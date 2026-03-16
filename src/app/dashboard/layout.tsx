@@ -39,6 +39,13 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
   const { data: profile } = useDoc(userProfileRef)
 
+  // Move redirect logic to useEffect to avoid "update during render" error
+  React.useEffect(() => {
+    if (!isUserLoading && !user) {
+      router.push("/login")
+    }
+  }, [user, isUserLoading, router])
+
   const handleSignOut = async () => {
     await signOut(auth)
     router.push("/login")
@@ -72,16 +79,11 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     return items
   }, [role])
 
-  if (isUserLoading) return (
+  if (isUserLoading || !user) return (
     <div className="h-screen w-full flex items-center justify-center bg-charcoal">
       <div className="w-8 h-8 border-4 border-orange/20 border-t-orange rounded-full animate-spin" />
     </div>
   )
-
-  if (!user) {
-    router.push("/login")
-    return null
-  }
 
   return (
     <div className="flex h-screen overflow-hidden bg-charcoal">
