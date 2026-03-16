@@ -5,16 +5,24 @@ import { useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { motion } from "framer-motion"
 import { Truck } from "lucide-react"
+import { useUser } from "@/firebase"
 
 export default function Home() {
   const router = useRouter()
+  const { user, isUserLoading } = useUser()
 
   useEffect(() => {
+    if (isUserLoading) return;
+    
     const timer = setTimeout(() => {
-      router.push("/dashboard")
+      if (user) {
+        router.push("/dashboard")
+      } else {
+        router.push("/login")
+      }
     }, 2000)
     return () => clearTimeout(timer)
-  }, [router])
+  }, [user, isUserLoading, router])
 
   return (
     <div className="h-screen w-full flex flex-col items-center justify-center bg-charcoal text-foreground">

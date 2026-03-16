@@ -12,28 +12,77 @@ import {
   LogOut,
   Bell,
   Search,
-  ShieldAlert
+  ShieldAlert,
+  ClipboardList
 } from "lucide-react"
 import { motion, AnimatePresence } from "framer-motion"
 import Link from "next/link"
-import { usePathname } from "next/navigation"
+import { usePathname, useRouter } from "next/navigation"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-
-const navItems = [
-  { icon: LayoutDashboard, label: "Command Center", href: "/dashboard" },
-  { icon: MapIcon, label: "Live Tracking", href: "/dashboard/map" },
-  { icon: Truck, label: "Fleet Status", href: "/dashboard/fleet" },
-  { icon: Users, label: "Drivers", href: "/dashboard/drivers" },
-  { icon: BarChart3, label: "Analytics", href: "/dashboard/analytics" },
-  { icon: ShieldAlert, label: "Safety & Alerts", href: "/dashboard/alerts" },
-  { icon: Settings, label: "System Config", href: "/dashboard/settings" },
-]
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/Avatar"
+import { useUser, useDoc, useMemoFirebase, useAuth, useFirestore } from "@/firebase"
+import { doc } from "firebase/firestore"
+import { signOut } from "firebase/auth"
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
+  const router = useRouter()
+  const auth = useAuth()
+  const db = useFirestore()
+  const { user, isUserLoading } = useUser()
   
+  const userProfileRef = useMemoFirebase(() => {
+    if (!user || !db) return null
+    return doc(db, "userProfiles", user.uid)
+  }, [user, db])
+
+  const { data: profile } = useDoc(userProfileRef)
+
+  const handleSignOut = async () => {
+    await signOut(auth)
+    router.push("/login")
+  }
+
+  const role = profile?.role || "Driver"
+
+  const navItems = React.useMemo(() => {
+    const items = [
+      { icon: LayoutDashboard, label: "Command Center", href: "/dashboard", roles: ["Super Admin", "Admin", "Driver"] },
+    ]
+
+    if (role === "Driver") {
+      items.push({ icon: ClipboardList, label: "My Duty", href: "/dashboard/duty", roles: ["Driver"] })
+    }
+
+    if (role === "Admin" || role === "Super Admin") {
+      items.push(
+        { icon: MapIcon, label: "Live Tracking", href: "/dashboard/map", roles: ["Admin", "Super Admin"] },
+        { icon: Truck, label: "Fleet Dispatch", href: "/dashboard/fleet", roles: ["Admin", "Super Admin"] },
+        { icon: Users, label: "Drivers", href: "/dashboard/drivers", roles: ["Admin", "Super Admin"] },
+        { icon: BarChart3, label: "Analytics", href: "/dashboard/analytics", roles: ["Admin", "Super Admin"] },
+      )
+    }
+
+    items.push(
+      { icon: ShieldAlert, label: "Safety & Alerts", href: "/dashboard/alerts", roles: ["Super Admin", "Admin", "Driver"] },
+      { icon: Settings, label: "System Config", href: "/dashboard/settings", roles: ["Super Admin", "Admin"] },
+    )
+
+    return items
+  }, [role])
+
+  if (isUserLoading) return (
+    <div className="h-screen w-full flex items-center justify-center bg-charcoal">
+      <div className="w-8 h-8 border-4 border-orange/20 border-t-orange rounded-full animate-spin" />
+    </div>
+  )
+
+  if (!user) {
+    router.push("/login")
+    return null
+  }
+
   return (
     <div className="flex h-screen overflow-hidden bg-charcoal">
       {/* Sidebar */}
@@ -78,7 +127,11 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         </nav>
 
         <div className="p-4 border-t border-navy/20">
-          <Button variant="ghost" className="w-full justify-start text-muted-foreground hover:text-destructive hover:bg-destructive/10">
+          <Button 
+            variant="ghost" 
+            onClick={handleSignOut}
+            className="w-full justify-start text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+          >
             <LogOut className="w-5 h-5 mr-3" />
             Sign Out
           </Button>
@@ -114,12 +167,12 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
             <div className="flex items-center gap-3 border-l border-navy/20 pl-6">
               <div className="text-right">
-                <p className="text-sm font-semibold">Director One</p>
-                <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Super Admin</p>
+                <p className="text-sm font-semibold">{profile?.name || "Initializing..."}</p>
+                <p className="text-[10px] text-muted-foreground uppercase tracking-wider">{role}</p>
               </div>
               <Avatar className="h-8 w-8 ring-2 ring-orange/20">
-                <AvatarImage src="https://picsum.photos/seed/admin/100/100" />
-                <AvatarFallback>AD</AvatarFallback>
+                <AvatarImage src={`https://picsum.photos/seed/${user.uid}/100/100`} />
+                <AvatarFallback>{profile?.name?.[0] || "U"}</AvatarFallback>
               </Avatar>
             </div>
           </div>
