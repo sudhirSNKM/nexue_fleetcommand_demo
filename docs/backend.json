@@ -1,0 +1,996 @@
+{
+  "entities": {
+    "UserProfile": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "UserProfile",
+      "type": "object",
+      "description": "Represents a user within the system, including Super Admin, Admin, and Driver roles.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the UserProfile entity."
+        },
+        "name": {
+          "type": "string",
+          "description": "The full name of the user."
+        },
+        "email": {
+          "type": "string",
+          "description": "The email address of the user, used for login and notifications.",
+          "format": "email"
+        },
+        "role": {
+          "type": "string",
+          "description": "The role of the user within the system (e.g., 'Super Admin', 'Admin', 'Driver').",
+          "format": "enum"
+        },
+        "operatingZoneIds": {
+          "type": "array",
+          "description": "References to Zones where this user (e.g., a driver) is authorized to operate. (Relationship: UserProfile N:N Zone)",
+          "items": {
+            "type": "string"
+          }
+        },
+        "currentVehicleId": {
+          "type": "string",
+          "description": "Reference to the Vehicle currently assigned to this driver. Only applicable for 'Driver' role. (Relationship: UserProfile 1:1 Vehicle)"
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "Timestamp when the user profile was created.",
+          "format": "date-time"
+        },
+        "lastUpdatedAt": {
+          "type": "string",
+          "description": "Timestamp when the user profile was last updated.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "email",
+        "role",
+        "createdAt"
+      ]
+    },
+    "Vehicle": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Vehicle",
+      "type": "object",
+      "description": "Represents a vehicle in the fleet, tracking its profile, status, and current assignment.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the Vehicle entity."
+        },
+        "licensePlate": {
+          "type": "string",
+          "description": "The license plate number of the vehicle."
+        },
+        "make": {
+          "type": "string",
+          "description": "The manufacturer of the vehicle."
+        },
+        "model": {
+          "type": "string",
+          "description": "The model of the vehicle."
+        },
+        "year": {
+          "type": "number",
+          "description": "The manufacturing year of the vehicle."
+        },
+        "driverId": {
+          "type": "string",
+          "description": "Reference to the UserProfile of the driver currently assigned to this vehicle. (Relationship: Vehicle 1:1 UserProfile)"
+        },
+        "status": {
+          "type": "string",
+          "description": "The current operational status of the vehicle (e.g., 'Active', 'Idle', 'Maintenance', 'Emergency')."
+        },
+        "latitude": {
+          "type": "number",
+          "description": "The current latitude coordinate of the vehicle."
+        },
+        "longitude": {
+          "type": "number",
+          "description": "The current longitude coordinate of the vehicle."
+        },
+        "lastLocationUpdate": {
+          "type": "string",
+          "description": "Timestamp of the last known location update for the vehicle.",
+          "format": "date-time"
+        },
+        "fuelLevel": {
+          "type": "number",
+          "description": "The current fuel level percentage of the vehicle (0-100)."
+        },
+        "maintenanceDue": {
+          "type": "string",
+          "description": "Timestamp indicating when the next maintenance is due for the vehicle.",
+          "format": "date-time"
+        },
+        "currentTripId": {
+          "type": "string",
+          "description": "Reference to the current active Trip this vehicle is undertaking. (Relationship: Vehicle 1:1 Trip)"
+        },
+        "vehicleType": {
+          "type": "string",
+          "description": "The type of vehicle (e.g., 'Truck', 'Van', 'Car')."
+        },
+        "capacity": {
+          "type": "number",
+          "description": "The cargo capacity of the vehicle, typically in weight or volume units."
+        }
+      },
+      "required": [
+        "id",
+        "licensePlate",
+        "make",
+        "model",
+        "year",
+        "status",
+        "latitude",
+        "longitude",
+        "lastLocationUpdate",
+        "fuelLevel"
+      ]
+    },
+    "Trip": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Trip",
+      "type": "object",
+      "description": "Records details of a single journey or delivery task undertaken by a vehicle and driver.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the Trip entity."
+        },
+        "vehicleId": {
+          "type": "string",
+          "description": "Reference to the Vehicle used for this trip. (Relationship: Trip N:1 Vehicle)"
+        },
+        "driverId": {
+          "type": "string",
+          "description": "Reference to the UserProfile of the driver performing this trip. (Relationship: Trip N:1 UserProfile)"
+        },
+        "assignedShiftId": {
+          "type": "string",
+          "description": "Reference to the DriverShift this trip is part of. (Relationship: Trip N:1 DriverShift)"
+        },
+        "pickupAddress": {
+          "type": "string",
+          "description": "The full address of the pickup location."
+        },
+        "pickupLatitude": {
+          "type": "number",
+          "description": "The latitude coordinate of the pickup location."
+        },
+        "pickupLongitude": {
+          "type": "number",
+          "description": "The longitude coordinate of the pickup location."
+        },
+        "dropoffAddress": {
+          "type": "string",
+          "description": "The full address of the dropoff location."
+        },
+        "dropoffLatitude": {
+          "type": "number",
+          "description": "The latitude coordinate of the dropoff location."
+        },
+        "dropoffLongitude": {
+          "type": "number",
+          "description": "The longitude coordinate of the dropoff location."
+        },
+        "plannedRouteGeoJson": {
+          "type": "string",
+          "description": "GeoJSON string representing the planned route for the trip."
+        },
+        "actualRouteGeoJson": {
+          "type": "string",
+          "description": "GeoJSON string representing the actual route taken by the vehicle during the trip."
+        },
+        "tripStartTime": {
+          "type": "string",
+          "description": "Timestamp when the driver started en route to the pickup location.",
+          "format": "date-time"
+        },
+        "arrivalAtPickupTimestamp": {
+          "type": "string",
+          "description": "Timestamp when the driver arrived at the pickup location.",
+          "format": "date-time"
+        },
+        "loadLoadedTimestamp": {
+          "type": "string",
+          "description": "Timestamp when the load was confirmed as loaded, marking the 'punch in' for the load delivery task.",
+          "format": "date-time"
+        },
+        "departureFromPickupTimestamp": {
+          "type": "string",
+          "description": "Timestamp when the driver departed from the pickup location en route to dropoff.",
+          "format": "date-time"
+        },
+        "arrivalAtDropoffTimestamp": {
+          "type": "string",
+          "description": "Timestamp when the driver arrived at the dropoff location.",
+          "format": "date-time"
+        },
+        "loadDeliveredTimestamp": {
+          "type": "string",
+          "description": "Timestamp when the load was confirmed as delivered, marking the 'punch out' for the load delivery task.",
+          "format": "date-time"
+        },
+        "tripEndTime": {
+          "type": "string",
+          "description": "Timestamp when the driver completed the entire trip after dropoff.",
+          "format": "date-time"
+        },
+        "status": {
+          "type": "string",
+          "description": "The current status of the trip (e.g., 'Pending', 'EnRouteToPickup', 'AtPickup', 'Loading', 'EnRouteToDropoff', 'AtDropoff', 'Unloading', 'Completed', 'Cancelled')."
+        },
+        "estimatedTravelTimeMinutes": {
+          "type": "number",
+          "description": "The estimated travel time for the trip in minutes."
+        },
+        "estimatedDistanceKm": {
+          "type": "number",
+          "description": "The estimated distance for the trip in kilometers."
+        },
+        "actualTravelTimeMinutes": {
+          "type": "number",
+          "description": "The actual travel time for the trip in minutes."
+        },
+        "actualDistanceKm": {
+          "type": "number",
+          "description": "The actual distance covered during the trip in kilometers."
+        },
+        "adminNotes": {
+          "type": "string",
+          "description": "Additional instructions or notes provided by the admin for the trip."
+        },
+        "driverNotes": {
+          "type": "string",
+          "description": "Notes or comments made by the driver during or after the trip."
+        }
+      },
+      "required": [
+        "id",
+        "vehicleId",
+        "driverId",
+        "pickupAddress",
+        "pickupLatitude",
+        "pickupLongitude",
+        "dropoffAddress",
+        "dropoffLatitude",
+        "dropoffLongitude",
+        "status",
+        "tripStartTime"
+      ]
+    },
+    "FuelLog": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "FuelLog",
+      "type": "object",
+      "description": "Records details of a fuel purchase made for a vehicle by a driver.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the FuelLog entity."
+        },
+        "driverId": {
+          "type": "string",
+          "description": "Reference to the UserProfile of the driver who logged the fuel. (Relationship: FuelLog N:1 UserProfile)"
+        },
+        "vehicleId": {
+          "type": "string",
+          "description": "Reference to the Vehicle for which fuel was purchased. (Relationship: FuelLog N:1 Vehicle)"
+        },
+        "tripId": {
+          "type": "string",
+          "description": "Optional reference to the Trip during which the fuel was purchased. (Relationship: FuelLog N:1 Trip)"
+        },
+        "amount": {
+          "type": "number",
+          "description": "The monetary cost of the fuel purchased."
+        },
+        "gallons": {
+          "type": "number",
+          "description": "The quantity of fuel purchased in gallons or equivalent units."
+        },
+        "receiptUrl": {
+          "type": "string",
+          "description": "URL to the scanned or uploaded fuel receipt in Firebase Storage.",
+          "format": "uri"
+        },
+        "timestamp": {
+          "type": "string",
+          "description": "Timestamp when the fuel purchase was made or logged.",
+          "format": "date-time"
+        },
+        "latitude": {
+          "type": "number",
+          "description": "The latitude coordinate of the fuel station where fuel was purchased."
+        },
+        "longitude": {
+          "type": "number",
+          "description": "The longitude coordinate of the fuel station where fuel was purchased."
+        },
+        "approvedBy": {
+          "type": "string",
+          "description": "Reference to the UserProfile (Admin) who approved this fuel expense. (Relationship: FuelLog N:1 UserProfile)"
+        },
+        "approvalStatus": {
+          "type": "string",
+          "description": "The approval status of the fuel expense (e.g., 'Pending', 'Approved', 'Rejected')."
+        }
+      },
+      "required": [
+        "id",
+        "driverId",
+        "vehicleId",
+        "amount",
+        "gallons",
+        "receiptUrl",
+        "timestamp",
+        "approvalStatus"
+      ]
+    },
+    "Zone": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Zone",
+      "type": "object",
+      "description": "Defines a geographic area or zone within the system, used for geofencing and operational boundaries.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the Zone entity."
+        },
+        "name": {
+          "type": "string",
+          "description": "A human-readable name for the zone (e.g., 'North Region', 'Warehouse A')."
+        },
+        "type": {
+          "type": "string",
+          "description": "The category of the zone (e.g., 'Warehouse', 'Delivery Area', 'Restricted Zone')."
+        },
+        "description": {
+          "type": "string",
+          "description": "A detailed description of the zone's purpose or characteristics."
+        },
+        "polygonCoordinates": {
+          "type": "array",
+          "description": "An array of coordinate pairs defining the polygon boundary of the zone.",
+          "items": {
+            "type": "string"
+          }
+        },
+        "alertOnEntry": {
+          "type": "boolean",
+          "description": "Boolean indicating if an alert should be triggered when a vehicle enters this zone."
+        },
+        "alertOnExit": {
+          "type": "boolean",
+          "description": "Boolean indicating if an alert should be triggered when a vehicle exits this zone."
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "type",
+        "polygonCoordinates",
+        "alertOnEntry",
+        "alertOnExit"
+      ]
+    },
+    "AuditLog": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "AuditLog",
+      "type": "object",
+      "description": "Records every significant action performed within the system for security and accountability.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the AuditLog entity."
+        },
+        "userId": {
+          "type": "string",
+          "description": "Reference to the UserProfile who performed the action. (Relationship: AuditLog N:1 UserProfile)"
+        },
+        "action": {
+          "type": "string",
+          "description": "A description of the action performed (e.g., 'Created Vehicle', 'Updated User Role', 'Approved Fuel Expense')."
+        },
+        "timestamp": {
+          "type": "string",
+          "description": "Timestamp when the action occurred.",
+          "format": "date-time"
+        },
+        "entityType": {
+          "type": "string",
+          "description": "The type of entity affected by the action (e.g., 'Vehicle', 'UserProfile', 'Trip', 'Zone')."
+        },
+        "entityId": {
+          "type": "string",
+          "description": "The unique identifier of the entity affected by the action."
+        },
+        "details": {
+          "type": "string",
+          "description": "Additional contextual details about the action, potentially including old and new values."
+        }
+      },
+      "required": [
+        "id",
+        "userId",
+        "action",
+        "timestamp"
+      ]
+    },
+    "DriverShift": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "DriverShift",
+      "type": "object",
+      "description": "Represents a driver's complete work shift, including punch-in/out times and associated activities.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the DriverShift entity."
+        },
+        "driverId": {
+          "type": "string",
+          "description": "Reference to the UserProfile of the driver for this shift. (Relationship: DriverShift N:1 UserProfile)"
+        },
+        "vehicleId": {
+          "type": "string",
+          "description": "Reference to the Vehicle used by the driver for this shift. (Relationship: DriverShift N:1 Vehicle)"
+        },
+        "punchInTime": {
+          "type": "string",
+          "description": "Timestamp when the driver officially started their work shift (punch in).",
+          "format": "date-time"
+        },
+        "punchOutTime": {
+          "type": "string",
+          "description": "Timestamp when the driver officially ended their work shift (punch out).",
+          "format": "date-time"
+        },
+        "status": {
+          "type": "string",
+          "description": "The current status of the shift (e.g., 'Active', 'OnBreak', 'Completed', 'Scheduled')."
+        },
+        "breakLogIds": {
+          "type": "array",
+          "description": "References to DriverBreak entities that occurred during this shift. (Relationship: DriverShift 1:N DriverBreak)",
+          "items": {
+            "type": "string"
+          }
+        },
+        "tripIds": {
+          "type": "array",
+          "description": "References to Trip entities completed or undertaken during this shift. (Relationship: DriverShift 1:N Trip)",
+          "items": {
+            "type": "string"
+          }
+        },
+        "totalBreakDurationMinutes": {
+          "type": "number",
+          "description": "Calculated total duration of all breaks taken during this shift in minutes."
+        },
+        "totalDrivingDurationMinutes": {
+          "type": "number",
+          "description": "Calculated total time spent driving during this shift in minutes."
+        },
+        "totalShiftDurationMinutes": {
+          "type": "number",
+          "description": "Calculated total duration of the entire shift (Punch Out - Punch In) in minutes."
+        },
+        "shiftDate": {
+          "type": "string",
+          "description": "The calendar date of the shift, for easier querying and reporting.",
+          "format": "date"
+        }
+      },
+      "required": [
+        "id",
+        "driverId",
+        "punchInTime",
+        "status",
+        "shiftDate"
+      ]
+    },
+    "DriverBreak": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "DriverBreak",
+      "type": "object",
+      "description": "Records details of an individual break taken by a driver during their shift.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the DriverBreak entity."
+        },
+        "driverShiftId": {
+          "type": "string",
+          "description": "Reference to the DriverShift during which this break occurred. (Relationship: DriverBreak N:1 DriverShift)"
+        },
+        "breakStartTime": {
+          "type": "string",
+          "description": "Timestamp when the break started.",
+          "format": "date-time"
+        },
+        "breakEndTime": {
+          "type": "string",
+          "description": "Timestamp when the break ended.",
+          "format": "date-time"
+        },
+        "durationMinutes": {
+          "type": "number",
+          "description": "Calculated duration of the break in minutes."
+        },
+        "reason": {
+          "type": "string",
+          "description": "The reason for the break (e.g., 'Rest', 'Lunch', 'Refuel', 'Vehicle Issue')."
+        }
+      },
+      "required": [
+        "id",
+        "driverShiftId",
+        "breakStartTime",
+        "reason"
+      ]
+    },
+    "MaintenanceRecord": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "MaintenanceRecord",
+      "type": "object",
+      "description": "Tracks scheduled and performed maintenance activities for vehicles.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the MaintenanceRecord entity."
+        },
+        "vehicleId": {
+          "type": "string",
+          "description": "Reference to the Vehicle that underwent maintenance. (Relationship: MaintenanceRecord N:1 Vehicle)"
+        },
+        "type": {
+          "type": "string",
+          "description": "The type of maintenance performed (e.g., 'Oil Change', 'Tire Rotation', 'Brake Inspection', 'Repair')."
+        },
+        "scheduledDate": {
+          "type": "string",
+          "description": "The date when the maintenance was scheduled.",
+          "format": "date-time"
+        },
+        "completionDate": {
+          "type": "string",
+          "description": "The date when the maintenance was completed.",
+          "format": "date-time"
+        },
+        "cost": {
+          "type": "number",
+          "description": "The total cost of the maintenance service."
+        },
+        "notes": {
+          "type": "string",
+          "description": "Any additional notes or details about the maintenance."
+        },
+        "status": {
+          "type": "string",
+          "description": "The current status of the maintenance record (e.g., 'Scheduled', 'InProgress', 'Completed', 'Overdue')."
+        },
+        "performedBy": {
+          "type": "string",
+          "description": "The name of the mechanic or service center that performed the maintenance."
+        },
+        "documentIds": {
+          "type": "array",
+          "description": "References to Document entities, such as invoices or service reports. (Relationship: MaintenanceRecord N:N Document)",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "required": [
+        "id",
+        "vehicleId",
+        "type",
+        "scheduledDate",
+        "status"
+      ]
+    },
+    "Document": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Document",
+      "type": "object",
+      "description": "Stores references and details for important documents associated with users or vehicles, tracking their expiry.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the Document entity."
+        },
+        "name": {
+          "type": "string",
+          "description": "The name or type of the document (e.g., 'Vehicle Registration', 'Driver's License', 'Insurance Policy')."
+        },
+        "documentUrl": {
+          "type": "string",
+          "description": "URL to the document file stored in Firebase Storage.",
+          "format": "uri"
+        },
+        "expiryDate": {
+          "type": "string",
+          "description": "The expiration date of the document.",
+          "format": "date"
+        },
+        "associatedEntityType": {
+          "type": "string",
+          "description": "The type of entity this document is associated with (e.g., 'Vehicle', 'UserProfile')."
+        },
+        "associatedEntityId": {
+          "type": "string",
+          "description": "The unique identifier of the associated entity (Vehicle ID or UserProfile ID). (Relationship: Document N:1 Vehicle/UserProfile)"
+        },
+        "status": {
+          "type": "string",
+          "description": "The current status of the document (e.g., 'Valid', 'Expiring Soon', 'Expired')."
+        },
+        "uploadedBy": {
+          "type": "string",
+          "description": "Reference to the UserProfile who uploaded this document. (Relationship: Document N:1 UserProfile)"
+        },
+        "uploadedAt": {
+          "type": "string",
+          "description": "Timestamp when the document was uploaded.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "documentUrl",
+        "expiryDate",
+        "associatedEntityType",
+        "associatedEntityId",
+        "status",
+        "uploadedBy",
+        "uploadedAt"
+      ]
+    },
+    "SystemSetting": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "SystemSetting",
+      "type": "object",
+      "description": "Stores global configuration settings for the application, manageable by Super Admins.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the SystemSetting entity (e.g., 'vehicleStatusColors', 'brandingLogoUrl')."
+        },
+        "settingName": {
+          "type": "string",
+          "description": "A human-readable name for the setting."
+        },
+        "settingValue": {
+          "type": "string",
+          "description": "The value of the setting, stored as a string (can be JSON serialized for complex values)."
+        },
+        "scope": {
+          "type": "string",
+          "description": "The scope of the setting (e.g., 'Global', 'Admin-specific')."
+        },
+        "lastUpdatedBy": {
+          "type": "string",
+          "description": "Reference to the UserProfile who last updated this setting. (Relationship: SystemSetting N:1 UserProfile)"
+        },
+        "lastUpdatedAt": {
+          "type": "string",
+          "description": "Timestamp when the setting was last updated.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "settingName",
+        "settingValue",
+        "scope",
+        "lastUpdatedBy",
+        "lastUpdatedAt"
+      ]
+    },
+    "ExpenseLog": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "ExpenseLog",
+      "type": "object",
+      "description": "Records general expenses incurred by drivers, excluding fuel, for approval and tracking.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the ExpenseLog entity."
+        },
+        "driverId": {
+          "type": "string",
+          "description": "Reference to the UserProfile of the driver who logged the expense. (Relationship: ExpenseLog N:1 UserProfile)"
+        },
+        "vehicleId": {
+          "type": "string",
+          "description": "Optional reference to the Vehicle associated with this expense. (Relationship: ExpenseLog N:1 Vehicle)"
+        },
+        "tripId": {
+          "type": "string",
+          "description": "Optional reference to the Trip during which the expense was incurred. (Relationship: ExpenseLog N:1 Trip)"
+        },
+        "type": {
+          "type": "string",
+          "description": "The category of the expense (e.g., 'Toll', 'Parking', 'Accommodation', 'Meal', 'Other')."
+        },
+        "amount": {
+          "type": "number",
+          "description": "The monetary amount of the expense."
+        },
+        "receiptUrl": {
+          "type": "string",
+          "description": "URL to the scanned or uploaded receipt in Firebase Storage.",
+          "format": "uri"
+        },
+        "timestamp": {
+          "type": "string",
+          "description": "Timestamp when the expense was incurred or logged.",
+          "format": "date-time"
+        },
+        "notes": {
+          "type": "string",
+          "description": "Any additional notes or comments regarding the expense."
+        },
+        "approvedBy": {
+          "type": "string",
+          "description": "Reference to the UserProfile (Admin) who approved this expense. (Relationship: ExpenseLog N:1 UserProfile)"
+        },
+        "approvalStatus": {
+          "type": "string",
+          "description": "The approval status of the expense (e.g., 'Pending', 'Approved', 'Rejected')."
+        }
+      },
+      "required": [
+        "id",
+        "driverId",
+        "type",
+        "amount",
+        "timestamp",
+        "approvalStatus"
+      ]
+    }
+  },
+  "auth": {
+    "providers": [
+      "password",
+      "anonymous"
+    ]
+  },
+  "firestore": {
+    "structure": [
+      {
+        "path": "/userProfiles/{userId}",
+        "definition": {
+          "entityName": "UserProfile",
+          "schema": {
+            "$ref": "#/backend/entities/UserProfile"
+          },
+          "description": "Stores user profiles for Super Admin, Admin, and Driver roles. The document ID matches the user's Firebase Authentication UID. The `role` field is included for client-side routing and UI. Super Admin can manage all, Admin can manage Driver profiles, and users can manage their own non-role-critical fields."
+        }
+      },
+      {
+        "path": "/roles_super_admin/{superAdminId}",
+        "definition": {
+          "entityName": "UserProfile",
+          "schema": {
+            "$ref": "#/backend/entities/UserProfile"
+          },
+          "description": "A denormalized collection used for efficient server-side security rule checks for 'Super Admin' role. Document ID matches the Super Admin's `UserProfile.id`. Contains a simple flag (e.g., `{ active: true }`). This enables authorization independence by avoiding `get()` calls on `userProfiles` for role checks.",
+          "params": [
+            {
+              "name": "superAdminId",
+              "description": "The unique ID of the Super Admin, matching their Firebase Auth UID."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/roles_admin/{adminId}",
+        "definition": {
+          "entityName": "UserProfile",
+          "schema": {
+            "$ref": "#/backend/entities/UserProfile"
+          },
+          "description": "A denormalized collection used for efficient server-side security rule checks for 'Admin' role. Document ID matches the Admin's `UserProfile.id`. Contains a simple flag (e.g., `{ active: true }`). This enables authorization independence by avoiding `get()` calls on `userProfiles` for role checks.",
+          "params": [
+            {
+              "name": "adminId",
+              "description": "The unique ID of the Admin, matching their Firebase Auth UID."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/vehicles/{vehicleId}",
+        "definition": {
+          "entityName": "Vehicle",
+          "schema": {
+            "$ref": "#/backend/entities/Vehicle"
+          },
+          "description": "Stores detailed profiles of all fleet vehicles. Includes denormalized `driverId` to allow assigned drivers to read and update their vehicle's location and status directly. Managed by Admins and Super Admins.",
+          "params": [
+            {
+              "name": "vehicleId",
+              "description": "The unique identifier for the Vehicle."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/trips/{tripId}",
+        "definition": {
+          "entityName": "Trip",
+          "schema": {
+            "$ref": "#/backend/entities/Trip"
+          },
+          "description": "Records details of individual journeys or delivery tasks. Includes denormalized `driverId` and `vehicleId` for authorization independence, enabling drivers to manage their assigned trips (e.g., punch-in/out, status updates) and Admins/Super Admins to view all trips. Supports QAPs for list queries across all drivers.",
+          "params": [
+            {
+              "name": "tripId",
+              "description": "The unique identifier for the Trip."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/driverShifts/{shiftId}",
+        "definition": {
+          "entityName": "DriverShift",
+          "schema": {
+            "$ref": "#/backend/entities/DriverShift"
+          },
+          "description": "Records a driver's complete work shift. Includes denormalized `driverId` and `vehicleId` for authorization independence, enabling drivers to punch in/out of their shifts directly and Admins/Super Admins to view and analyze all shifts. Supports QAPs for list queries across all drivers.",
+          "params": [
+            {
+              "name": "shiftId",
+              "description": "The unique identifier for the Driver Shift."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/driverShifts/{shiftId}/driverBreaks/{breakId}",
+        "definition": {
+          "entityName": "DriverBreak",
+          "schema": {
+            "$ref": "#/backend/entities/DriverBreak"
+          },
+          "description": "Records individual breaks taken by a driver during a specific shift. Access is intrinsically tied to the parent `DriverShift` document, which contains the `driverId`. This maintains a clear hierarchical ownership.",
+          "params": [
+            {
+              "name": "shiftId",
+              "description": "The unique identifier of the parent Driver Shift."
+            },
+            {
+              "name": "breakId",
+              "description": "The unique identifier for the Driver Break."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/fuelLogs/{logId}",
+        "definition": {
+          "entityName": "FuelLog",
+          "schema": {
+            "$ref": "#/backend/entities/FuelLog"
+          },
+          "description": "Records fuel purchases. Includes denormalized `driverId` and `vehicleId` for authorization independence. Drivers can create and manage their own fuel logs, while Admins/Super Admins can review and approve them. Supports QAPs for list queries across all drivers.",
+          "params": [
+            {
+              "name": "logId",
+              "description": "The unique identifier for the Fuel Log entry."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/expenseLogs/{logId}",
+        "definition": {
+          "entityName": "ExpenseLog",
+          "schema": {
+            "$ref": "#/backend/entities/ExpenseLog"
+          },
+          "description": "Records general expenses incurred by drivers. Includes denormalized `driverId` and `vehicleId` (if applicable) for authorization independence. Drivers can create and manage their own expense logs, while Admins/Super Admins can review and approve them. Supports QAPs for list queries across all drivers.",
+          "params": [
+            {
+              "name": "logId",
+              "description": "The unique identifier for the Expense Log entry."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/maintenanceRecords/{recordId}",
+        "definition": {
+          "entityName": "MaintenanceRecord",
+          "schema": {
+            "$ref": "#/backend/entities/MaintenanceRecord"
+          },
+          "description": "Tracks scheduled and performed maintenance activities for vehicles. Includes `vehicleId`. Managed by Admins and Super Admins. Drivers can read records related to their assigned vehicle.",
+          "params": [
+            {
+              "name": "recordId",
+              "description": "The unique identifier for the Maintenance Record."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/documents/{documentId}",
+        "definition": {
+          "entityName": "Document",
+          "schema": {
+            "$ref": "#/backend/entities/Document"
+          },
+          "description": "Stores references and details for important documents. Includes denormalized `associatedEntityId`, `associatedEntityType`, and `uploadedBy` for authorization independence. Allows Admins/Super Admins to manage all documents and drivers to upload/view their own or vehicle-related documents. Supports QAPs for list queries.",
+          "params": [
+            {
+              "name": "documentId",
+              "description": "The unique identifier for the Document."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/zones/{zoneId}",
+        "definition": {
+          "entityName": "Zone",
+          "schema": {
+            "$ref": "#/backend/entities/Zone"
+          },
+          "description": "Defines geographic areas or zones within the system for geofencing. Managed exclusively by Super Admins. Read access for Admins and Drivers (for map display).",
+          "params": [
+            {
+              "name": "zoneId",
+              "description": "The unique identifier for the Zone."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/systemSettings/{settingId}",
+        "definition": {
+          "entityName": "SystemSetting",
+          "schema": {
+            "$ref": "#/backend/entities/SystemSetting"
+          },
+          "description": "Stores global configuration settings for the application. Managed exclusively by Super Admins. Read access for all authenticated users.",
+          "params": [
+            {
+              "name": "settingId",
+              "description": "The unique identifier for the System Setting."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/auditLogs/{logId}",
+        "definition": {
+          "entityName": "AuditLog",
+          "schema": {
+            "$ref": "#/backend/entities/AuditLog"
+          },
+          "description": "Records every significant action performed within the system for security and accountability. Written exclusively by secure backend services (e.g., Firebase Functions) with a service account. Read access for Super Admins and Admins. Includes `userId` of the actor for authorization context.",
+          "params": [
+            {
+              "name": "logId",
+              "description": "The unique identifier for the Audit Log entry."
+            }
+          ]
+        }
+      }
+    ],
+    "reasoning": "The Firestore data structure for Nexus FleetCommand prioritizes Authorization Independence and Structural Segregation to ensure robust security, scalability, and simplified debugging of security rules. \n\n**Authorization Independence (Denormalization Strategy):**\n1.  **Roles:** User roles (`Super Admin`, `Admin`, `Driver`) are denormalized into two key ways:\n    *   The `UserProfile` document (`/userProfiles/{userId}`) explicitly contains a `role` field. This is primarily for UI display and initial client-side routing.\n    *   For highly efficient and secure server-side rule evaluation, separate top-level collections are introduced: `/roles_super_admin/{superAdminId}` and `/roles_admin/{adminId}`. These collections will contain minimal documents (e.g., `{ id: true }`) where the document ID matches the respective user's UID. This allows security rules to use direct `exists(/roles_super_admin/$(request.auth.uid))` or `exists(/roles_admin/$(request.auth.uid))` checks, completely eliminating `get()` calls on the `userProfiles` collection for role authorization, which is critical for atomic operations and avoiding fan-out reads.\n2.  **Owner/Contextual IDs:** For most top-level collections that drivers interact with or that require driver/vehicle context, crucial IDs are denormalized directly into the document:\n    *   `Trip` documents (`/trips/{tripId}`) will include `driverId` and `vehicleId`. This enables a driver to read/update their assigned trip details without needing to perform a `get()` operation on a parent `DriverShift` or `Vehicle` document.\n    *   `DriverShift` documents (`/driverShifts/{shiftId}`) will include `driverId` and `vehicleId`. This allows drivers to punch in/out and manage their shift directly, and Admins to query shifts by driver/vehicle without complex joins or `get()` calls.\n    *   `FuelLog` and `ExpenseLog` documents (`/fuelLogs/{logId}`, `/expenseLogs/{logId}`) include `driverId` and `vehicleId` (if applicable), and `approvedBy`. This allows drivers to create their own logs, and Admins to approve them, all with rules operating on the document's own fields.\n    *   `Document` documents (`/documents/{documentId}`) include `associatedEntityId`, `associatedEntityType`, and `uploadedBy`. This facilitates authorization based on the document itself.\n\nThis extensive denormalization ensures that security rules are simple, operate on the `request.resource.data` object, and are independent of `get()` operations, thereby enhancing rule performance and atomic operation reliability.\n\n**Structural Segregation (Homogeneous Security Posture & QAPs):**\n1.  **Top-Level Collections for Cross-Role Access & List Operations:** Core operational data like `Vehicles`, `Trips`, `DriverShifts`, `FuelLogs`, `ExpenseLogs`, `MaintenanceRecords`, and `Documents` are placed in top-level collections. This is crucial for QAPs (Query, Aggregation, Permissions, Security Rules) because:\n    *   **Efficient List Operations:** Super Admins and Admins frequently need to list *all* vehicles, trips, or logs. Placing them at the top level allows for simple, performant collection-level queries (`db.collection('trips').where('status', '==', 'EnRoute')`) without being nested under specific users. \n    *   **Driver-Specific Filtering:** For drivers, queries can be securely filtered using `where('driverId', '==', request.auth.uid)` in conjunction with security rules that mandate this filter, ensuring drivers only access their own data while allowing Admins broader access.\n    *   **Role-Based Read/Write:** Each top-level collection (`/vehicles`, `/trips`, etc.) will have security rules defined based on the denormalized role collections (e.g., `allow read: if exists(/roles_admin/$(request.auth.uid))`) and/or the `driverId` field (e.g., `allow write: if request.auth.uid == resource.data.driverId`).\n2.  **Hierarchical for Nested Ownership:** `DriverBreak` is placed as a subcollection (`/driverShifts/{shiftId}/driverBreaks/{breakId}`) because breaks are strictly contained within a shift. The `driverId` for authorization can be inferred from the parent `DriverShift` document, minimizing redundant denormalization while maintaining clear data hierarchy. Rules here would leverage `get(/driverShifts/$(shiftId)).data.driverId == request.auth.uid` or similar, which is acceptable for such tightly coupled 1:N relationships where the child itself is not queried independently across all parents.\n3.  **Dedicated Global Collections:** `Zones` and `SystemSettings` are global entities managed by specific roles (Super Admin) and read by others. `AuditLogs` are for system-level tracking, written by backend services and read by Super Admins/Admins. Their top-level placement is logical for global access and management by privileged roles.\n\nThis structure ensures clear separation of concerns, simplifies security rules by moving complexity into the data's organization, and robustly supports real-time features and analytical requirements for all user roles, particularly enabling efficient querying (QAPs) for dashboards and reporting across the fleet."
+  }
+}
