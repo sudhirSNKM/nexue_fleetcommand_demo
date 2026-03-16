@@ -55,7 +55,8 @@ service cloud.firestore {
 
     match /trips/{tripId} {
       // Drivers can see their own trips. Staff can see all.
-      allow get, list: if isSignedIn() && (isStaff() || (resource != null && resource.data.driverId == request.auth.uid));
+      // consolidated get/list into read and removed resource != null to allow filtered queries
+      allow read: if isSignedIn() && (isStaff() || (resource.data.driverId == request.auth.uid));
       allow create: if isStaff();
       allow update: if isStaff() || (isSignedIn() && resource.data.driverId == request.auth.uid);
       allow delete: if isStaff();
@@ -63,7 +64,7 @@ service cloud.firestore {
 
     match /driverShifts/{shiftId} {
       // Drivers can see their own shifts. Staff can see all.
-      allow get, list: if isSignedIn() && (isStaff() || (resource != null && resource.data.driverId == request.auth.uid));
+      allow read: if isSignedIn() && (isStaff() || (resource.data.driverId == request.auth.uid));
       allow create: if isSignedIn() && request.resource.data.driverId == request.auth.uid;
       allow update: if isStaff() || (isSignedIn() && resource.data.driverId == request.auth.uid);
       allow delete: if isStaff();
@@ -74,14 +75,14 @@ service cloud.firestore {
     }
 
     match /fuelLogs/{logId} {
-      allow get, list: if isSignedIn() && (isStaff() || (resource != null && resource.data.driverId == request.auth.uid));
+      allow read: if isSignedIn() && (isStaff() || (resource.data.driverId == request.auth.uid));
       allow create: if isSignedIn() && request.resource.data.driverId == request.auth.uid;
       allow update: if isStaff() || (isSignedIn() && resource.data.driverId == request.auth.uid);
       allow delete: if isStaff();
     }
 
     match /expenseLogs/{logId} {
-      allow get, list: if isSignedIn() && (isStaff() || (resource != null && resource.data.driverId == request.auth.uid));
+      allow read: if isSignedIn() && (isStaff() || (resource.data.driverId == request.auth.uid));
       allow create: if isSignedIn() && request.resource.data.driverId == request.auth.uid;
       allow update: if isStaff() || (isSignedIn() && resource.data.driverId == request.auth.uid);
       allow delete: if isStaff();
@@ -93,9 +94,9 @@ service cloud.firestore {
     }
 
     match /documents/{documentId} {
-      allow read: if isStaff() || (isSignedIn() && resource != null && (resource.data.uploadedBy == request.auth.uid || resource.data.associatedEntityId == request.auth.uid));
+      allow read: if isStaff() || (isSignedIn() && (resource.data.uploadedBy == request.auth.uid || resource.data.associatedEntityId == request.auth.uid));
       allow create: if isStaff() || (isSignedIn() && request.resource.data.uploadedBy == request.auth.uid);
-      allow update: if isStaff() || (isSignedIn() && resource != null && resource.data.uploadedBy == request.auth.uid);
+      allow update: if isStaff() || (isSignedIn() && resource.data.uploadedBy == request.auth.uid);
       allow delete: if isStaff();
     }
 
