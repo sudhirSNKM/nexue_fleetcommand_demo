@@ -4,6 +4,7 @@
 import React from "react"
 import FuelAnalytics from "@/components/dashboard/FuelAnalytics"
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card"
+import { Badge } from "@/components/ui/badge"
 import { BarChart3, TrendingUp, Zap, PieChart } from "lucide-react"
 import { 
   ResponsiveContainer, 
