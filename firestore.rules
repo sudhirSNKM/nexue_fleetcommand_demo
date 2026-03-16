@@ -54,17 +54,20 @@ service cloud.firestore {
     }
 
     match /trips/{tripId} {
-      // Drivers can see their own trips. Staff can see all.
-      // consolidated get/list into read and removed resource != null to allow filtered queries
-      allow read: if isSignedIn() && (isStaff() || (resource.data.driverId == request.auth.uid));
+      // Allow single document reads for assigned driver or staff
+      allow get: if isSignedIn() && (isStaff() || resource.data.driverId == request.auth.uid);
+      // Allow filtered list queries where driverId matches the authenticated user
+      allow list: if isSignedIn() && (isStaff() || resource.data.driverId == request.auth.uid);
+      
       allow create: if isStaff();
       allow update: if isStaff() || (isSignedIn() && resource.data.driverId == request.auth.uid);
       allow delete: if isStaff();
     }
 
     match /driverShifts/{shiftId} {
-      // Drivers can see their own shifts. Staff can see all.
-      allow read: if isSignedIn() && (isStaff() || (resource.data.driverId == request.auth.uid));
+      allow get: if isSignedIn() && (isStaff() || resource.data.driverId == request.auth.uid);
+      allow list: if isSignedIn() && (isStaff() || resource.data.driverId == request.auth.uid);
+      
       allow create: if isSignedIn() && request.resource.data.driverId == request.auth.uid;
       allow update: if isStaff() || (isSignedIn() && resource.data.driverId == request.auth.uid);
       allow delete: if isStaff();
@@ -75,14 +78,18 @@ service cloud.firestore {
     }
 
     match /fuelLogs/{logId} {
-      allow read: if isSignedIn() && (isStaff() || (resource.data.driverId == request.auth.uid));
+      allow get: if isSignedIn() && (isStaff() || resource.data.driverId == request.auth.uid);
+      allow list: if isSignedIn() && (isStaff() || resource.data.driverId == request.auth.uid);
+      
       allow create: if isSignedIn() && request.resource.data.driverId == request.auth.uid;
       allow update: if isStaff() || (isSignedIn() && resource.data.driverId == request.auth.uid);
       allow delete: if isStaff();
     }
 
     match /expenseLogs/{logId} {
-      allow read: if isSignedIn() && (isStaff() || (resource.data.driverId == request.auth.uid));
+      allow get: if isSignedIn() && (isStaff() || resource.data.driverId == request.auth.uid);
+      allow list: if isSignedIn() && (isStaff() || resource.data.driverId == request.auth.uid);
+      
       allow create: if isSignedIn() && request.resource.data.driverId == request.auth.uid;
       allow update: if isStaff() || (isSignedIn() && resource.data.driverId == request.auth.uid);
       allow delete: if isStaff();
