@@ -3,7 +3,7 @@
 
 import React, { useState } from "react"
 import { motion } from "framer-motion"
-import { Truck, ShieldCheck, Lock, Mail, User, UserPlus } from "lucide-react"
+import { ShieldCheck, Lock, Mail, User, UserPlus } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
@@ -175,12 +175,6 @@ export default function RegisterPage() {
             </div>
           </CardContent>
         </Card>
-
-        <div className="mt-8 text-center">
-          <p className="text-[9px] text-muted-foreground uppercase font-black tracking-widest">
-            Identity Provisioning Protocol v4.0.2 | Secure Handshake
-          </p>
-        </div>
       </motion.div>
     </div>
   )

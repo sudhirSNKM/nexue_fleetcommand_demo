@@ -115,12 +115,6 @@ export default function LoginPage() {
             </div>
           </CardContent>
         </Card>
-
-        <div className="mt-8 text-center">
-          <p className="text-[9px] text-muted-foreground uppercase font-black tracking-widest">
-            Encryption: AES-256 | Protocol: NEXUS-OS v4.0.2
-          </p>
-        </div>
       </motion.div>
     </div>
   )
