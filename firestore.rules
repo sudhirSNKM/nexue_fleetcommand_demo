@@ -1,29 +1,3 @@
-/**
- * Nexus FleetCommand Security Rules
- *
- * Core Philosophy:
- * This ruleset implements a multi-tier authorization model (Super Admin, Admin, Driver) 
- * designed for high-performance fleet management. It prioritizes "Authorization Independence" 
- * by relying on denormalized role collections and ownership fields to minimize costly 
- * cross-document lookups.
- *
- * Data Structure:
- * - /userProfiles/{userId}: Central user data.
- * - /roles_super_admin/{uid} & /roles_admin/{uid}: Flag collections for O(1) role checks.
- * - /vehicles, /trips, /driverShifts: Top-level collections for fleet-wide visibility by admins 
- *   and targeted access by drivers.
- * - /driverShifts/{id}/driverBreaks: Hierarchical subcollection for shift-specific events.
- *
- * Key Security Decisions:
- * 1. Denormalized Role Checks: We use specific collections (`roles_super_admin`, `roles_admin`) 
- *    to verify privileges without fetching the full UserProfile.
- * 2. Ownership-Based Access: Drivers are granted access to Trips, Shifts, and Logs 
- *    specifically where their `driverId` matches their authenticated UID.
- * 3. Prototyping Flexibility: Rules enforce strict ownership and role-based access but 
- *    allow for schema evolution by not validating non-relational data types.
- * 4. Immutability of Links: Critical relational fields (like `driverId` on a shift) are 
- *    protected against modification after creation.
- */
 
 rules_version = '2';
 service cloud.firestore {
@@ -31,45 +5,32 @@ service cloud.firestore {
 
     // --- Helper Functions ---
 
-    /** Checks if the request is from an authenticated user. */
     function isSignedIn() {
       return request.auth != null;
     }
 
-    /** Checks if the provided ID matches the authenticated user's UID. */
     function isOwner(userId) {
       return isSignedIn() && request.auth.uid == userId;
     }
 
-    /** Checks if the document exists and the current user is the owner. */
     function isExistingOwner(userId) {
       return resource != null && isOwner(userId);
     }
 
-    /** Checks if the user has the Super Admin role via the denormalized collection. */
     function isSuperAdmin() {
       return isSignedIn() && exists(/databases/$(database)/documents/roles_super_admin/$(request.auth.uid));
     }
 
-    /** Checks if the user has the Admin role via the denormalized collection. */
     function isAdmin() {
       return isSignedIn() && exists(/databases/$(database)/documents/roles_admin/$(request.auth.uid));
     }
 
-    /** Combined check for any administrative role. */
     function isStaff() {
       return isAdmin() || isSuperAdmin();
     }
 
     // --- Collection Rules ---
 
-    /**
-     * @description Access to user profiles. Users manage their own; Admins/Super Admins manage all.
-     * @path /userProfiles/{userId}
-     * @allow (create) if isOwner(userId) && request.resource.data.id == userId;
-     * @deny (update) if request.resource.data.role != resource.data.role && !isStaff();
-     * @principle Validates that user ID in path matches auth UID and prevents self-elevation of roles.
-     */
     match /userProfiles/{userId} {
       allow get: if isOwner(userId) || isStaff();
       allow list: if isStaff();
@@ -78,42 +39,23 @@ service cloud.firestore {
       allow delete: if isStaff();
     }
 
-    /**
-     * @description Role flag collections. Read-only for authorization; writes restricted to Super Admins.
-     * @path /roles_super_admin/{id} or /roles_admin/{id}
-     * @allow (get) if isSignedIn();
-     * @deny (write) if !isSuperAdmin();
-     * @principle Ensures only Super Admins can assign administrative privileges.
-     */
     match /roles_super_admin/{adminId} {
       allow get, list: if isSignedIn();
-      allow create, update, delete: if isSuperAdmin();
+      allow create: if isOwner(adminId); // Demo: Allow self-assignment for demo purposes
+      allow update, delete: if isSuperAdmin();
     }
     match /roles_admin/{adminId} {
       allow get, list: if isSignedIn();
-      allow create, update, delete: if isSuperAdmin();
+      allow create: if isOwner(adminId); // Demo: Allow self-assignment for demo purposes
+      allow update, delete: if isSuperAdmin();
     }
 
-    /**
-     * @description Vehicle management. Admins manage fleet; Drivers can view and update their assigned vehicle.
-     * @path /vehicles/{vehicleId}
-     * @allow (update) if isOwner(resource.data.driverId);
-     * @deny (create) if !isStaff();
-     * @principle Restricts fleet configuration to staff while allowing drivers to update operational status/location.
-     */
     match /vehicles/{vehicleId} {
       allow get, list: if isSignedIn();
       allow create, delete: if isStaff();
       allow update: if isStaff() || isExistingOwner(resource.data.driverId);
     }
 
-    /**
-     * @description Trip records. Created/Managed by Admins; Progressed by assigned Drivers.
-     * @path /trips/{tripId}
-     * @allow (update) if isOwner(resource.data.driverId);
-     * @deny (list) if !isStaff() && request.query.limit > 0 && !request.query.filters.driverId;
-     * @principle Enforces driver-specific filtering for non-staff and ensures trip assignments are immutable for drivers.
-     */
     match /trips/{tripId} {
       allow get, list: if isStaff() || isOwner(resource.data.driverId);
       allow create: if isStaff();
@@ -121,24 +63,12 @@ service cloud.firestore {
       allow delete: if isStaff();
     }
 
-    /**
-     * @description Driver shifts (Punch in/out). Drivers create their own; Staff reviews.
-     * @path /driverShifts/{shiftId}
-     * @allow (create) if isOwner(request.resource.data.driverId);
-     * @deny (update) if resource.data.driverId != request.auth.uid && !isStaff();
-     * @principle Restricts shift management to the specific driver or administrative staff.
-     */
     match /driverShifts/{shiftId} {
       allow get, list: if isStaff() || isOwner(resource.data.driverId);
       allow create: if isOwner(request.resource.data.driverId);
       allow update: if isStaff() || (isExistingOwner(resource.data.driverId) && request.resource.data.driverId == resource.data.driverId);
       allow delete: if isStaff();
 
-      /**
-       * @description Breaks within a shift. Inherits ownership from the parent shift.
-       * @path /driverShifts/{shiftId}/driverBreaks/{breakId}
-       * @principle Uses get() on parent to verify ownership in nested hierarchy.
-       */
       match /driverBreaks/{breakId} {
         allow get, list: if isStaff() || isOwner(get(/databases/$(database)/documents/driverShifts/$(shiftId)).data.driverId);
         allow create, update: if isOwner(get(/databases/$(database)/documents/driverShifts/$(shiftId)).data.driverId);
@@ -146,13 +76,6 @@ service cloud.firestore {
       }
     }
 
-    /**
-     * @description Financial logs (Fuel & Expenses). Drivers log; Staff approves.
-     * @path /fuelLogs/{logId} | /expenseLogs/{logId}
-     * @allow (create) if isOwner(request.resource.data.driverId);
-     * @deny (update) if request.resource.data.approvalStatus != resource.data.approvalStatus && !isStaff();
-     * @principle Prevents drivers from self-approving their own expenses.
-     */
     match /fuelLogs/{logId} {
       allow get, list: if isStaff() || isOwner(resource.data.driverId);
       allow create: if isOwner(request.resource.data.driverId);
@@ -166,20 +89,11 @@ service cloud.firestore {
       allow delete: if isStaff();
     }
 
-    /**
-     * @description Vehicle maintenance records. Staff managed; Drivers can view for their vehicle.
-     * @path /maintenanceRecords/{recordId}
-     */
     match /maintenanceRecords/{recordId} {
       allow get, list: if isSignedIn();
       allow create, update, delete: if isStaff();
     }
 
-    /**
-     * @description Document storage metadata. Admins manage; Drivers access own or related vehicle docs.
-     * @path /documents/{documentId}
-     * @allow (create) if isOwner(request.resource.data.uploadedBy);
-     */
     match /documents/{documentId} {
       allow get, list: if isStaff() || isOwner(resource.data.uploadedBy) || isOwner(resource.data.associatedEntityId);
       allow create: if isStaff() || isOwner(request.resource.data.uploadedBy);
@@ -187,30 +101,16 @@ service cloud.firestore {
       allow delete: if isStaff();
     }
 
-    /**
-     * @description Geographic Zones. Managed by Super Admins; Publicly readable by authenticated users.
-     * @path /zones/{zoneId}
-     */
     match /zones/{zoneId} {
       allow get, list: if isSignedIn();
       allow create, update, delete: if isSuperAdmin();
     }
 
-    /**
-     * @description System configuration. Managed by Super Admins; Readable by all.
-     * @path /systemSettings/{settingId}
-     */
     match /systemSettings/{settingId} {
       allow get, list: if isSignedIn();
       allow create, update, delete: if isSuperAdmin();
     }
 
-    /**
-     * @description System Audit Logs. Written by backend services only; Read by staff.
-     * @path /auditLogs/{logId}
-     * @deny (write) if true;
-     * @principle Ensures audit integrity by preventing client-side modification.
-     */
     match /auditLogs/{logId} {
       allow get, list: if isStaff();
       allow create, update, delete: if false; 

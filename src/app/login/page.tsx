@@ -11,6 +11,7 @@ import { useAuth } from "@/firebase"
 import { signInWithEmailAndPassword } from "firebase/auth"
 import { useRouter } from "next/navigation"
 import { useToast } from "@/hooks/use-toast"
+import Link from "next/link"
 
 export default function LoginPage() {
   const [email, setEmail] = useState("")
@@ -107,6 +108,11 @@ export default function LoginPage() {
                 )}
               </Button>
             </form>
+            <div className="mt-6 text-center">
+              <Link href="/register" className="text-[10px] uppercase font-bold text-orange hover:underline underline-offset-4">
+                Register a new tactical terminal
+              </Link>
+            </div>
           </CardContent>
         </Card>
 
