@@ -1,0 +1,23 @@
+
+{
+  "placeholderImages": [
+    {
+      "id": "truck-1",
+      "description": "Heavy Duty Transport Truck",
+      "imageUrl": "https://picsum.photos/seed/truck1/800/600",
+      "imageHint": "semi truck"
+    },
+    {
+      "id": "driver-1",
+      "description": "Experienced Fleet Driver Profile",
+      "imageUrl": "https://picsum.photos/seed/driver1/400/400",
+      "imageHint": "man profile"
+    },
+    {
+      "id": "warehouse-1",
+      "description": "Logistics Distribution Center",
+      "imageUrl": "https://picsum.photos/seed/warehouse1/1200/800",
+      "imageHint": "warehouse logistics"
+    }
+  ]
+}
