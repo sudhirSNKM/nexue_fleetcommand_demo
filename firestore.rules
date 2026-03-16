@@ -22,7 +22,7 @@ service cloud.firestore {
     }
 
     function isStaff() {
-      return isAdmin() || isSuperAdmin();
+      return isSuperAdmin() || isAdmin();
     }
 
     // --- Collection Rules ---
@@ -40,6 +40,7 @@ service cloud.firestore {
       allow create: if isOwner(uid);
       allow update, delete: if isSuperAdmin();
     }
+    
     match /roles_admin/{uid} {
       allow get, list: if isSignedIn();
       allow create: if isOwner(uid);
@@ -49,20 +50,22 @@ service cloud.firestore {
     match /vehicles/{vehicleId} {
       allow read: if isSignedIn();
       allow create, delete: if isStaff();
-      allow update: if isStaff() || (isSignedIn() && resource != null && resource.data.driverId == request.auth.uid);
+      allow update: if isStaff() || (isSignedIn() && resource.data.driverId == request.auth.uid);
     }
 
     match /trips/{tripId} {
-      allow read: if isStaff() || (isSignedIn() && (resource == null || resource.data.driverId == request.auth.uid));
+      // Drivers can see their own trips. Staff can see all.
+      allow get, list: if isSignedIn() && (isStaff() || (resource != null && resource.data.driverId == request.auth.uid));
       allow create: if isStaff();
-      allow update: if isStaff() || (isSignedIn() && resource != null && resource.data.driverId == request.auth.uid);
+      allow update: if isStaff() || (isSignedIn() && resource.data.driverId == request.auth.uid);
       allow delete: if isStaff();
     }
 
     match /driverShifts/{shiftId} {
-      allow read: if isStaff() || (isSignedIn() && (resource == null || resource.data.driverId == request.auth.uid));
+      // Drivers can see their own shifts. Staff can see all.
+      allow get, list: if isSignedIn() && (isStaff() || (resource != null && resource.data.driverId == request.auth.uid));
       allow create: if isSignedIn() && request.resource.data.driverId == request.auth.uid;
-      allow update: if isStaff() || (isSignedIn() && resource != null && resource.data.driverId == request.auth.uid);
+      allow update: if isStaff() || (isSignedIn() && resource.data.driverId == request.auth.uid);
       allow delete: if isStaff();
 
       match /driverBreaks/{breakId} {
@@ -71,16 +74,16 @@ service cloud.firestore {
     }
 
     match /fuelLogs/{logId} {
-      allow read: if isStaff() || (isSignedIn() && (resource == null || resource.data.driverId == request.auth.uid));
+      allow get, list: if isSignedIn() && (isStaff() || (resource != null && resource.data.driverId == request.auth.uid));
       allow create: if isSignedIn() && request.resource.data.driverId == request.auth.uid;
-      allow update: if isStaff() || (isSignedIn() && resource != null && resource.data.driverId == request.auth.uid);
+      allow update: if isStaff() || (isSignedIn() && resource.data.driverId == request.auth.uid);
       allow delete: if isStaff();
     }
 
     match /expenseLogs/{logId} {
-      allow read: if isStaff() || (isSignedIn() && (resource == null || resource.data.driverId == request.auth.uid));
+      allow get, list: if isSignedIn() && (isStaff() || (resource != null && resource.data.driverId == request.auth.uid));
       allow create: if isSignedIn() && request.resource.data.driverId == request.auth.uid;
-      allow update: if isStaff() || (isSignedIn() && resource != null && resource.data.driverId == request.auth.uid);
+      allow update: if isStaff() || (isSignedIn() && resource.data.driverId == request.auth.uid);
       allow delete: if isStaff();
     }
 
