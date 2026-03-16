@@ -13,10 +13,6 @@ service cloud.firestore {
       return isSignedIn() && request.auth.uid == userId;
     }
 
-    function isExistingOwner(userId) {
-      return resource != null && isOwner(userId);
-    }
-
     function isSuperAdmin() {
       return isSignedIn() && exists(/databases/$(database)/documents/roles_super_admin/$(request.auth.uid));
     }
@@ -34,85 +30,84 @@ service cloud.firestore {
     match /userProfiles/{userId} {
       allow get: if isOwner(userId) || isStaff();
       allow list: if isStaff();
-      allow create: if isOwner(userId) && request.resource.data.id == userId;
-      allow update: if (isOwner(userId) && request.resource.data.role == resource.data.role) || isStaff();
+      allow create: if isOwner(userId);
+      allow update: if isOwner(userId) || isStaff();
       allow delete: if isStaff();
     }
 
-    match /roles_super_admin/{adminId} {
+    match /roles_super_admin/{uid} {
       allow get, list: if isSignedIn();
-      allow create: if isOwner(adminId); // Demo: Allow self-assignment for demo purposes
+      allow create: if isOwner(uid);
       allow update, delete: if isSuperAdmin();
     }
-    match /roles_admin/{adminId} {
+    match /roles_admin/{uid} {
       allow get, list: if isSignedIn();
-      allow create: if isOwner(adminId); // Demo: Allow self-assignment for demo purposes
+      allow create: if isOwner(uid);
       allow update, delete: if isSuperAdmin();
     }
 
     match /vehicles/{vehicleId} {
-      allow get, list: if isSignedIn();
+      allow read: if isSignedIn();
       allow create, delete: if isStaff();
-      allow update: if isStaff() || isExistingOwner(resource.data.driverId);
+      allow update: if isStaff() || (isSignedIn() && resource != null && resource.data.driverId == request.auth.uid);
     }
 
     match /trips/{tripId} {
-      allow get, list: if isStaff() || isOwner(resource.data.driverId);
+      allow read: if isStaff() || (isSignedIn() && (resource == null || resource.data.driverId == request.auth.uid));
       allow create: if isStaff();
-      allow update: if isStaff() || (isExistingOwner(resource.data.driverId) && request.resource.data.driverId == resource.data.driverId);
+      allow update: if isStaff() || (isSignedIn() && resource != null && resource.data.driverId == request.auth.uid);
       allow delete: if isStaff();
     }
 
     match /driverShifts/{shiftId} {
-      allow get, list: if isStaff() || isOwner(resource.data.driverId);
-      allow create: if isOwner(request.resource.data.driverId);
-      allow update: if isStaff() || (isExistingOwner(resource.data.driverId) && request.resource.data.driverId == resource.data.driverId);
+      allow read: if isStaff() || (isSignedIn() && (resource == null || resource.data.driverId == request.auth.uid));
+      allow create: if isSignedIn() && request.resource.data.driverId == request.auth.uid;
+      allow update: if isStaff() || (isSignedIn() && resource != null && resource.data.driverId == request.auth.uid);
       allow delete: if isStaff();
 
       match /driverBreaks/{breakId} {
-        allow get, list: if isStaff() || isOwner(get(/databases/$(database)/documents/driverShifts/$(shiftId)).data.driverId);
-        allow create, update: if isOwner(get(/databases/$(database)/documents/driverShifts/$(shiftId)).data.driverId);
-        allow delete: if isStaff();
+        allow read, write: if isStaff() || (isSignedIn() && get(/databases/$(database)/documents/driverShifts/$(shiftId)).data.driverId == request.auth.uid);
       }
     }
 
     match /fuelLogs/{logId} {
-      allow get, list: if isStaff() || isOwner(resource.data.driverId);
-      allow create: if isOwner(request.resource.data.driverId);
-      allow update: if isStaff() || (isExistingOwner(resource.data.driverId) && request.resource.data.approvalStatus == resource.data.approvalStatus);
+      allow read: if isStaff() || (isSignedIn() && (resource == null || resource.data.driverId == request.auth.uid));
+      allow create: if isSignedIn() && request.resource.data.driverId == request.auth.uid;
+      allow update: if isStaff() || (isSignedIn() && resource != null && resource.data.driverId == request.auth.uid);
       allow delete: if isStaff();
     }
+
     match /expenseLogs/{logId} {
-      allow get, list: if isStaff() || isOwner(resource.data.driverId);
-      allow create: if isOwner(request.resource.data.driverId);
-      allow update: if isStaff() || (isExistingOwner(resource.data.driverId) && request.resource.data.approvalStatus == resource.data.approvalStatus);
+      allow read: if isStaff() || (isSignedIn() && (resource == null || resource.data.driverId == request.auth.uid));
+      allow create: if isSignedIn() && request.resource.data.driverId == request.auth.uid;
+      allow update: if isStaff() || (isSignedIn() && resource != null && resource.data.driverId == request.auth.uid);
       allow delete: if isStaff();
     }
 
     match /maintenanceRecords/{recordId} {
-      allow get, list: if isSignedIn();
+      allow read: if isSignedIn();
       allow create, update, delete: if isStaff();
     }
 
     match /documents/{documentId} {
-      allow get, list: if isStaff() || isOwner(resource.data.uploadedBy) || isOwner(resource.data.associatedEntityId);
-      allow create: if isStaff() || isOwner(request.resource.data.uploadedBy);
-      allow update: if isStaff() || isExistingOwner(resource.data.uploadedBy);
+      allow read: if isStaff() || (isSignedIn() && resource != null && (resource.data.uploadedBy == request.auth.uid || resource.data.associatedEntityId == request.auth.uid));
+      allow create: if isStaff() || (isSignedIn() && request.resource.data.uploadedBy == request.auth.uid);
+      allow update: if isStaff() || (isSignedIn() && resource != null && resource.data.uploadedBy == request.auth.uid);
       allow delete: if isStaff();
     }
 
     match /zones/{zoneId} {
-      allow get, list: if isSignedIn();
+      allow read: if isSignedIn();
       allow create, update, delete: if isSuperAdmin();
     }
 
     match /systemSettings/{settingId} {
-      allow get, list: if isSignedIn();
+      allow read: if isSignedIn();
       allow create, update, delete: if isSuperAdmin();
     }
 
     match /auditLogs/{logId} {
-      allow get, list: if isStaff();
+      allow read: if isStaff();
       allow create, update, delete: if false; 
     }
   }
