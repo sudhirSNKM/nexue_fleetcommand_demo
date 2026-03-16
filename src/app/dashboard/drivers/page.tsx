@@ -3,7 +3,7 @@
 
 import React from "react"
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/Avatar"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Users, Star, Clock, ShieldCheck, Timer } from "lucide-react"
 import { useFirestore, useCollection, useMemoFirebase } from "@/firebase"
