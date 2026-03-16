@@ -1,7 +1,7 @@
 
 "use client"
 
-import React from "react"
+import React, { useState, useEffect } from "react"
 import { motion } from "framer-motion"
 import FleetStats from "@/components/dashboard/FleetStats"
 import LiveMap from "@/components/dashboard/LiveMap"
@@ -11,13 +11,30 @@ import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card"
 import { AlertCircle, ShieldCheck, Timer } from "lucide-react"
 
 export default function Dashboard() {
+  const [currentTime, setCurrentTime] = useState<string | null>(null)
+
+  useEffect(() => {
+    // Set time on client side mount to avoid hydration mismatch
+    setCurrentTime(new Date().toLocaleTimeString())
+    
+    // Update time every second for a live dashboard feel
+    const timer = setInterval(() => {
+      setCurrentTime(new Date().toLocaleTimeString())
+    }, 1000)
+    
+    return () => clearInterval(timer)
+  }, [])
+
   return (
     <div className="space-y-8">
       {/* Hero Stats */}
       <section>
         <div className="mb-6">
           <h1 className="text-2xl font-black uppercase tracking-tighter">Command Control Terminal</h1>
-          <p className="text-sm text-muted-foreground">Fleet status: <span className="text-active font-bold">OPERATIONAL</span> | Current Time: {new Date().toLocaleTimeString()}</p>
+          <p className="text-sm text-muted-foreground">
+            Fleet status: <span className="text-active font-bold">OPERATIONAL</span> | 
+            Current Time: <span className="font-mono">{currentTime || "--:--:--"}</span>
+          </p>
         </div>
         <FleetStats />
       </section>
