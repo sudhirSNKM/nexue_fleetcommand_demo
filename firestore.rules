@@ -1,249 +1,31 @@
+
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
+    function isSignedIn() { return request.auth != null; }
+    function isOwner(userId) { return request.auth.uid == userId; }
+    function hasRole(role) { return get(/databases/$(database)/documents/userProfiles/$(request.auth.uid)).data.role == role; }
+    function isAdmin() { return hasRole('Admin') || hasRole('Super Admin'); }
 
-    /**
-     * Unified Mobility Platform - Security Rules
-     * 
-     * Core Philosophy:
-     * This ruleset enforces a strict Role-Based Access Control (RBAC) and User-Ownership model. 
-     * It leverages denormalized identity fields (like passengerId, driverId, and ownerId) 
-     * to perform high-performance authorization checks without excessive database reads.
-     * 
-     * Data Structure:
-     * - User-specific profiles and sub-resources (documents, logs) are nested under /users, /drivers, or /passengers.
-     * - Operational data (rides, vehicles) is top-level but secured via participant IDs stored on the documents.
-     * - Administrative and configuration data (zones, settings) is restricted to Admin and SuperAdmin roles.
-     * 
-     * Key Security Decisions:
-     * - All write operations (create, update, delete) require authentication and specific ownership or admin rights.
-     * - Role verification (Admin/SuperAdmin) is performed by looking up the user's role in the /users collection.
-     * - Critical relational fields (like user IDs on ride documents) are immutable after creation.
-     * - Prototyping flexibility: Strict schema validation is omitted in favor of relationship and identity integrity.
-     */
-
-    // --- GLOBAL HELPER FUNCTIONS ---
-
-    function isSignedIn() {
-      return request.auth != null;
+    match /userProfiles/{userId} {
+      allow read: if isSignedIn();
+      allow write: if isOwner(userId) || isAdmin();
     }
 
-    function isOwner(userId) {
-      return isSignedIn() && request.auth.uid == userId;
-    }
-
-    // Helper to check the authenticated user's role from the /users collection.
-    function hasRole(role) {
-      return isSignedIn() && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == role;
-    }
-
-    function isAdmin() {
-      return hasRole('Admin') || hasRole('SuperAdmin');
-    }
-
-    function isSuperAdmin() {
-      return hasRole('SuperAdmin');
-    }
-
-    // The 'isExistingOwner' function has been removed because it was unused
-    // and incorrectly referenced 'resource' which is not in the function's scope.
-    // The 'resource != null' checks in 'update' and 'delete' rules are generally
-    // redundant as 'resource' always exists for these operations, but are harmless.
-
-    // --- COLLECTION RULES ---
-
-    /**
-     * @description Core user profiles containing identity and platform roles.
-     * @path /users/{userId}
-     * @allow (get, list, update) if the user is the owner or an admin.
-     * @deny (create) if the provided userId does not match the auth UID.
-     * @principle Validates that users can only manage their own profile and enforces identity-path consistency.
-     */
-    match /users/{userId} {
-      allow get: if isOwner(userId) || isAdmin();
-      allow list: if isAdmin();
-      allow create: if isOwner(userId) && request.resource.data.id == userId;
-      allow update: if (isOwner(userId) || isAdmin()) && resource != null;
-      allow delete: if isAdmin() && resource != null;
-    }
-
-    /**
-     * @description Specific profiles for drivers, including operational status and ratings.
-     * @path /drivers/{driverId}
-     * @allow (get) if signed in; (update) if owner or admin.
-     * @deny (delete) for non-admin users.
-     * @principle Ensures driver profiles are manageable by the driver and monitored by administrators.
-     */
-    match /drivers/{driverId} {
-      allow get: if isSignedIn();
-      allow list: if isAdmin();
-      allow create: if isOwner(driverId) && request.resource.data.userId == driverId;
-      allow update: if (isOwner(driverId) || isAdmin()) && resource != null;
-      allow delete: if isAdmin() && resource != null;
-
-      /**
-       * @description Regulatory and administrative documents for a specific driver.
-       * @path /drivers/{driverId}/documents/{documentId}
-       * @allow (read, write) if driver owner or admin.
-       */
-      match /documents/{documentId} {
-        allow get, list: if isOwner(driverId) || isAdmin();
-        allow create: if isOwner(driverId);
-        allow update, delete: if (isOwner(driverId) || isAdmin()) && resource != null;
-      }
-
-      /**
-       * @description Fuel logs recorded by drivers for tracking expenses.
-       * @path /drivers/{driverId}/fuel_logs/{fuelLogId}
-       * @allow (read, write) if driver owner or admin.
-       */
-      match /fuel_logs/{fuelLogId} {
-        allow get, list: if isOwner(driverId) || isAdmin();
-        allow create: if isOwner(driverId);
-        allow update, delete: if (isOwner(driverId) || isAdmin()) && resource != null;
-      }
-    }
-
-    /**
-     * @description Profiles for passengers including preferences and saved addresses.
-     * @path /passengers/{passengerId}
-     * @allow (read, update) if owner or admin.
-     * @principle Restricts passenger metadata to the specific user and system operators.
-     */
-    match /passengers/{passengerId} {
-      allow get, list: if isOwner(passengerId) || isAdmin();
-      allow create: if isOwner(passengerId) && request.resource.data.userId == passengerId;
-      allow update: if (isOwner(passengerId) || isAdmin()) && resource != null;
-      allow delete: if isAdmin() && resource != null;
-    }
-
-    /**
-     * @description Fleet vehicle details, including status and current tracking coordinates.
-     * @path /vehicles/{vehicleId}
-     * @allow (get) if signed in; (update) if admin or assigned driver.
-     * @principle Allows drivers to see their assigned vehicle while centralizing management with admins.
-     */
-    match /vehicles/{vehicleId} {
-      allow get: if isSignedIn();
-      allow list: if isSignedIn();
-      allow create: if isAdmin();
-      allow update: if (isAdmin() || isOwner(resource.data.driverId)) && resource != null;
-      allow delete: if isAdmin() && resource != null;
-
-      /**
-       * @description Administrative documents for vehicles (insurance, registration).
-       */
-      match /documents/{documentId} {
-        allow get, list: if isAdmin() || isOwner(resource.data.assignedDriverId);
-        allow create, update, delete: if isAdmin();
-      }
-    }
-
-    /**
-     * @description Represents service requests (Ride, Parcel, Logistics).
-     * @path /rides/{rideId}
-     * @allow (read) if user is the passenger, driver, or an admin.
-     * @principle Uses denormalized IDs (passengerId, driverId) for collaborative access control.
-     */
     match /rides/{rideId} {
-      allow get: if isOwner(resource.data.passengerId) || isOwner(resource.data.driverId) || isAdmin();
-      allow list: if isSignedIn(); // Filtered by query in app (where passengerId == uid)
-      allow create: if isOwner(request.resource.data.passengerId);
-      allow update: if (isOwner(resource.data.passengerId) || isOwner(resource.data.driverId) || isAdmin()) && resource != null;
-      allow delete: if isAdmin() && resource != null;
-
-      /**
-       * @description Historical location breadcrumbs for a specific trip.
-       */
-      match /locations/{locationId} {
-        allow get, list: if isOwner(resource.data.ridePassengerId) || isOwner(resource.data.rideDriverId) || isAdmin();
-        allow create: if isOwner(get(/databases/$(database)/documents/rides/$(rideId)).data.driverId);
-        allow update, delete: if isAdmin();
-      }
+      allow list: if isSignedIn() && (isAdmin() || request.query.where('passengerId', '==', request.auth.uid) || request.query.where('driverId', '==', request.auth.uid) || request.query.where('status', '==', 'Requested'));
+      allow get: if isSignedIn();
+      allow create: if isSignedIn();
+      allow update: if isSignedIn();
     }
 
-    /**
-     * @description Real-time driver coordinates for map tracking.
-     * @path /live_driver_locations/{driverId}
-     * @allow (read) if user is an admin or the passenger currently assigned to the driver.
-     * @principle Facilitates live tracking while protecting driver privacy from non-involved parties.
-     */
-    match /live_driver_locations/{driverId} {
-      allow get: if isOwner(driverId) || isAdmin() || isOwner(resource.data.currentPassengerId);
-      allow list: if isAdmin();
-      allow create: if isOwner(driverId);
-      allow update: if (isOwner(driverId) || isAdmin()) && resource != null;
-      allow delete: if (isOwner(driverId) || isAdmin()) && resource != null;
+    match /driverStats/{statsId} {
+      allow read, write: if isSignedIn();
     }
 
-    /**
-     * @description Financial transactions associated with rides.
-     * @path /payments/{paymentId}
-     * @allow (read) if user is the payer, payee, or admin.
-     * @principle Protects financial privacy using denormalized user IDs.
-     */
-    match /payments/{paymentId} {
-      allow get: if isOwner(resource.data.payerUserId) || isOwner(resource.data.payeeUserId) || isAdmin();
-      allow list: if isAdmin();
-      allow create: if isAdmin(); // Usually created via Cloud Functions/Server
-      allow update: if isAdmin();
-      allow delete: if isAdmin();
+    match /driverLocations/{driverId} {
+      allow read: if isSignedIn();
+      allow write: if isOwner(driverId);
     }
-
-    /**
-     * @description User ratings and feedback for completed services.
-     * @path /ratings/{ratingId}
-     * @allow (read) if rater, rated user, or admin.
-     */
-    match /ratings/{ratingId} {
-      allow get: if isOwner(resource.data.raterUserId) || isOwner(resource.data.ratedUserId) || isAdmin();
-      allow list: if isSignedIn();
-      allow create: if isOwner(request.resource.data.raterUserId);
-      allow update: if (isOwner(resource.data.raterUserId) || isAdmin()) && resource != null;
-      allow delete: if isAdmin() && resource != null;
-    }
-
-    /**
-     * @description Geographic zones for geofencing and operational boundaries.
-     * @path /zones/{zoneId}
-     * @allow (read) if signed in; (write) if admin.
-     */
-    match /zones/{zoneId} {
-      allow get, list: if isSignedIn();
-      allow create, update, delete: if isAdmin();
-    }
-
-    /**
-     * @description System audit logs for security and traceability.
-     * @path /audit_logs/{logId}
-     * @allow (read) if admin.
-     * @deny (write) for all clients.
-     */
-    match /audit_logs/{logId} {
-      allow get, list: if isAdmin();
-      allow create, update, delete: if false; 
-    }
-
-    /**
-     * @description Configuration for vehicle types and fare multipliers.
-     * @path /platform_vehicle_types/{typeId}
-     * @allow (read) if signed in; (write) if admin.
-     */
-    match /platform_vehicle_types/{typeId} {
-      allow get, list: if isSignedIn();
-      allow create, update, delete: if isAdmin();
-    }
-
-    /**
-     * @description Global platform settings.
-     * @path /platform_settings/general
-     * @allow (read, write) only for SuperAdmins.
-     */
-    match /platform_settings/general {
-      allow get: if isAdmin();
-      allow list: if isAdmin();
-      allow create, update, delete: if isSuperAdmin();
-    }
-
   }
 }
