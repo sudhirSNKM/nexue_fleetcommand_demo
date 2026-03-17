@@ -16,16 +16,15 @@ service cloud.firestore {
     }
 
     function getRole() {
-      return getProfile().data.role;
+      return hasProfile() ? getProfile().data.role : "passenger";
     }
 
     function isSuperAdmin() {
-      return signedIn() && hasProfile() && getRole() == "super-admin";
+      return signedIn() && getRole() == "super-admin";
     }
 
     function isAdmin() {
-      return signedIn() && hasProfile() &&
-             (getRole() == "admin" || getRole() == "super-admin");
+      return signedIn() && (getRole() == "admin" || getRole() == "super-admin");
     }
 
     // USER PROFILES
@@ -36,13 +35,12 @@ service cloud.firestore {
 
     // DRIVER SHIFTS
     match /driverShifts/{shiftId} {
-      // Admins and Super Admins can read all shifts for tactical auditing
+      // Admins and Super Admins can read all shifts for tactical auditing (including list queries)
       allow read: if isAdmin();
       
-      // Drivers can read only their own shifts
+      // Drivers can read only their own shifts (requires filtered query where driverId == auth.uid)
       allow read: if signedIn() && 
-                  exists(resource) && 
-                  request.auth.uid == resource.data.driverId;
+                  resource.data.driverId == request.auth.uid;
 
       // Admins manage the fleet's shifts globally
       allow create, update, delete: if isAdmin();
@@ -75,6 +73,13 @@ service cloud.firestore {
     match /auditLogs/{logId} {
       allow read: if isSuperAdmin();
       allow create: if signedIn();
+    }
+
+    // DRIVER STATS
+    match /driverStats/{statsId} {
+      // statsId is structured as {driverId}_{date}
+      allow read: if isAdmin() || (signedIn() && statsId.split('_')[0] == request.auth.uid);
+      allow write: if isAdmin() || (signedIn() && statsId.split('_')[0] == request.auth.uid);
     }
 
   }
