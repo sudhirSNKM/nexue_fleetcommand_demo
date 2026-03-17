@@ -36,6 +36,7 @@ import { useUser, useDoc, useMemoFirebase, useAuth, useFirestore } from "@/fireb
 import { doc } from "firebase/firestore"
 import { signOut } from "firebase/auth"
 import { Sheet, SheetContent, SheetTrigger, SheetTitle, SheetDescription } from "@/components/ui/sheet"
+import { Card } from "@/components/ui/card"
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
@@ -229,10 +230,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               <Avatar className="h-8 w-8 ring-2 ring-orange/20">
                 <AvatarImage src={`https://picsum.photos/seed/${user.uid}/100/100`} />
                 <AvatarFallback>{profile?.name?.[0] || "U"}</AvatarFallback>
-              </Avatar>
+              </div>
             </div>
-          </div>
-        </header>
+          </header>
 
         <section className="flex-1 overflow-auto p-4 lg:p-8 relative scrollbar-hide">
           <AnimatePresence mode="wait">
