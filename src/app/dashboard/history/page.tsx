@@ -6,15 +6,14 @@ import {
   Clock, 
   MapPin, 
   Navigation, 
-  CreditCard, 
-  ChevronRight, 
+  History, 
   Zap, 
-  ShieldCheck, 
   BrainCircuit, 
-  TrendingUp,
-  Search,
-  History,
-  Info
+  ShieldCheck, 
+  TrendingUp, 
+  Info,
+  ChevronRight,
+  IndianRupee
 } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -30,7 +29,7 @@ export default function RideHistoryPage() {
   const [analyzingRideId, setAnalyzingRideId] = useState<string | null>(null)
   const [aiAnalysis, setAiAnalysis] = useState<Record<string, AnalyzeRouteOutput>>({})
 
-  // Fetch User Profile to determine role
+  // Fetch User Profile to determine role for filtering
   const userProfileRef = useMemoFirebase(() => {
     if (!user || !db) return null
     return doc(db, "userProfiles", user.uid)
@@ -39,13 +38,15 @@ export default function RideHistoryPage() {
   const { data: profile } = useDoc(userProfileRef)
   const role = profile?.role || "Passenger"
 
-  // MISSION ARCHIVE QUERY: Explicitly filter by role ID to satisfy Security Rules
+  // MISSION ARCHIVE QUERY: Explicitly filter by role ID to satisfy Security Rules (Simple & Safe)
   const ridesQuery = useMemoFirebase(() => {
     if (!user || !db || !profile) return null
     
     // Ownership check: must be either passenger or driver
     const filterKey = role === "Driver" ? "driverId" : "passengerId"
     
+    // Note: This query requires a composite index in production. 
+    // If it fails, remove the orderBy("createdAt", "desc") temporarily.
     return query(
       collection(db, "rides"),
       where(filterKey, "==", user.uid),
@@ -71,136 +72,148 @@ export default function RideHistoryPage() {
     }
   }
 
+  const totalEarnings = rides?.reduce((sum, ride) => sum + (ride.fare || 0), 0) || 0
+
   return (
-    <div className="space-y-8">
-      <div className="flex items-center justify-between">
+    <div className="space-y-8 max-w-7xl mx-auto">
+      {/* Tactical Header */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div>
-          <h1 className="text-2xl font-black uppercase tracking-tighter flex items-center gap-3 text-white">
-            <History className="w-8 h-8 text-orange" />
+          <h1 className="text-3xl font-black uppercase tracking-tighter flex items-center gap-3 text-white">
+            <History className="w-10 h-10 text-orange" />
             Mission Archives
           </h1>
-          <p className="text-sm text-white/70 font-medium uppercase tracking-widest">Historical deployment logs and tactical auditing</p>
+          <p className="text-sm text-white/70 font-bold uppercase tracking-[0.2em] mt-1">Operational History & Tactical Auditing</p>
         </div>
-        <div className="hidden sm:flex items-center gap-4 bg-navy px-4 py-2 rounded-lg border border-white/10">
-           <div className="text-right">
-             <p className="text-[10px] text-white/50 uppercase font-black">Total Missions</p>
-             <p className="text-xl font-mono font-bold text-white">{rides?.length || 0}</p>
-           </div>
+        
+        <div className="flex gap-4">
+          <Card className="glass-panel px-6 py-3 border-l-4 border-orange bg-navy/40">
+            <p className="text-[10px] text-white/50 uppercase font-black tracking-widest mb-1">Total Deployments</p>
+            <p className="text-2xl font-mono font-black text-white leading-none">{rides?.length || 0}</p>
+          </Card>
+          <Card className="glass-panel px-6 py-3 border-l-4 border-active bg-navy/40">
+            <p className="text-[10px] text-white/50 uppercase font-black tracking-widest mb-1">Total Credits</p>
+            <p className="text-2xl font-mono font-black text-active leading-none">₹{totalEarnings}</p>
+          </Card>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
-        {/* Main List */}
-        <div className="xl:col-span-2 space-y-4">
+      <div className="grid grid-cols-1 xl:grid-cols-4 gap-8">
+        {/* Main List Archive */}
+        <div className="xl:col-span-3 space-y-6">
           {isLoading ? (
             [1, 2, 3].map(i => (
-              <Card key={i} className="glass-panel p-6">
+              <Card key={i} className="glass-panel p-8">
                 <div className="space-y-4">
-                  <Skeleton className="h-4 w-1/4 bg-navy/40" />
-                  <Skeleton className="h-8 w-full bg-navy/40" />
+                  <Skeleton className="h-6 w-1/4 bg-navy/40" />
+                  <Skeleton className="h-12 w-full bg-navy/40" />
                   <Skeleton className="h-12 w-full bg-navy/40" />
                 </div>
               </Card>
             ))
           ) : rides && rides.length > 0 ? (
             rides.map((ride) => (
-              <Card key={ride.id} className="glass-panel overflow-hidden border-l-4 border-orange hover:bg-navy/10 transition-all">
+              <Card key={ride.id} className="glass-panel overflow-hidden border-2 border-white/5 hover:border-orange/30 transition-all duration-300 group bg-card/80">
                 <CardContent className="p-0">
-                  <div className="p-6">
-                    <div className="flex justify-between items-start mb-6">
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-lg bg-orange/10 flex items-center justify-center text-orange">
-                          {ride.vehicleType === 'Bike' ? <Zap className="w-6 h-6" /> : <Navigation className="w-6 h-6" />}
+                  <div className="p-6 md:p-8">
+                    <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-8">
+                      <div className="flex items-center gap-4">
+                        <div className="w-12 h-12 rounded-xl bg-orange/10 flex items-center justify-center text-orange border border-orange/20">
+                          {ride.vehicleType === 'Bike' ? <Zap className="w-7 h-7" /> : <Navigation className="w-7 h-7" />}
                         </div>
                         <div>
-                          <p className="text-[10px] font-black uppercase text-orange tracking-[0.2em]">{ride.vehicleType} PROTOCOL</p>
-                          <p className="text-sm font-bold text-white/60">
+                          <p className="text-xs font-black uppercase text-orange tracking-[0.2em] mb-1">{ride.vehicleType} PROTOCOL</p>
+                          <p className="text-sm font-bold text-white/80 flex items-center gap-2">
+                            <Clock className="w-3.5 h-3.5" />
                             {ride.createdAt?.toDate?.()?.toLocaleDateString() || 'N/A'} • {ride.createdAt?.toDate?.()?.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
                           </p>
                         </div>
                       </div>
-                      <div className="text-right">
-                        <p className="text-xl font-black text-white">₹{ride.fare}</p>
+                      <div className="flex flex-col items-end gap-2">
+                        <p className="text-3xl font-black text-white tracking-tighter">₹{ride.fare}</p>
                         <Badge className={
-                          ride.status === 'Completed' || ride.status === 'Paid' ? 'bg-active/20 text-active border-active/30' : 
-                          ride.status === 'Cancelled' ? 'bg-emergency/20 text-emergency border-emergency/30' : 
-                          'bg-orange/20 text-orange border-orange/30'
+                          ride.status === 'Completed' || ride.status === 'Paid' ? 'bg-active/20 text-active border-active/40 font-black' : 
+                          ride.status === 'Cancelled' ? 'bg-emergency/20 text-emergency border-emergency/40 font-black' : 
+                          'bg-orange/20 text-orange border-orange/40 font-black'
                         }>
                           {ride.status.toUpperCase()}
                         </Badge>
                       </div>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 relative">
-                      <div className="absolute left-3 top-2 bottom-2 w-0.5 bg-navy/40 hidden md:block" />
-                      
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8 relative">
                       <div className="flex gap-4 items-start">
-                        <div className="w-6 h-6 rounded-full bg-active/20 flex items-center justify-center shrink-0 z-10">
-                          <MapPin className="w-3 h-3 text-active" />
+                        <div className="w-8 h-8 rounded-full bg-active/20 flex items-center justify-center shrink-0 border border-active/30">
+                          <MapPin className="w-4 h-4 text-active" />
                         </div>
-                        <div>
-                          <p className="text-[9px] font-black text-white/50 uppercase mb-1">Pickup Origin</p>
-                          <p className="text-sm font-bold text-white truncate max-w-[200px]">{ride.pickup.address}</p>
+                        <div className="min-w-0">
+                          <p className="text-[10px] font-black text-white/50 uppercase mb-1 tracking-widest">Origin Sector</p>
+                          <p className="text-sm font-bold text-white truncate">{ride.pickup.address}</p>
                         </div>
                       </div>
 
                       <div className="flex gap-4 items-start">
-                        <div className="w-6 h-6 rounded-full bg-emergency/20 flex items-center justify-center shrink-0 z-10">
-                          <Navigation className="w-3 h-3 text-emergency" />
+                        <div className="w-8 h-8 rounded-full bg-emergency/20 flex items-center justify-center shrink-0 border border-emergency/30">
+                          <Navigation className="w-4 h-4 text-emergency" />
                         </div>
-                        <div>
-                          <p className="text-[9px] font-black text-white/50 uppercase mb-1">Dropoff Target</p>
-                          <p className="text-sm font-bold text-white truncate max-w-[200px]">{ride.dropoff.address}</p>
+                        <div className="min-w-0">
+                          <p className="text-[10px] font-black text-white/50 uppercase mb-1 tracking-widest">Target Destination</p>
+                          <p className="text-sm font-bold text-white truncate">{ride.dropoff.address}</p>
                         </div>
                       </div>
                     </div>
                   </div>
 
-                  {/* NexAI Integration */}
-                  <div className="bg-navy/40 border-t border-white/10 p-4">
+                  {/* NexAI Strategic Integration */}
+                  <div className="bg-navy/30 border-t border-white/10 p-5">
                     <AnimatePresence mode="wait">
                       {aiAnalysis[ride.id] ? (
                         <motion.div
-                          initial={{ opacity: 0, height: 0 }}
-                          animate={{ opacity: 1, height: "auto" }}
+                          initial={{ opacity: 0, y: 10 }}
+                          animate={{ opacity: 1, y: 0 }}
                           className="space-y-4"
                         >
                           <div className="flex items-center gap-2 text-orange mb-2">
-                            <BrainCircuit className="w-4 h-4" />
-                            <span className="text-[10px] font-black uppercase tracking-widest">NexAI Tactical Briefing</span>
+                            <BrainCircuit className="w-5 h-5" />
+                            <span className="text-[11px] font-black uppercase tracking-[0.2em]">NexAI Tactical Briefing</span>
                           </div>
-                          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                            <div className="col-span-2">
-                              <p className="text-xs text-white/80 leading-relaxed italic">"{aiAnalysis[ride.id].strategy}"</p>
-                              <div className="mt-3 flex items-start gap-2 text-[10px] font-bold text-active uppercase">
-                                <ShieldCheck className="w-3 h-3 mt-0.5" />
+                          <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+                            <div className="md:col-span-3">
+                              <p className="text-xs text-white/90 leading-relaxed font-medium italic border-l-2 border-orange/40 pl-4 py-1">
+                                "{aiAnalysis[ride.id].strategy}"
+                              </p>
+                              <div className="mt-4 flex items-start gap-3 text-[10px] font-black text-active uppercase bg-active/5 p-2 rounded border border-active/10">
+                                <ShieldCheck className="w-4 h-4 shrink-0" />
                                 {aiAnalysis[ride.id].safetyAdvisory}
                               </div>
                             </div>
-                            <div className="bg-charcoal/50 p-3 rounded border border-white/5 text-center">
-                              <p className="text-[8px] font-black text-white/40 uppercase mb-1">Efficiency</p>
-                              <p className="text-2xl font-black text-orange">{aiAnalysis[ride.id].efficiencyScore}%</p>
+                            <div className="bg-charcoal/80 p-4 rounded-xl border border-white/10 text-center flex flex-col justify-center">
+                              <p className="text-[9px] font-black text-white/40 uppercase mb-1">Efficiency Rating</p>
+                              <p className="text-3xl font-black text-orange">{aiAnalysis[ride.id].efficiencyScore}%</p>
                             </div>
                           </div>
                         </motion.div>
                       ) : (
                         <div className="flex justify-between items-center">
-                          <p className="text-[10px] text-white/60 font-bold flex items-center gap-2">
-                            <Info className="w-3 h-3" /> Analyze this mission for tactical insights?
-                          </p>
+                          <div className="flex items-center gap-3">
+                            <Info className="w-4 h-4 text-white/40" />
+                            <p className="text-[11px] text-white/60 font-bold uppercase tracking-wider">
+                              Perform tactical analysis on this deployment?
+                            </p>
+                          </div>
                           <Button 
-                            variant="ghost" 
+                            variant="outline" 
                             size="sm" 
                             disabled={analyzingRideId === ride.id}
                             onClick={() => handleRunAiAnalysis(ride)}
-                            className="text-[9px] font-black uppercase text-orange hover:bg-orange/10 h-7"
+                            className="text-[10px] font-black uppercase text-orange border-orange/30 hover:bg-orange hover:text-white transition-all h-9 px-4"
                           >
                             {analyzingRideId === ride.id ? (
-                              <Zap className="w-3 h-3 animate-spin mr-2" />
+                              <Zap className="w-3.5 h-3.5 animate-spin mr-2" />
                             ) : (
-                              <BrainCircuit className="w-3 h-3 mr-2" />
+                              <BrainCircuit className="w-3.5 h-3.5 mr-2" />
                             )}
-                            {analyzingRideId === ride.id ? "Analyzing..." : "NexAI Brief"}
+                            {analyzingRideId === ride.id ? "Analyzing Sector..." : "Run NexAI Brief"}
                           </Button>
                         </div>
                       )}
@@ -210,63 +223,73 @@ export default function RideHistoryPage() {
               </Card>
             ))
           ) : (
-            <div className="text-center py-24 bg-navy/20 rounded-xl border border-dashed border-white/20">
-               <History className="w-12 h-12 mx-auto mb-4 text-white/20" />
-               <p className="text-xs font-black uppercase tracking-widest text-white/40">No historical mission logs detected</p>
-               <Button className="mt-6 bg-orange font-black uppercase text-xs" onClick={() => window.location.href='/dashboard/passenger'}>Initialize First Mission</Button>
+            <div className="text-center py-32 bg-navy/20 rounded-2xl border-2 border-dashed border-white/10">
+               <div className="w-20 h-20 bg-navy/30 rounded-full flex items-center justify-center mx-auto mb-6">
+                 <History className="w-10 h-10 text-white/10" />
+               </div>
+               <h3 className="text-xl font-black uppercase text-white mb-2">No Mission Logs</h3>
+               <p className="text-xs font-bold uppercase tracking-widest text-white/40">Historical data bank is currently empty</p>
+               <Button 
+                className="mt-8 bg-orange text-white font-black uppercase text-xs h-12 px-8" 
+                onClick={() => window.location.href='/dashboard/passenger'}
+               >
+                 Initialize First Mission
+               </Button>
             </div>
           )}
         </div>
 
-        {/* Sidebar Insights */}
-        <aside className="space-y-6">
-          <Card className="glass-panel">
-            <CardHeader className="p-4 bg-navy/30 border-b border-white/10">
-              <CardTitle className="text-xs font-black uppercase tracking-widest flex items-center gap-2 text-white">
-                <TrendingUp className="w-4 h-4 text-active" />
-                Fleet Usage Trends
+        {/* Tactical Insights Sidebar */}
+        <aside className="space-y-8">
+          <Card className="glass-panel border-t-4 border-orange">
+            <CardHeader className="p-6 bg-navy/40 border-b border-white/10">
+              <CardTitle className="text-xs font-black uppercase tracking-[0.2em] flex items-center gap-2 text-white">
+                <TrendingUp className="w-5 h-5 text-active" />
+                Fleet Audit
               </CardTitle>
             </CardHeader>
-            <CardContent className="p-6 space-y-6">
-              <div className="space-y-2">
-                <div className="flex justify-between text-[10px] font-black uppercase mb-1 text-white">
-                  <span>Bike Preferred</span>
-                  <span className="text-orange">68%</span>
+            <CardContent className="p-6 space-y-8">
+              <div className="space-y-3">
+                <div className="flex justify-between text-[11px] font-black uppercase text-white">
+                  <span>Bike Dominance</span>
+                  <span className="text-orange">72%</span>
                 </div>
-                <div className="h-1.5 w-full bg-navy/50 rounded-full overflow-hidden">
-                  <div className="h-full bg-orange w-[68%]" />
-                </div>
-              </div>
-              <div className="space-y-2">
-                <div className="flex justify-between text-[10px] font-black uppercase mb-1 text-white">
-                  <span>Rush Hour Missions</span>
-                  <span className="text-emergency">22%</span>
-                </div>
-                <div className="h-1.5 w-full bg-navy/50 rounded-full overflow-hidden">
-                  <div className="h-full bg-emergency w-[22%]" />
+                <div className="h-2 w-full bg-navy/60 rounded-full overflow-hidden border border-white/5">
+                  <motion.div initial={{ width: 0 }} animate={{ width: "72%" }} className="h-full bg-orange shadow-[0_0_10px_#FF8000]" />
                 </div>
               </div>
-              <div className="pt-4 border-t border-white/10">
-                <p className="text-[9px] text-white/60 uppercase font-medium leading-relaxed">
-                  Based on your last {rides?.length || 0} missions, you are operating at peak efficiency during morning cycles.
+              
+              <div className="space-y-3">
+                <div className="flex justify-between text-[11px] font-black uppercase text-white">
+                  <span>Peak Efficiency Cycles</span>
+                  <span className="text-active">88%</span>
+                </div>
+                <div className="h-2 w-full bg-navy/60 rounded-full overflow-hidden border border-white/5">
+                  <motion.div initial={{ width: 0 }} animate={{ width: "88%" }} className="h-full bg-active shadow-[0_0_10px_#00CC00]" />
+                </div>
+              </div>
+
+              <div className="pt-6 border-t border-white/10">
+                <div className="flex items-center gap-3 text-white/60 mb-3">
+                  <ShieldCheck className="w-4 h-4 text-active" />
+                  <span className="text-[10px] font-black uppercase tracking-widest">Compliance Status: OPTIMAL</span>
+                </div>
+                <p className="text-[10px] text-white/50 uppercase font-bold leading-relaxed">
+                  Based on your last mission set, you are maintaining a 100% resolution rate with zero tactical deviations.
                 </p>
               </div>
             </CardContent>
           </Card>
 
-          <Card className="glass-panel overflow-hidden border-active/40 bg-active/5">
-            <CardContent className="p-0">
-               <div className="p-4 bg-active/10 flex items-center gap-3">
-                  <ShieldCheck className="w-5 h-5 text-active" />
-                  <span className="text-[10px] font-black uppercase text-active">Safety Status: NOMINAL</span>
-               </div>
-               <div className="p-6 text-center">
-                  <p className="text-xs font-bold mb-4 uppercase text-white">Verified Operator Protocol</p>
-                  <div className="w-16 h-16 rounded-full border-4 border-active/20 border-t-active mx-auto mb-4 flex items-center justify-center font-black text-xl text-white">
-                    100
-                  </div>
-                  <p className="text-[10px] text-white/40 uppercase font-black">Reputation Index</p>
-               </div>
+          <Card className="glass-panel bg-active/5 border-active/20">
+            <CardContent className="p-8 text-center space-y-4">
+              <div className="w-20 h-20 rounded-full border-4 border-active/20 border-t-active mx-auto flex items-center justify-center">
+                <span className="text-3xl font-black text-white">100</span>
+              </div>
+              <div>
+                <p className="text-xs font-black uppercase text-white tracking-widest">Reputation Score</p>
+                <p className="text-[9px] text-white/40 uppercase font-bold mt-1">Verified Operator Protocol</p>
+              </div>
             </CardContent>
           </Card>
         </aside>

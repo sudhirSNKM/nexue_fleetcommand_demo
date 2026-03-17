@@ -99,13 +99,6 @@ export default function PassengerApp() {
     toast({ variant: "destructive", title: "Operation Terminated", description: "Request purged from dispatch queue." })
   }
 
-  const handleProcessPayment = (rideId: string, method: string, amount: number) => {
-    if (!db || !user) return
-    updateDocumentNonBlocking(doc(db, "rides", rideId), { status: "Paid", paymentMethod: method })
-    if (method === 'Wallet') updateDocumentNonBlocking(doc(db, "userProfiles", user.uid), { walletBalance: increment(-amount) })
-    toast({ title: "Settlement Confirmed", description: `Mission finalized via ${method} protocol.` })
-  }
-
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-full p-2">
       <div className="lg:col-span-2 relative h-[500px] lg:h-full rounded-2xl overflow-hidden border border-navy shadow-2xl">
@@ -127,9 +120,9 @@ export default function PassengerApp() {
                     <TabsTrigger 
                       key={s.id} 
                       value={s.id} 
-                      className="text-white/70 font-black uppercase text-[11px] data-[state=active]:text-white data-[state=active]:bg-orange data-[state=active]:shadow-[0_0_25px_rgba(255,128,0,0.8)] transition-all flex flex-col items-center justify-center gap-2 py-4 h-full"
+                      className="text-white font-black uppercase text-sm data-[state=active]:text-white data-[state=active]:bg-orange data-[state=active]:shadow-[0_0_25px_rgba(255,128,0,0.8)] transition-all flex flex-col items-center justify-center gap-2 py-4 h-full"
                     >
-                      <s.icon className="w-6 h-6" /> 
+                      <s.icon className="w-8 h-8" /> 
                       <span className="truncate">{s.name}</span>
                     </TabsTrigger>
                   ))}
@@ -143,28 +136,28 @@ export default function PassengerApp() {
           <CardContent className="space-y-4 pt-4">
             {!currentRide ? (
               <>
-                <div className="space-y-3 relative">
-                  <div className="relative">
-                    <Label className="text-[12px] font-black text-white uppercase ml-1 mb-2 block tracking-widest">Origin Point</Label>
+                <div className="space-y-4 relative">
+                  <div>
+                    <label className="text-sm font-black text-white uppercase ml-1 mb-2 block tracking-widest">Origin Point</label>
                     <div className="relative">
-                      <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-active" />
+                      <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-active" />
                       <Input 
                         placeholder="Pickup Location" 
                         value={pickup} 
                         onChange={e => setPickup(e.target.value)} 
-                        className="pl-10 bg-navy border-white/20 text-sm text-white placeholder:text-white/40 font-bold h-12" 
+                        className="pl-10 bg-navy border-2 border-white/20 text-white placeholder:text-white/40 font-bold h-12 text-sm focus:border-orange/50" 
                       />
                     </div>
                   </div>
-                  <div className="relative">
-                    <Label className="text-[12px] font-black text-white uppercase ml-1 mb-2 block tracking-widest">Target Destination</Label>
+                  <div>
+                    <label className="text-sm font-black text-white uppercase ml-1 mb-2 block tracking-widest">Target Destination</label>
                     <div className="relative">
-                      <Navigation className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-emergency" />
+                      <Navigation className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-emergency" />
                       <Input 
                         placeholder="Dropoff Destination" 
                         value={dropoff} 
                         onChange={e => setDropoff(e.target.value)} 
-                        className="pl-10 bg-navy border-white/20 text-sm text-white placeholder:text-white/40 font-bold h-12" 
+                        className="pl-10 bg-navy border-2 border-white/20 text-white placeholder:text-white/40 font-bold h-12 text-sm focus:border-orange/50" 
                       />
                     </div>
                   </div>
@@ -180,7 +173,7 @@ export default function PassengerApp() {
                             onClick={() => setSelectedVehicle(v.id)}
                             className={cn(
                               "flex flex-col items-center justify-center p-3 rounded-xl border-2 transition-all",
-                              selectedVehicle === v.id ? "bg-orange/20 border-orange text-orange shadow-[0_0_10px_rgba(255,128,0,0.4)]" : "bg-navy/60 border-navy text-white hover:text-white hover:bg-navy/80"
+                              selectedVehicle === v.id ? "bg-orange/20 border-orange text-orange shadow-[0_0_10px_rgba(255,128,0,0.4)]" : "bg-navy/60 border-white/10 text-white/70 hover:text-white hover:bg-navy/80"
                             )}
                           >
                             <v.icon className="w-6 h-6 mb-1" />
@@ -244,20 +237,16 @@ export default function PassengerApp() {
         </Card>
 
         <div className="grid grid-cols-2 gap-4">
-          <Card className="glass-panel passenger-card p-5 text-center border-2 border-white/20 bg-navy/60">
-            <p className="text-[11px] uppercase font-black text-white mb-1 tracking-widest">Operator Rep</p>
+          <Card className="glass-panel p-5 text-center border-2 border-white/20 bg-navy/60">
+            <p className="text-xs uppercase font-black text-white mb-1 tracking-widest">Operator Rep</p>
             <p className="text-3xl font-black text-white">{profile?.rating ? profile.rating.toFixed(1) : '5.0'}</p>
           </Card>
-          <Card className="glass-panel passenger-card p-5 text-center border-2 border-white/20 bg-navy/60">
-            <p className="text-[11px] uppercase font-black text-white mb-1 tracking-widest">Nexus Credits</p>
+          <Card className="glass-panel p-5 text-center border-2 border-white/20 bg-navy/60">
+            <p className="text-xs uppercase font-black text-white mb-1 tracking-widest">Nexus Credits</p>
             <p className="text-3xl font-black text-active">₹{profile?.walletBalance || 0}</p>
           </Card>
         </div>
       </div>
     </div>
   )
-}
-
-function Label({ className, children }: { className?: string, children: React.ReactNode }) {
-  return <label className={cn("text-sm font-black leading-none", className)}>{children}</label>
 }
