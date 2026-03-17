@@ -1,22 +1,22 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    
+
     function isSignedIn() {
       return request.auth != null;
     }
 
     match /userProfiles/{userId} {
-      // Users can manage their own profiles.
       allow read, write: if isSignedIn() && request.auth.uid == userId;
     }
 
     match /rides/{rideId} {
-      // Simple ownership-based rules
+      // Simple and safe ownership-based rules
       allow read: if isSignedIn() && (
         request.auth.uid == resource.data.passengerId ||
         request.auth.uid == resource.data.driverId ||
-        resource.data.status == "Requested" // Allow discovery for drivers
+        // Allow drivers to discover new requests
+        (resource.data.status == "Requested")
       );
 
       allow create: if isSignedIn();
@@ -24,22 +24,14 @@ service cloud.firestore {
       allow update: if isSignedIn() && (
         request.auth.uid == resource.data.passengerId ||
         request.auth.uid == resource.data.driverId ||
-        // Allow a driver to take a "Requested" ride
+        // Allow a driver to accept a requested ride
         (resource.data.status == "Requested" && request.resource.data.status == "Accepted")
       );
 
       allow delete: if false;
     }
 
-    // Role marker collections for admin discovery
-    match /roles_admin/{userId} {
-      allow read: if isSignedIn();
-    }
-    match /roles_super_admin/{userId} {
-      allow read: if isSignedIn();
-    }
-    
-    // Support and stats collections
+    // Secondary collections
     match /driverStats/{statsId} {
       allow read, write: if isSignedIn();
     }
@@ -48,6 +40,14 @@ service cloud.firestore {
     }
     match /trips/{tripId} {
       allow read, write: if isSignedIn();
+    }
+    
+    // Role markers
+    match /roles_admin/{userId} {
+      allow read: if isSignedIn();
+    }
+    match /roles_super_admin/{userId} {
+      allow read: if isSignedIn();
     }
   }
 }

@@ -51,6 +51,7 @@ export default function PassengerApp() {
   const userProfileRef = useMemoFirebase(() => user && db ? doc(db, "userProfiles", user.uid) : null, [user, db])
   const { data: profile } = useDoc(userProfileRef)
 
+  // FILTERED QUERY: Explicitly filter by passengerId to satisfy Security Rules
   const activeRidesQuery = useMemoFirebase(() => {
     if (!user || !db) return null
     return query(
@@ -118,18 +119,18 @@ export default function PassengerApp() {
       </div>
 
       <div className="space-y-6">
-        <Card className="glass-panel passenger-card border-t-4 border-orange bg-card/90">
+        <Card className="glass-panel passenger-card border-t-4 border-orange bg-card/95">
           <CardHeader className="pb-2">
             {!currentRide && (
               <Tabs value={activeService} onValueChange={setActiveService} className="w-full">
-                <TabsList className="grid grid-cols-3 bg-navy border-2 border-white/20 p-1 h-24">
+                <TabsList className="grid grid-cols-3 bg-navy/90 border-2 border-white/20 p-1 h-24">
                   {SERVICES.map(s => (
                     <TabsTrigger 
                       key={s.id} 
                       value={s.id} 
-                      className="text-white font-black uppercase text-xs data-[state=active]:text-white data-[state=active]:bg-orange data-[state=active]:shadow-[0_0_25px_rgba(255,128,0,0.8)] transition-all flex flex-col items-center justify-center gap-2 py-4 h-full"
+                      className="text-white font-black uppercase text-sm data-[state=active]:text-white data-[state=active]:bg-orange data-[state=active]:shadow-[0_0_25px_rgba(255,128,0,0.8)] transition-all flex flex-col items-center justify-center gap-2 py-4 h-full"
                     >
-                      <s.icon className="w-6 h-6" /> 
+                      <s.icon className="w-7 h-7" /> 
                       <span className="truncate">{s.name}</span>
                     </TabsTrigger>
                   ))}
@@ -145,26 +146,26 @@ export default function PassengerApp() {
               <>
                 <div className="space-y-3 relative">
                   <div className="relative">
-                    <Label className="text-[12px] font-black text-white uppercase ml-1 mb-2 block tracking-widest opacity-100">Origin Point</Label>
+                    <Label className="text-[12px] font-black text-white uppercase ml-1 mb-2 block tracking-widest">Origin Point</Label>
                     <div className="relative">
                       <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-active" />
                       <Input 
                         placeholder="Pickup Location" 
                         value={pickup} 
                         onChange={e => setPickup(e.target.value)} 
-                        className="pl-10 bg-navy/80 border-navy text-sm text-white placeholder:text-white/60 font-black h-12" 
+                        className="pl-10 bg-navy border-white/20 text-sm text-white placeholder:text-white/40 font-bold h-12" 
                       />
                     </div>
                   </div>
                   <div className="relative">
-                    <Label className="text-[12px] font-black text-white uppercase ml-1 mb-2 block tracking-widest opacity-100">Target Destination</Label>
+                    <Label className="text-[12px] font-black text-white uppercase ml-1 mb-2 block tracking-widest">Target Destination</Label>
                     <div className="relative">
                       <Navigation className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-emergency" />
                       <Input 
                         placeholder="Dropoff Destination" 
                         value={dropoff} 
                         onChange={e => setDropoff(e.target.value)} 
-                        className="pl-10 bg-navy/80 border-navy text-sm text-white placeholder:text-white/60 font-black h-12" 
+                        className="pl-10 bg-navy border-white/20 text-sm text-white placeholder:text-white/40 font-bold h-12" 
                       />
                     </div>
                   </div>
@@ -211,7 +212,7 @@ export default function PassengerApp() {
                 <p className="text-4xl font-black text-active">₹{currentRide.fare}</p>
                 <div className="grid gap-3 pt-4">
                   <Button onClick={() => handleProcessPayment(currentRide.id, 'Wallet', currentRide.fare)} variant="outline" className="border-navy h-14 justify-between text-white hover:bg-navy/40 px-6 bg-navy/20">
-                    <span className="font-black uppercase text-xs">Nexus Wallet</span> 
+                    <span className="font-black uppercase text-xs text-white">Nexus Wallet</span> 
                     <span className="text-active font-black">₹{profile?.walletBalance || 0}</span>
                   </Button>
                   <Button onClick={() => handleProcessPayment(currentRide.id, 'Cash', currentRide.fare)} variant="outline" className="border-navy h-14 text-white hover:bg-navy/40 font-black uppercase text-xs bg-navy/20">Settlement via Cash</Button>
