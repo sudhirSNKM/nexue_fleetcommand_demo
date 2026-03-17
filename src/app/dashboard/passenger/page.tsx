@@ -119,14 +119,14 @@ export default function PassengerApp() {
           <CardHeader className="pb-2">
             {!currentRide && (
               <Tabs value={activeService} onValueChange={setActiveService} className="w-full">
-                <TabsList className="grid grid-cols-3 bg-navy/60 border border-white/10 p-1 h-12">
+                <TabsList className="grid grid-cols-3 bg-navy/80 border border-white/20 p-1 h-12">
                   {SERVICES.map(s => (
                     <TabsTrigger 
                       key={s.id} 
                       value={s.id} 
-                      className="text-[11px] font-black uppercase text-white/90 data-[state=active]:text-white data-[state=active]:bg-orange transition-all flex items-center justify-center gap-1.5"
+                      className="text-[12px] font-black uppercase text-white data-[state=active]:text-white data-[state=active]:bg-orange transition-all flex items-center justify-center gap-1.5"
                     >
-                      <s.icon className="w-3.5 h-3.5" /> 
+                      <s.icon className="w-4 h-4" /> 
                       <span className="hidden sm:inline">{s.name}</span>
                     </TabsTrigger>
                   ))}
@@ -171,17 +171,17 @@ export default function PassengerApp() {
                             onClick={() => setSelectedVehicle(v.id)}
                             className={cn(
                               "flex flex-col items-center justify-center p-2 rounded-xl border transition-all",
-                              selectedVehicle === v.id ? "bg-orange/20 border-orange text-orange" : "bg-navy/20 border-navy text-white/60 hover:text-white"
+                              selectedVehicle === v.id ? "bg-orange/20 border-orange text-orange" : "bg-navy/20 border-navy text-white hover:text-orange"
                             )}
                           >
                             <v.icon className="w-5 h-5 mb-1" />
-                            <span className="text-[9px] font-black uppercase">{v.name}</span>
+                            <span className="text-[10px] font-black uppercase">{v.name}</span>
                           </button>
                         ))}
                       </div>
                       <div className="bg-navy/10 p-4 rounded-lg border border-white/5 flex justify-between items-center">
                         <div>
-                          <p className="text-[8px] font-black text-white/60 uppercase">Estimated Fare</p>
+                          <p className="text-[10px] font-black text-white/60 uppercase">Estimated Fare</p>
                           <p className="text-2xl font-black text-orange">₹{currentFare}</p>
                         </div>
                         <Button onClick={handleBookRide} className="bg-orange hover:bg-orange/90 font-black uppercase text-xs h-10 px-6 text-white shadow-lg">Book Now</Button>
@@ -207,11 +207,11 @@ export default function PassengerApp() {
                    <div className="absolute top-0 left-0 w-full h-1 bg-orange/20">
                      <motion.div animate={{ x: ["-100%", "100%"] }} transition={{ duration: 2, repeat: Infinity }} className="w-1/3 h-full bg-orange" />
                    </div>
-                   <p className="text-[10px] font-black text-orange uppercase tracking-[0.2em] mb-4">{currentRide.status}</p>
+                   <p className="text-[11px] font-black text-orange uppercase tracking-[0.2em] mb-4">{currentRide.status}</p>
                    {driverProfile ? (
                      <div className="space-y-2">
                        <p className="text-sm font-black uppercase text-white">{driverProfile.name}</p>
-                       <p className="text-[9px] text-white/60 uppercase">Rating: {driverProfile.rating || '5.0'} • Sector 4 Dispatch</p>
+                       <p className="text-[10px] text-white/60 uppercase">Rating: {driverProfile.rating || '5.0'} • Sector 4 Dispatch</p>
                      </div>
                    ) : (
                      <p className="text-xs font-bold animate-pulse text-white">Assigning nearest captain...</p>
@@ -230,11 +230,11 @@ export default function PassengerApp() {
         </Card>
 
         <div className="grid grid-cols-2 gap-4">
-          <Card className="glass-panel passenger-card p-4 text-center">
+          <Card className="glass-panel passenger-card p-4 text-center border-white/10">
             <p className="text-[10px] uppercase font-black text-white/60 mb-1">Reputation</p>
             <p className="text-2xl font-black text-white">{profile?.rating ? profile.rating.toFixed(1) : '5.0'}</p>
           </Card>
-          <Card className="glass-panel passenger-card p-4 text-center">
+          <Card className="glass-panel passenger-card p-4 text-center border-white/10">
             <p className="text-[10px] uppercase font-black text-white/60 mb-1">Credits</p>
             <p className="text-2xl font-black text-active">₹{profile?.walletBalance || 0}</p>
           </Card>
