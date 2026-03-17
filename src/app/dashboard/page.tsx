@@ -20,8 +20,15 @@ export default function Dashboard() {
 
   useEffect(() => {
     if (!isProfileLoading && profile) {
-      // Normalize role string to handle potential capitalized or space-separated versions from DB
       const role = (profile.role || "passenger").toLowerCase().replace(/\s+/g, '-')
+      const status = (profile.status || "Pending").toLowerCase()
+
+      if (role === "driver" && status === "pending") {
+        if (!profile.detailsSubmitted) {
+          router.push("/onboarding/vehicle-details")
+        }
+        return
+      }
       
       if (role === "super-admin") {
         router.push("/dashboard/super-admin")

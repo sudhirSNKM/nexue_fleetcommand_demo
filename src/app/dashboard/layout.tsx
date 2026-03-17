@@ -22,7 +22,9 @@ import {
   Timer,
   AlertTriangle,
   User,
-  LayoutDashboard
+  LayoutDashboard,
+  ShieldAlert,
+  Clock
 } from "lucide-react"
 import { motion, AnimatePresence } from "framer-motion"
 import Link from "next/link"
@@ -60,13 +62,15 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     router.push("/login")
   }
 
-  // Normalize role string to handle potential capitalized or space-separated versions from DB
   const role = (profile?.role || "passenger").toLowerCase().replace(/\s+/g, '-')
+  const status = (profile?.status || "Active").toLowerCase()
   const isMobilityUser = role === "passenger" || role === "driver"
+  const isPendingDriver = role === "driver" && status === "pending"
 
   const navItems = React.useMemo(() => {
+    if (isPendingDriver) return [{ icon: Settings, label: "Onboarding", href: "/onboarding/vehicle-details" }]
+    
     const items = []
-
     if (role === "super-admin") {
       items.push(
         { icon: Globe, label: "Command Center", href: "/dashboard/super-admin" },
@@ -104,7 +108,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
     items.push({ icon: Settings, label: "Account", href: (role === "admin" || role === "super-admin") ? "/dashboard/account" : "/dashboard/settings" })
     return items
-  }, [role])
+  }, [role, isPendingDriver])
 
   if (isUserLoading || isProfileLoading || !user) return (
     <div className="h-screen w-full flex items-center justify-center bg-charcoal">
@@ -160,6 +164,27 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     </div>
   )
 
+  if (isPendingDriver && !pathname.includes('onboarding')) {
+    return (
+      <div className="h-screen w-full flex items-center justify-center bg-charcoal p-6">
+        <Card className="max-w-md w-full glass-panel border-none p-8 text-center">
+          <ShieldAlert className="w-16 h-16 text-orange mx-auto mb-6 animate-pulse" />
+          <h2 className="text-2xl font-black uppercase text-white mb-2">Clearance Restricted</h2>
+          <p className="text-sm text-white/40 uppercase tracking-widest leading-relaxed mb-8">
+            Your asset manifest is under review by Central Command. Please standby for operational activation.
+          </p>
+          <div className="flex items-center justify-center gap-3 py-4 bg-navy/20 rounded-xl mb-8 border border-white/5">
+            <Clock className="w-4 h-4 text-orange" />
+            <span className="text-[10px] font-bold text-white/60 uppercase">ETA: 24-48 Cycles</span>
+          </div>
+          <Button onClick={handleSignOut} variant="outline" className="w-full border-white/10 text-white uppercase font-black text-xs h-12">
+            Logout of Terminal
+          </Button>
+        </Card>
+      </div>
+    )
+  }
+
   return (
     <div className={cn("flex h-screen overflow-hidden transition-colors duration-500", isMobilityUser ? "bg-slate-50" : "bg-charcoal")}>
       <aside className="hidden lg:flex w-64 flex-col shrink-0">
@@ -183,8 +208,10 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             </Sheet>
 
             <div className="flex items-center gap-2">
-              <span className="flex h-2 w-2 rounded-full bg-active animate-pulse" />
-              <span className={cn("text-[10px] font-black uppercase tracking-widest hidden sm:inline", isMobilityUser ? "text-slate-500" : "text-active")}>Network Operational</span>
+              <span className={cn("flex h-2 w-2 rounded-full animate-pulse", isPendingDriver ? "bg-orange" : "bg-active")} />
+              <span className={cn("text-[10px] font-black uppercase tracking-widest hidden sm:inline", isMobilityUser ? "text-slate-500" : isPendingDriver ? "text-orange" : "text-active")}>
+                {isPendingDriver ? "Awaiting Verification" : "Network Operational"}
+              </span>
             </div>
           </div>
 

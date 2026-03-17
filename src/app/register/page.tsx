@@ -40,8 +40,8 @@ export default function RegisterPage() {
         id: user.uid,
         name,
         email,
-        role, // Standardized roles: passenger, driver, admin, super-admin
-        status: role === "driver" ? "Offline" : "Active",
+        role, 
+        status: role === "driver" ? "Pending" : "Active",
         walletBalance: role === "passenger" ? 500 : 0,
         rating: 5.0,
         createdAt: serverTimestamp(),
@@ -55,9 +55,14 @@ export default function RegisterPage() {
 
       toast({
         title: "Terminal Initialized",
-        description: `Welcome, ${name}. Your ${role} account is active.`,
+        description: role === "driver" ? "Step 1 complete. Now provide vehicle details." : `Welcome, ${name}. Your account is active.`,
       })
-      router.push("/dashboard")
+
+      if (role === "driver") {
+        router.push("/onboarding/vehicle-details")
+      } else {
+        router.push("/dashboard")
+      }
     } catch (error: any) {
       toast({
         variant: "destructive",
@@ -155,7 +160,7 @@ export default function RegisterPage() {
 
               {role === "driver" && (
                 <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} className="space-y-2">
-                  <Label className="text-[10px] uppercase font-black text-muted-foreground ml-1">Vehicle Class</Label>
+                  <Label className="text-[10px] uppercase font-black text-muted-foreground ml-1">Initial Vehicle Class</Label>
                   <Select value={vehicleType} onValueChange={setVehicleType}>
                     <SelectTrigger className="bg-navy/20 border-navy/50 h-11 text-sm font-medium">
                       <SelectValue placeholder="Select Unit Class" />

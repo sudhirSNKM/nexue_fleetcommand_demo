@@ -1,3 +1,4 @@
+
 "use client"
 
 import React, { useState, useMemo } from "react"
@@ -88,15 +89,15 @@ export default function DriverProfilePage() {
   ) : null, [db, driverId])
   const { data: shifts } = useCollection(shiftsQuery)
 
-  // MOCK CHART DATA (Ideally from driverStats)
+  // MOCK CHART DATA
   const chartData = [
-    { day: 'Mon', trips: 12, earnings: 1450, hours: 8.5, rating: 4.8 },
-    { day: 'Tue', trips: 15, earnings: 1890, hours: 9.2, rating: 4.9 },
-    { day: 'Wed', trips: 10, earnings: 1200, hours: 7.0, rating: 4.7 },
-    { day: 'Thu', trips: 18, earnings: 2100, hours: 10.5, rating: 5.0 },
-    { day: 'Fri', trips: 14, earnings: 1650, hours: 8.0, rating: 4.8 },
-    { day: 'Sat', trips: 22, earnings: 2800, hours: 12.0, rating: 4.9 },
-    { day: 'Sun', trips: 8, earnings: 900, hours: 5.5, rating: 4.6 },
+    { day: 'Mon', trips: 12, earnings: 1450 },
+    { day: 'Tue', trips: 15, earnings: 1890 },
+    { day: 'Wed', trips: 10, earnings: 1200 },
+    { day: 'Thu', trips: 18, earnings: 2100 },
+    { day: 'Fri', trips: 14, earnings: 1650 },
+    { day: 'Sat', trips: 22, earnings: 2800 },
+    { day: 'Sun', trips: 8, earnings: 900 },
   ]
 
   const metrics = useMemo(() => {
@@ -129,7 +130,7 @@ export default function DriverProfilePage() {
   }
 
   if (isProfileLoading) return (
-    <div className="h-screen w-full flex items-center justify-center bg-charcoal">
+    <div className="h-screen w-screen flex items-center justify-center bg-charcoal">
       <div className="w-10 h-10 border-4 border-orange/20 border-t-orange rounded-full animate-spin" />
     </div>
   )
@@ -141,6 +142,8 @@ export default function DriverProfilePage() {
       <Button variant="link" onClick={() => router.back()} className="text-orange">Return to Directory</Button>
     </div>
   )
+
+  const isPending = driver.status === 'Pending'
 
   return (
     <div className="space-y-8 pb-20">
@@ -162,7 +165,11 @@ export default function DriverProfilePage() {
         </div>
 
         <div className="flex items-center gap-3">
-          {driver.status === 'Suspended' ? (
+          {isPending ? (
+            <Button onClick={() => handleStatusChange('Active')} className="bg-active text-white font-black uppercase text-xs h-11 px-6 shadow-lg shadow-active/20 border-none">
+              <ShieldCheck className="w-4 h-4 mr-2" /> Authorize Unit
+            </Button>
+          ) : driver.status === 'Suspended' ? (
             <Button onClick={() => handleStatusChange('Active')} className="bg-active text-white font-black uppercase text-xs h-11 px-6 shadow-lg shadow-active/20 border-none">
               <UserCheck className="w-4 h-4 mr-2" /> Activate Unit
             </Button>
@@ -180,7 +187,7 @@ export default function DriverProfilePage() {
       <div className="grid grid-cols-1 xl:grid-cols-4 gap-8">
         {/* SIDEBAR: OVERVIEW */}
         <div className="space-y-6">
-          <Card className="glass-panel border-none shadow-2xl overflow-hidden">
+          <Card className={cn("glass-panel border-none shadow-2xl overflow-hidden", isPending && "ring-2 ring-orange/50")}>
             <div className="h-24 bg-gradient-to-br from-navy to-charcoal border-b border-white/5" />
             <CardContent className="px-6 pb-6 pt-0 -mt-12 text-center">
               <Avatar className="w-24 h-24 mx-auto ring-4 ring-charcoal shadow-2xl mb-4">
@@ -190,6 +197,10 @@ export default function DriverProfilePage() {
               <h2 className="text-xl font-black text-white uppercase">{driver.name}</h2>
               <p className="text-[10px] text-orange font-black uppercase tracking-widest mt-1">{driver.vehicleType || 'Scout'}</p>
               
+              {isPending && (
+                <Badge className="mt-4 bg-orange text-white font-black uppercase text-[8px] animate-pulse">Awaiting Verification</Badge>
+              )}
+
               <div className="flex justify-center gap-4 mt-6">
                 <div className="text-center">
                   <p className="text-[9px] font-black text-white/30 uppercase">Rating</p>
@@ -201,7 +212,8 @@ export default function DriverProfilePage() {
                   <p className="text-[9px] font-black text-white/30 uppercase">Status</p>
                   <Badge className={cn(
                     "text-[8px] font-black uppercase",
-                    driver.status === 'Online' ? 'bg-active/10 text-active' : 'bg-white/5 text-white/40'
+                    driver.status === 'Online' ? 'bg-active/10 text-active' : 
+                    driver.status === 'Pending' ? 'bg-orange/10 text-orange' : 'bg-white/5 text-white/40'
                   )}>
                     {driver.status || 'Offline'}
                   </Badge>
@@ -211,7 +223,7 @@ export default function DriverProfilePage() {
               <div className="mt-8 space-y-4 text-left border-t border-white/5 pt-6">
                 <div className="flex items-center gap-3 text-white/60">
                   <Phone className="w-4 h-4 text-orange" />
-                  <span className="text-xs font-bold">{driver.phone || '+91 9988776655'}</span>
+                  <span className="text-xs font-bold">{driver.phone || 'Contact Unknown'}</span>
                 </div>
                 <div className="flex items-center gap-3 text-white/60">
                   <Mail className="w-4 h-4 text-orange" />
@@ -219,11 +231,7 @@ export default function DriverProfilePage() {
                 </div>
                 <div className="flex items-center gap-3 text-white/60">
                   <MapPin className="w-4 h-4 text-orange" />
-                  <span className="text-xs font-bold">{driver.zone || 'Sector 4 Depot'}</span>
-                </div>
-                <div className="flex items-center gap-3 text-white/60">
-                  <Calendar className="w-4 h-4 text-orange" />
-                  <span className="text-xs font-bold">Member Since {new Date(driver.createdAt?.seconds * 1000).toLocaleDateString()}</span>
+                  <span className="text-xs font-bold">{driver.zone || 'Sector Unassigned'}</span>
                 </div>
               </div>
             </CardContent>
@@ -235,22 +243,16 @@ export default function DriverProfilePage() {
             </h3>
             <div className="space-y-4">
               <div>
-                <p className="text-[9px] font-black text-white/30 uppercase mb-1">Vehicle Class</p>
-                <p className="text-xs font-black text-white uppercase">{driver.vehicleType || 'Not Assigned'}</p>
+                <p className="text-[9px] font-black text-white/30 uppercase mb-1">Vehicle Model</p>
+                <p className="text-xs font-black text-white uppercase">{driver.vehicleModel || 'No Model Data'}</p>
               </div>
               <div>
                 <p className="text-[9px] font-black text-white/30 uppercase mb-1">Registration #</p>
-                <p className="text-xs font-black font-mono text-white/80">{driver.vehicleNumber || 'KA-01-NX-2024'}</p>
+                <p className="text-xs font-black font-mono text-white/80">{driver.vehicleNumber || 'No Plate Data'}</p>
               </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <p className="text-[9px] font-black text-white/30 uppercase mb-1">Insurance</p>
-                  <Badge variant="outline" className="text-[9px] border-white/10 text-white/40 uppercase">EXPIRED</Badge>
-                </div>
-                <div>
-                  <p className="text-[9px] font-black text-white/30 uppercase mb-1">RC Validation</p>
-                  <Badge variant="outline" className="text-[9px] border-active/50 text-active uppercase">VERIFIED</Badge>
-                </div>
+              <div>
+                <p className="text-[9px] font-black text-white/30 uppercase mb-1">License ID</p>
+                <p className="text-xs font-black font-mono text-white/80">{driver.licenseNumber || 'No License Data'}</p>
               </div>
             </div>
           </Card>
@@ -271,11 +273,9 @@ export default function DriverProfilePage() {
               <TabsTrigger value="overview" className="data-[state=active]:bg-orange data-[state=active]:text-white font-black uppercase text-[10px] px-8 h-full rounded-lg transition-all">Overview</TabsTrigger>
               <TabsTrigger value="history" className="data-[state=active]:bg-orange data-[state=active]:text-white font-black uppercase text-[10px] px-8 h-full rounded-lg transition-all">Mission Log</TabsTrigger>
               <TabsTrigger value="documents" className="data-[state=active]:bg-orange data-[state=active]:text-white font-black uppercase text-[10px] px-8 h-full rounded-lg transition-all">Documents</TabsTrigger>
-              <TabsTrigger value="feedback" className="data-[state=active]:bg-orange data-[state=active]:text-white font-black uppercase text-[10px] px-8 h-full rounded-lg transition-all">Feedback</TabsTrigger>
             </TabsList>
 
             <TabsContent value="overview" className="mt-8 space-y-8">
-              {/* METRICS ROW */}
               <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                 {[
                   { label: "Missions", val: metrics.totalTrips, icon: Zap, color: "text-active" },
@@ -291,7 +291,6 @@ export default function DriverProfilePage() {
                 ))}
               </div>
 
-              {/* CHARTS */}
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                 <Card className="glass-panel border-none">
                   <CardHeader className="p-4 bg-navy/10 border-b border-white/5">
@@ -345,11 +344,10 @@ export default function DriverProfilePage() {
 
             <TabsContent value="history" className="mt-8">
               <Card className="glass-panel border-none overflow-hidden">
-                <CardHeader className="p-4 bg-navy/10 border-b border-white/5 flex flex-row justify-between architecture">
+                <CardHeader className="p-4 bg-navy/10 border-b border-white/5 flex flex-row justify-between">
                    <CardTitle className="text-[10px] font-black uppercase text-white/60 flex items-center gap-2">
                      <History className="w-4 h-4 text-orange" /> Mission Manifest
                    </CardTitle>
-                   <Button variant="ghost" size="sm" className="text-[9px] font-black uppercase text-white/40">View All Archive</Button>
                 </CardHeader>
                 <CardContent className="p-0 overflow-x-auto">
                   <table className="w-full text-xs text-left">
@@ -382,11 +380,6 @@ export default function DriverProfilePage() {
                           <td className="p-4 text-white/40">{new Date(ride.createdAt?.seconds * 1000).toLocaleString()}</td>
                         </tr>
                       ))}
-                      {!rides?.length && (
-                        <tr>
-                          <td colSpan={5} className="p-20 text-center text-white/10 italic">No historical missions detected in current sector.</td>
-                        </tr>
-                      )}
                     </tbody>
                   </table>
                 </CardContent>
@@ -396,58 +389,20 @@ export default function DriverProfilePage() {
             <TabsContent value="documents" className="mt-8">
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {[
-                  { label: "Driving License", icon: User, status: "Verified" },
-                  { label: "Vehicle RC", icon: Car, status: "Verified" },
-                  { label: "Insurance Policy", icon: Shield, status: "Expired", critical: true },
-                  { label: "Pollution Certificate", icon: FileText, status: "Verified" },
-                  { label: "Aadhar/ID Proof", icon: Lock, status: "Verified" },
+                  { label: "Driving License", icon: User, status: driver.licenseNumber ? "Provided" : "Missing" },
+                  { label: "Vehicle RC", icon: Car, status: driver.vehicleNumber ? "Provided" : "Missing" },
+                  { label: "Asset Manifest", icon: FileText, status: driver.vehicleModel ? "Provided" : "Missing" },
                 ].map((doc, i) => (
-                  <Card key={i} className={cn("glass-panel border-none p-6 flex flex-col items-center group relative overflow-hidden", doc.critical && "ring-1 ring-emergency/30")}>
-                    <div className="p-4 rounded-full bg-navy/40 mb-4 group-hover:scale-110 transition-transform">
-                      <doc.icon className={cn("w-8 h-8", doc.critical ? "text-emergency" : "text-orange")} />
+                  <Card key={i} className="glass-panel border-none p-6 flex flex-col items-center group relative overflow-hidden">
+                    <div className="p-4 rounded-full bg-navy/40 mb-4">
+                      <doc.icon className={cn("w-8 h-8", doc.status === "Provided" ? "text-active" : "text-orange")} />
                     </div>
                     <p className="text-sm font-black text-white uppercase mb-2">{doc.label}</p>
-                    <Badge className={cn("text-[9px] font-black uppercase", doc.critical ? "bg-emergency text-white" : "bg-active/10 text-active")}>
+                    <Badge className={cn("text-[9px] font-black uppercase", doc.status === "Provided" ? "bg-active/10 text-active" : "bg-orange/10 text-orange")}>
                       {doc.status}
                     </Badge>
-                    <Button variant="ghost" className="mt-4 text-[9px] font-black uppercase text-white/40 hover:text-white">View File</Button>
                   </Card>
                 ))}
-              </div>
-            </TabsContent>
-
-            <TabsContent value="feedback" className="mt-8">
-              <div className="space-y-4">
-                {rides?.filter(r => r.rating).map((ride, i) => (
-                  <Card key={i} className="glass-panel border-none p-6">
-                    <div className="flex justify-between items-start mb-4">
-                      <div className="flex items-center gap-3">
-                        <Avatar className="w-8 h-8">
-                          <AvatarImage src={`https://picsum.photos/seed/${ride.passengerId}/100/100`} />
-                          <AvatarFallback className="bg-navy text-[10px] font-black text-white">P</AvatarFallback>
-                        </Avatar>
-                        <div>
-                          <p className="text-[10px] font-black text-white uppercase">Passenger ID: {ride.passengerId.substring(0,6)}</p>
-                          <p className="text-[8px] text-white/40 uppercase font-bold">{new Date(ride.reviewedAt?.seconds * 1000).toLocaleDateString()}</p>
-                        </div>
-                      </div>
-                      <div className="flex gap-1">
-                        {[...Array(5)].map((_, j) => (
-                          <Star key={j} className={cn("w-3 h-3", j < (ride.rating || 0) ? "text-orange fill-orange" : "text-white/10")} />
-                        ))}
-                      </div>
-                    </div>
-                    <p className="text-xs font-bold text-white/80 italic leading-relaxed">
-                      "Professional operator, efficient tactical navigation. Highly recommended for logistics missions in Sector 4."
-                    </p>
-                  </Card>
-                ))}
-                {!rides?.some(r => r.rating) && (
-                  <div className="p-20 text-center glass-panel rounded-2xl border-none">
-                    <Activity className="w-12 h-12 mx-auto mb-4 text-white/10" />
-                    <p className="text-sm font-black text-white/20 uppercase">No active feedback logs</p>
-                  </div>
-                )}
               </div>
             </TabsContent>
           </Tabs>
