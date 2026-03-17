@@ -7,22 +7,20 @@ service cloud.firestore {
     }
 
     match /userProfiles/{userId} {
-      allow read, write: if isSignedIn() && (request.auth.uid == userId || get(/databases/$(database)/documents/roles_admin/$(request.auth.uid)).data.active == true);
+      allow read, write: if isSignedIn() && request.auth.uid == userId;
     }
 
     match /rides/{rideId} {
       allow read: if isSignedIn() && (
         request.auth.uid == resource.data.passengerId || 
-        request.auth.uid == resource.data.driverId ||
-        get(/databases/$(database)/documents/roles_admin/$(request.auth.uid)).data.active == true
+        request.auth.uid == resource.data.driverId
       );
       
       allow create: if isSignedIn();
       
       allow update: if isSignedIn() && (
         request.auth.uid == resource.data.passengerId || 
-        request.auth.uid == resource.data.driverId ||
-        get(/databases/$(database)/documents/roles_admin/$(request.auth.uid)).data.active == true
+        request.auth.uid == resource.data.driverId
       );
       
       allow delete: if false;
@@ -40,7 +38,6 @@ service cloud.firestore {
       allow read, write: if isSignedIn();
     }
 
-    // Role markers
     match /roles_admin/{userId} {
       allow read: if isSignedIn();
     }

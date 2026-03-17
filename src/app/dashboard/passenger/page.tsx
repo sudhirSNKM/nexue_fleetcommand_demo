@@ -2,7 +2,6 @@
 
 import React, { useState, useMemo, useEffect } from "react"
 import { motion, AnimatePresence } from "framer-motion"
-import gsap from "gsap"
 import { 
   MapPin, Navigation, CreditCard, Star, Search, Car, Phone, 
   MessageSquare, CheckCircle2, XCircle, Bike, Zap, 
@@ -51,7 +50,7 @@ export default function PassengerApp() {
   const userProfileRef = useMemoFirebase(() => user && db ? doc(db, "userProfiles", user.uid) : null, [user, db])
   const { data: profile } = useDoc(userProfileRef)
 
-  // Explicitly filtered query to match security rules
+  // Strictly filtered query to match security rules
   const activeRidesQuery = useMemoFirebase(() => {
     if (!user || !db) return null
     return query(
@@ -74,10 +73,6 @@ export default function PassengerApp() {
     if (!vehicle || !hasLocations) return 0
     return Math.max(vehicle.min, mockDistance * vehicle.rate)
   }, [activeService, selectedVehicle, mockDistance, hasLocations])
-
-  useEffect(() => {
-    gsap.from(".passenger-card", { y: 20, opacity: 0, duration: 0.8, stagger: 0.2, ease: "power3.out" })
-  }, [])
 
   const handleBookRide = async () => {
     if (!user || !db) return
@@ -112,8 +107,8 @@ export default function PassengerApp() {
         />
       </div>
 
-      <div className="space-y-6">
-        <Card className="glass-panel passenger-card border-t-4 border-orange bg-card/95">
+      <div className="space-y-6 relative z-10">
+        <Card className="glass-panel passenger-card border-t-4 border-orange bg-card/95 shadow-[0_0_40px_rgba(0,0,0,0.5)]">
           <CardHeader className="pb-2">
             {!currentRide && (
               <Tabs value={activeService} onValueChange={setActiveService} className="w-full">
@@ -122,10 +117,12 @@ export default function PassengerApp() {
                     <TabsTrigger 
                       key={s.id} 
                       value={s.id} 
-                      className="text-slate-400 font-black uppercase text-sm data-[state=active]:text-white data-[state=active]:bg-orange data-[state=active]:shadow-[0_0_25px_rgba(255,128,0,0.6)] transition-all flex flex-col items-center justify-center gap-2 py-4 h-full hover:text-white"
+                      className="text-white/60 font-black uppercase text-sm data-[state=active]:text-white data-[state=active]:bg-orange data-[state=active]:shadow-[0_0_25px_rgba(255,128,0,0.7)] transition-all flex flex-col items-center justify-center gap-2 py-4 h-full hover:text-white hover:bg-white/5"
                     >
                       <s.icon className="w-8 h-8" /> 
-                      <span className="truncate font-black">{s.name}</span>
+                      <span className="truncate font-black tracking-tighter">
+                        {s.name}
+                      </span>
                     </TabsTrigger>
                   ))}
                 </TabsList>
@@ -147,7 +144,7 @@ export default function PassengerApp() {
                         placeholder="Pickup Location" 
                         value={pickup} 
                         onChange={e => setPickup(e.target.value)} 
-                        className="pl-10 bg-navy/50 border-2 border-white/30 text-white placeholder:text-white/40 font-bold h-12 text-sm focus:border-orange/50" 
+                        className="pl-10 bg-navy/50 border-2 border-white/40 text-white placeholder:text-white/30 font-bold h-12 text-sm focus:border-orange/60" 
                       />
                     </div>
                   </div>
@@ -159,7 +156,7 @@ export default function PassengerApp() {
                         placeholder="Dropoff Destination" 
                         value={dropoff} 
                         onChange={e => setDropoff(e.target.value)} 
-                        className="pl-10 bg-navy/50 border-2 border-white/30 text-white placeholder:text-white/40 font-bold h-12 text-sm focus:border-orange/50" 
+                        className="pl-10 bg-navy/50 border-2 border-white/40 text-white placeholder:text-white/30 font-bold h-12 text-sm focus:border-orange/60" 
                       />
                     </div>
                   </div>
@@ -175,7 +172,7 @@ export default function PassengerApp() {
                             onClick={() => setSelectedVehicle(v.id)}
                             className={cn(
                               "flex flex-col items-center justify-center p-3 rounded-xl border-2 transition-all",
-                              selectedVehicle === v.id ? "bg-orange/20 border-orange text-orange shadow-[0_0_10px_rgba(255,128,0,0.4)]" : "bg-navy/60 border-white/10 text-slate-300 hover:text-white hover:bg-navy/80"
+                              selectedVehicle === v.id ? "bg-orange/30 border-orange text-white shadow-[0_0_15px_rgba(255,128,0,0.4)]" : "bg-navy/80 border-white/10 text-white/50 hover:text-white hover:bg-navy/90"
                             )}
                           >
                             <v.icon className="w-6 h-6 mb-1" />
@@ -203,9 +200,9 @@ export default function PassengerApp() {
               <div className="space-y-6 pt-4">
                 <div className="text-center p-8 bg-orange/10 rounded-2xl border-2 border-orange/40 relative overflow-hidden">
                    <div className="absolute top-0 left-0 w-full h-2 bg-orange/20">
-                     <motion.div animate={{ x: ["-100%", "100%"] }} transition={{ duration: 1.5, repeat: Infinity }} className="w-1/3 h-full bg-orange shadow-[0_0_10px_#FF8000]" />
+                     <motion.div animate={{ x: ["-100%", "100%"] }} transition={{ duration: 1.5, repeat: Infinity }} className="w-1/3 h-full bg-orange shadow-[0_0_15px_#FF8000]" />
                    </div>
-                   <p className="text-sm font-black text-orange uppercase tracking-[0.3em] mb-4 drop-shadow-[0_0_5px_rgba(255,128,0,0.5)]">{currentRide.status}</p>
+                   <p className="text-sm font-black text-orange uppercase tracking-[0.3em] mb-4 drop-shadow-[0_0_8px_rgba(255,128,0,0.5)]">{currentRide.status}</p>
                    {driverProfile ? (
                      <div className="space-y-4">
                        <div className="w-24 h-24 rounded-full bg-navy/80 mx-auto ring-4 ring-orange/40 flex items-center justify-center overflow-hidden shadow-2xl">
@@ -239,12 +236,12 @@ export default function PassengerApp() {
         </Card>
 
         <div className="grid grid-cols-2 gap-4">
-          <Card className="glass-panel p-5 text-center border-2 border-white/20 bg-navy/60">
-            <p className="text-xs uppercase font-black text-white mb-1 tracking-widest">Operator Rep</p>
+          <Card className="glass-panel p-5 text-center border-2 border-white/20 bg-navy/80">
+            <p className="text-xs uppercase font-black text-white/80 mb-1 tracking-widest">Operator Rep</p>
             <p className="text-3xl font-black text-white">{profile?.rating ? profile.rating.toFixed(1) : '5.0'}</p>
           </Card>
-          <Card className="glass-panel p-5 text-center border-2 border-white/20 bg-navy/60">
-            <p className="text-xs uppercase font-black text-white mb-1 tracking-widest">Nexus Credits</p>
+          <Card className="glass-panel p-5 text-center border-2 border-white/20 bg-navy/80">
+            <p className="text-xs uppercase font-black text-white/80 mb-1 tracking-widest">Nexus Credits</p>
             <p className="text-3xl font-black text-active">₹{profile?.walletBalance || 0}</p>
           </Card>
         </div>

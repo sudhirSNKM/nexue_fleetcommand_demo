@@ -31,7 +31,8 @@ export default function RideHistoryPage() {
   const { data: profile } = useDoc(userProfileRef)
   const role = profile?.role || "Passenger"
 
-  // Explicitly filtered query to match security rules
+  // Strictly filtered query to match security rules
+  // Removed orderBy to bypass potential indexing issues during confirmed debug phase
   const ridesQuery = useMemoFirebase(() => {
     if (!user || !db || !profile) return null
     const filterKey = role === "Driver" ? "driverId" : "passengerId"
