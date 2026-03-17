@@ -9,9 +9,17 @@
         "id": { "type": "string" },
         "email": { "type": "string", "format": "email" },
         "name": { "type": "string" },
+        "phone": { "type": "string" },
         "role": { "type": "string", "enum": ["SuperAdmin", "Admin", "Driver", "Passenger"] },
+        "status": { "type": "string", "enum": ["Online", "Offline", "Suspended", "Active"] },
+        "vehicleType": { "type": "string" },
+        "vehicleNumber": { "type": "string" },
+        "zone": { "type": "string" },
         "walletBalance": { "type": "number" },
         "rating": { "type": "number" },
+        "insuranceExpiry": { "type": "string", "format": "date" },
+        "rcExpiry": { "type": "string", "format": "date" },
+        "pollutionExpiry": { "type": "string", "format": "date" },
         "createdAt": { "type": "string", "format": "date-time" }
       },
       "required": ["id", "email", "name", "role", "createdAt"]
@@ -19,7 +27,7 @@
     "Ride": {
       "title": "Ride",
       "type": "object",
-      "description": "Unified transport request (Passenger, Parcel, or Logistics).",
+      "description": "Unified transport request.",
       "properties": {
         "id": { "type": "string" },
         "passengerId": { "type": "string" },
