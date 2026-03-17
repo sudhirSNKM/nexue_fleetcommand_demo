@@ -21,7 +21,7 @@ export default function SettingsPage() {
   }, [user, db])
 
   const { data: profile } = useDoc(userProfileRef)
-  const isSuperAdmin = profile?.role === "Super Admin"
+  const isSuperAdmin = profile?.role === "super-admin"
 
   return (
     <div className="space-y-8 max-w-5xl mx-auto">

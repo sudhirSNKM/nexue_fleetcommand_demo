@@ -13,11 +13,13 @@ service cloud.firestore {
     }
 
     function isSuperAdmin() {
-      return isSignedIn() && getRole() == "super-admin";
+      let role = getRole();
+      return isSignedIn() && (role == "super-admin" || role == "Super Admin");
     }
 
     function isAdmin() {
-      return isSignedIn() && (getRole() == "admin" || getRole() == "super-admin");
+      let role = getRole();
+      return isSignedIn() && (role == "admin" || role == "super-admin" || role == "Admin" || role == "Super Admin");
     }
 
     match /userProfiles/{userId} {
@@ -36,10 +38,10 @@ service cloud.firestore {
     }
 
     match /driverShifts/{shiftId} {
-      // Admins and Super Admins can read all shifts
+      // Admins and Super Admins can read all shifts for tactical oversight
       allow read: if isAdmin();
 
-      // Drivers can read only their own shifts
+      // Drivers can read only their own shifts (requires where("driverId", "==", auth.uid) filter)
       allow read: if isSignedIn() && resource.data.driverId == request.auth.uid;
 
       // Admins can manage all shift records
