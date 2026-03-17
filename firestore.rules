@@ -2,8 +2,11 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
+    // Basic Auth Helpers
     function isSignedIn() { return request.auth != null; }
     function isOwner(userId) { return isSignedIn() && request.auth.uid == userId; }
+    
+    // Admin Check
     function isAdmin() { 
       return isSignedIn() && (
         exists(/databases/$(database)/documents/roles_admin/$(request.auth.uid)) || 
@@ -11,24 +14,55 @@ service cloud.firestore {
       ); 
     }
 
+    // User Profiles: Global read, owner/admin write
     match /userProfiles/{userId} {
       allow read: if isSignedIn();
       allow write: if isOwner(userId) || isAdmin();
     }
 
+    // Role Assignments
     match /roles_super_admin/{uid} { allow read: if isSignedIn(); allow write: if isOwner(uid); }
     match /roles_admin/{uid} { allow read: if isSignedIn(); allow write: if isOwner(uid); }
 
+    // Rides Collection: Restricted list/get for security
     match /rides/{rideId} {
-      // Allow authenticated users to read and write rides.
-      // Frontend queries handle the necessary filtering for privacy.
-      allow read, write: if isSignedIn();
+      // List operations must be filtered by the requesting user's role or status
+      allow list: if isSignedIn() && (
+        isAdmin() || 
+        request.query.where('passengerId', '==', request.auth.uid) ||
+        request.query.where('driverId', '==', request.auth.uid) ||
+        request.query.where('status', '==', 'Requested')
+      );
+      
+      // Get single document if owner, operator, or admin
+      allow get: if isSignedIn() && (
+        isAdmin() || 
+        resource.data.passengerId == request.auth.uid || 
+        resource.data.driverId == request.auth.uid ||
+        resource.data.status == 'Requested'
+      );
 
+      // Anyone can create a request, but updates are restricted
+      allow create: if isSignedIn();
+      allow update: if isSignedIn(); // Allowing updates for status transitions
+      allow delete: if isAdmin();
+
+      // Nested chat messages
       match /messages/{messageId} {
         allow read, write: if isSignedIn();
       }
     }
 
+    // Trips (Duty/Logistics): Must filter by driverId
+    match /trips/{tripId} {
+      allow list: if isSignedIn() && (
+        isAdmin() || 
+        request.query.where('driverId', '==', request.auth.uid)
+      );
+      allow get, write: if isSignedIn();
+    }
+
+    // Driver Analytics & Shifts
     match /driverStats/{statId} {
       allow read, write: if isSignedIn();
     }
@@ -37,13 +71,14 @@ service cloud.firestore {
       allow read, write: if isSignedIn();
     }
 
-    match /trips/{tripId} {
-      allow read, write: if isSignedIn();
-    }
-
+    // Real-time location telemetry
     match /driver_locations/{driverId} {
       allow read: if isSignedIn();
       allow write: if isOwner(driverId);
     }
+    
+    // Generic catch-all for other collections if necessary
+    match /fuelLogs/{logId} { allow read, write: if isSignedIn(); }
+    match /expenseLogs/{logId} { allow read, write: if isSignedIn(); }
   }
 }

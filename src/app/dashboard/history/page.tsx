@@ -1,3 +1,4 @@
+
 "use client"
 
 import React, { useState } from "react"
@@ -30,10 +31,9 @@ export default function RideHistoryPage() {
   const [analyzingRideId, setAnalyzingRideId] = useState<string | null>(null)
   const [aiAnalysis, setAiAnalysis] = useState<Record<string, AnalyzeRouteOutput>>({})
 
-  // Fetch ride history for the current user
+  // MISSION ARCHIVE QUERY: Must use explicit passengerId filter for security compliance
   const ridesQuery = useMemoFirebase(() => {
     if (!user || !db) return null
-    // We check both passengerId and driverId to support both roles in history
     return query(
       collection(db, "rides"),
       where("passengerId", "==", user.uid),
