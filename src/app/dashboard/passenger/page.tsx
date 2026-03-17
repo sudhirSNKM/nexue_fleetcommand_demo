@@ -3,7 +3,7 @@
 
 import React, { useState } from "react"
 import { motion, AnimatePresence } from "framer-motion"
-import { MapPin, Navigation, CreditCard, Star, Search, Car, Phone, MessageSquare, CheckCircle2 } from "lucide-react"
+import { MapPin, Navigation, CreditCard, Star, Search, Car, Phone, MessageSquare, CheckCircle2, XCircle } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -50,7 +50,7 @@ export default function PassengerApp() {
 
   const handleBookRide = async () => {
     if (!user || !db) return
-    const estimatedFare = Math.floor(Math.random() * 100) + 100 // Randomized for demo, but stored in DB
+    const estimatedFare = Math.floor(Math.random() * 100) + 150 // Randomized for demo
     
     addDoc(collection(db, "rides"), {
       passengerId: user.uid,
@@ -61,6 +61,20 @@ export default function PassengerApp() {
       createdAt: serverTimestamp()
     })
     toast({ title: "Ride Requested", description: "Locating the nearest captain..." })
+  }
+
+  const handleCancelRide = (rideId: string) => {
+    if (!db) return
+    const rideRef = doc(db, "rides", rideId)
+    updateDocumentNonBlocking(rideRef, { 
+      status: "Cancelled",
+      cancelledAt: serverTimestamp()
+    })
+    toast({ 
+      variant: "destructive",
+      title: "Mission Aborted", 
+      description: "Your ride request has been terminated." 
+    })
   }
 
   const handleProcessPayment = (rideId: string, method: string, amount: number) => {
@@ -183,7 +197,17 @@ export default function PassengerApp() {
                   <Button variant="outline" className="flex-1 border-navy font-bold uppercase text-xs" onClick={() => toast({ title: "Secure Line", description: `Calling Captain ${driverProfile?.name || '...'}` })}><Phone className="w-4 h-4 mr-2" /> Call</Button>
                   <Button variant="outline" className="flex-1 border-navy font-bold uppercase text-xs" onClick={() => toast({ title: "Messaging Subsystem", description: "Opening encrypted chat..." })}><MessageSquare className="w-4 h-4 mr-2" /> Chat</Button>
                 </div>
-                <Button variant="destructive" className="w-full mt-4 font-bold uppercase text-xs opacity-50">Cancel Mission</Button>
+
+                {(currentRide.status === "Requested" || currentRide.status === "Accepted") && (
+                  <Button 
+                    variant="destructive" 
+                    className="w-full mt-4 font-bold uppercase text-xs"
+                    onClick={() => handleCancelRide(currentRide.id)}
+                  >
+                    <XCircle className="w-4 h-4 mr-2" />
+                    Cancel Mission
+                  </Button>
+                )}
               </motion.div>
             )}
           </CardContent>
