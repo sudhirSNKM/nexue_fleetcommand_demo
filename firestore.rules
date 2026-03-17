@@ -8,15 +8,16 @@ service cloud.firestore {
     }
 
     function getProfile() {
-      return get(/databases/$(database)/documents/userProfiles/$(request.auth.uid)).data;
+      // Safer retrieval of user profile document
+      return get(/databases/$(database)/documents/userProfiles/$(request.auth.uid));
     }
 
     function isSuperAdmin() {
-      return isSignedIn() && getProfile().role == "Super Admin";
+      return isSignedIn() && getProfile().data.role == "Super Admin";
     }
 
     function isAdmin() {
-      return isSignedIn() && (getProfile().role == "Admin" || getProfile().role == "Super Admin");
+      return isSignedIn() && (getProfile().data.role == "Admin" || getProfile().data.role == "Super Admin");
     }
 
     match /userProfiles/{userId} {
@@ -35,8 +36,17 @@ service cloud.firestore {
     }
 
     match /driverShifts/{shiftId} {
-      allow read: if isSignedIn();
-      allow write: if isSignedIn() && (isAdmin() || resource.data.driverId == request.auth.uid);
+      // Allow read if user is Admin OR if the driver is reading their own shift
+      allow read: if isAdmin() || (isSignedIn() && request.auth.uid == resource.data.driverId);
+      
+      // Allow creation if user is Admin OR if the driver is creating their own shift entry
+      allow create: if isAdmin() || (isSignedIn() && request.auth.uid == request.resource.data.driverId);
+      
+      // Allow updates if user is Admin OR if the driver is updating their own shift (e.g., punching out)
+      allow update: if isAdmin() || (isSignedIn() && request.auth.uid == resource.data.driverId);
+      
+      // Only Admins can delete shift records
+      allow delete: if isAdmin();
     }
 
     match /driverLocations/{driverId} {
