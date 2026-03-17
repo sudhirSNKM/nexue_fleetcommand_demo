@@ -38,27 +38,6 @@
         "createdAt": { "type": "string", "format": "date-time" }
       },
       "required": ["id", "passengerId", "serviceType", "vehicleType", "pickup", "dropoff", "fare", "status"]
-    },
-    "Vehicle": {
-      "title": "Vehicle",
-      "type": "object",
-      "properties": {
-        "id": { "type": "string" },
-        "type": { "type": "string" },
-        "status": { "type": "string" },
-        "driverId": { "type": "string" },
-        "fuelLevel": { "type": "number" },
-        "lastServiceDate": { "type": "string" }
-      }
-    },
-    "AuditLog": {
-      "title": "AuditLog",
-      "type": "object",
-      "properties": {
-        "userId": { "type": "string" },
-        "action": { "type": "string" },
-        "timestamp": { "type": "string", "format": "date-time" }
-      }
     }
   },
   "auth": {

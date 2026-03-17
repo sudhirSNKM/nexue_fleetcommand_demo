@@ -40,7 +40,7 @@ export default function RegisterPage() {
         id: user.uid,
         name,
         email,
-        role, // standard kebab-case roles: passenger, driver, admin, super-admin
+        role, // Standardized roles: passenger, driver, admin, super-admin
         status: role === "driver" ? "Offline" : "Active",
         walletBalance: role === "passenger" ? 500 : 0,
         rating: 5.0,

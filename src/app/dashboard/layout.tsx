@@ -169,8 +169,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 </Button>
               </SheetTrigger>
               <SheetContent side="left" className={cn("p-0 w-64 border-r", isMobilityUser ? "bg-white" : "bg-charcoal border-navy/20")}>
-                <SheetTitle>Platform Navigation</SheetTitle>
-                <SheetDescription>Access tactical terminals and account controls</SheetDescription>
+                <SheetTitle className="sr-only">Platform Navigation</SheetTitle>
+                <SheetDescription className="sr-only">Access tactical terminals and account controls</SheetDescription>
                 <SidebarContent />
               </SheetContent>
             </Sheet>
