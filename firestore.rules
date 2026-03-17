@@ -12,14 +12,30 @@ service cloud.firestore {
     }
 
     match /userProfiles/{userId} {
-      allow read: if isSignedIn() && (request.auth.uid == userId || isAdmin());
-      allow write: if isSignedIn() && (request.auth.uid == userId || isAdmin());
+      // Allow users to manage their own profile
+      allow read, write: if isSignedIn() && request.auth.uid == userId;
+      // Allow admins to manage all profiles
+      allow read, write: if isAdmin();
     }
 
     match /rides/{rideId} {
-      // TEMPORARY DEBUG: Allow read/write for all to confirm matching engine logic
-      // REVERT TO OWNERSHIP RULES IN PRODUCTION
-      allow read, write: if true;
+      // Allow individual gets and filtered lists based on ownership or status
+      allow read: if isSignedIn() && (
+        request.auth.uid == resource.data.passengerId || 
+        request.auth.uid == resource.data.driverId ||
+        resource.data.status == "Requested" ||
+        isAdmin()
+      );
+      
+      // Allow creation for all signed-in units
+      allow create: if isSignedIn();
+      
+      // Allow updates if owner, driver, or admin
+      allow update: if isSignedIn() && (
+        request.auth.uid == resource.data.passengerId || 
+        request.auth.uid == resource.data.driverId ||
+        isAdmin()
+      );
 
       match /messages/{messageId} {
         allow read, write: if isSignedIn();
@@ -37,12 +53,12 @@ service cloud.firestore {
 
     match /roles_admin/{userId} {
       allow read: if isSignedIn();
-      allow write: if true; 
+      allow write: if false; 
     }
     
     match /roles_super_admin/{userId} {
       allow read: if isSignedIn();
-      allow write: if true;
+      allow write: if false;
     }
     
     match /trips/{tripId} {

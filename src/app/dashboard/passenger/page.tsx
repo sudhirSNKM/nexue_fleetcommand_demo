@@ -122,14 +122,14 @@ export default function PassengerApp() {
           <CardHeader className="pb-2">
             {!currentRide && (
               <Tabs value={activeService} onValueChange={setActiveService} className="w-full">
-                <TabsList className="grid grid-cols-3 bg-navy border-2 border-white/20 p-1 h-20">
+                <TabsList className="grid grid-cols-3 bg-navy border-2 border-white/30 p-1 h-24">
                   {SERVICES.map(s => (
                     <TabsTrigger 
                       key={s.id} 
                       value={s.id} 
-                      className="text-[12px] font-black uppercase text-white data-[state=active]:text-white data-[state=active]:bg-orange data-[state=active]:shadow-[0_0_15px_rgba(255,128,0,0.5)] transition-all flex flex-col items-center justify-center gap-1"
+                      className="text-[14px] font-black uppercase text-white/90 data-[state=active]:text-white data-[state=active]:bg-orange data-[state=active]:shadow-[0_0_20px_rgba(255,128,0,0.6)] transition-all flex flex-col items-center justify-center gap-2 py-4 h-full"
                     >
-                      <s.icon className="w-5 h-5" /> 
+                      <s.icon className="w-6 h-6" /> 
                       <span className="truncate">{s.name}</span>
                     </TabsTrigger>
                   ))}
@@ -145,26 +145,26 @@ export default function PassengerApp() {
               <>
                 <div className="space-y-3 relative">
                   <div className="relative">
-                    <Label className="text-[10px] font-black text-white uppercase ml-1 mb-1 block">Origin</Label>
+                    <Label className="text-[11px] font-black text-white uppercase ml-1 mb-2 block">Origin Point</Label>
                     <div className="relative">
                       <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-active" />
                       <Input 
                         placeholder="Pickup Location" 
                         value={pickup} 
                         onChange={e => setPickup(e.target.value)} 
-                        className="pl-10 bg-navy/80 border-navy text-sm text-white placeholder:text-white/50 font-black h-12" 
+                        className="pl-10 bg-navy/80 border-navy text-sm text-white placeholder:text-white/40 font-black h-12" 
                       />
                     </div>
                   </div>
                   <div className="relative">
-                    <Label className="text-[10px] font-black text-white uppercase ml-1 mb-1 block">Target</Label>
+                    <Label className="text-[11px] font-black text-white uppercase ml-1 mb-2 block">Target Destination</Label>
                     <div className="relative">
                       <Navigation className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-emergency" />
                       <Input 
                         placeholder="Dropoff Destination" 
                         value={dropoff} 
                         onChange={e => setDropoff(e.target.value)} 
-                        className="pl-10 bg-navy/80 border-navy text-sm text-white placeholder:text-white/50 font-black h-12" 
+                        className="pl-10 bg-navy/80 border-navy text-sm text-white placeholder:text-white/40 font-black h-12" 
                       />
                     </div>
                   </div>
@@ -190,7 +190,7 @@ export default function PassengerApp() {
                       </div>
                       <div className="bg-navy/80 p-5 rounded-xl border-2 border-white/10 flex justify-between items-center mt-2 shadow-inner">
                         <div>
-                          <p className="text-[10px] font-black text-white uppercase tracking-widest mb-1">Estimated Credits</p>
+                          <p className="text-[11px] font-black text-white uppercase tracking-widest mb-1">Estimated credits</p>
                           <p className="text-3xl font-black text-orange">₹{currentFare}</p>
                         </div>
                         <Button 
@@ -258,11 +258,11 @@ export default function PassengerApp() {
 
         <div className="grid grid-cols-2 gap-4">
           <Card className="glass-panel passenger-card p-5 text-center border-2 border-white/10 bg-navy/40">
-            <p className="text-[10px] uppercase font-black text-white/80 mb-1 tracking-widest">Operator Rep</p>
+            <p className="text-[10px] uppercase font-black text-white mb-1 tracking-widest">Operator Rep</p>
             <p className="text-3xl font-black text-white">{profile?.rating ? profile.rating.toFixed(1) : '5.0'}</p>
           </Card>
           <Card className="glass-panel passenger-card p-5 text-center border-2 border-white/10 bg-navy/40">
-            <p className="text-[10px] uppercase font-black text-white/80 mb-1 tracking-widest">Nexus Credits</p>
+            <p className="text-[10px] uppercase font-black text-white mb-1 tracking-widest">Nexus Credits</p>
             <p className="text-3xl font-black text-active">₹{profile?.walletBalance || 0}</p>
           </Card>
         </div>
