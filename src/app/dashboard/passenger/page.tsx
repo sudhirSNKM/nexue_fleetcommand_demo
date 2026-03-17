@@ -1,9 +1,9 @@
 
 "use client"
 
-import React, { useState } from "react"
+import React, { useState, useMemo } from "react"
 import { motion, AnimatePresence } from "framer-motion"
-import { MapPin, Navigation, CreditCard, Star, Search, Car, Phone, MessageSquare, CheckCircle2, XCircle } from "lucide-react"
+import { MapPin, Navigation, CreditCard, Star, Search, Car, Phone, MessageSquare, CheckCircle2, XCircle, Bike, Zap, ArrowUpCircle } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -11,6 +11,13 @@ import TacticalMap from "@/components/dashboard/TacticalMap"
 import { useUser, useFirestore, useCollection, useMemoFirebase, useDoc, updateDocumentNonBlocking } from "@/firebase"
 import { collection, query, where, addDoc, serverTimestamp, doc, increment } from "firebase/firestore"
 import { useToast } from "@/hooks/use-toast"
+import { cn } from "@/lib/utils"
+
+const VEHICLE_TYPES = [
+  { id: 'Bike', name: 'Bike', icon: Bike, baseRate: 10, minFare: 30 },
+  { id: 'Auto', name: 'Auto', icon: Zap, baseRate: 15, minFare: 50 },
+  { id: 'Cab', name: 'Cab', icon: Car, baseRate: 25, minFare: 80 }
+]
 
 export default function PassengerApp() {
   const { user } = useUser()
@@ -18,8 +25,12 @@ export default function PassengerApp() {
   const { toast } = useToast()
   const [pickup, setPickup] = useState("")
   const [dropoff, setDropoff] = useState("")
+  const [selectedVehicle, setSelectedVehicle] = useState('Bike')
+  
+  // Simulated distance between 3 and 10 km
+  const mockDistance = useMemo(() => Math.floor(Math.random() * 7) + 3, [pickup, dropoff])
 
-  // Fetch Passenger Profile for Wallet and Rating
+  // Fetch Passenger Profile
   const userProfileRef = useMemoFirebase(() => {
     if (!user || !db) return null
     return doc(db, "userProfiles", user.uid)
@@ -48,19 +59,35 @@ export default function PassengerApp() {
 
   const { data: driverProfile } = useDoc(driverProfileRef)
 
+  const currentFare = useMemo(() => {
+    const vehicle = VEHICLE_TYPES.find(v => v.id === selectedVehicle)
+    if (!vehicle) return 0
+    return Math.max(vehicle.minFare, mockDistance * vehicle.baseRate)
+  }, [selectedVehicle, mockDistance])
+
   const handleBookRide = async () => {
     if (!user || !db) return
-    const estimatedFare = Math.floor(Math.random() * 100) + 150 // Randomized for demo
     
     addDoc(collection(db, "rides"), {
       passengerId: user.uid,
       pickup: { address: pickup || "Current Location", lat: 12.9716, lng: 77.5946 },
       dropoff: { address: dropoff || "Electronic City", lat: 12.8452, lng: 77.6632 },
       status: "Requested",
-      fare: estimatedFare,
+      vehicleType: selectedVehicle,
+      distance: mockDistance,
+      fare: currentFare,
       createdAt: serverTimestamp()
     })
-    toast({ title: "Ride Requested", description: "Locating the nearest captain..." })
+    toast({ title: "Ride Requested", description: `Locating the nearest ${selectedVehicle} captain...` })
+  }
+
+  const handleBoostFare = () => {
+    if (!currentRide || !db) return
+    const rideRef = doc(db, "rides", currentRide.id)
+    updateDocumentNonBlocking(rideRef, {
+      fare: increment(20)
+    })
+    toast({ title: "Offer Boosted", description: "Incentive increased by ₹20 to attract captains faster." })
   }
 
   const handleCancelRide = (rideId: string) => {
@@ -82,13 +109,11 @@ export default function PassengerApp() {
     const rideRef = doc(db, "rides", rideId)
     const userRef = doc(db, "userProfiles", user.uid)
 
-    // Update ride status
     updateDocumentNonBlocking(rideRef, { 
       status: "Paid", 
       paymentMethod: method 
     })
 
-    // If paying via wallet, deduct amount
     if (method === 'Wallet') {
       updateDocumentNonBlocking(userRef, {
         walletBalance: increment(-amount)
@@ -113,7 +138,8 @@ export default function PassengerApp() {
         <Card className="glass-panel border-t-4 border-orange">
           <CardHeader>
             <CardTitle className="text-xl font-black uppercase tracking-tighter">
-              {currentRide?.status === "Completed" ? "Mission Complete" : "Where to?"}
+              {currentRide?.status === "Completed" ? "Mission Complete" : 
+               currentRide?.status === "Requested" ? "Seeking Captain" : "Where to?"}
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -140,18 +166,37 @@ export default function PassengerApp() {
                     />
                   </div>
                 </div>
+
+                <div className="grid grid-cols-3 gap-2 py-2">
+                  {VEHICLE_TYPES.map((v) => (
+                    <button
+                      key={v.id}
+                      onClick={() => setSelectedVehicle(v.id)}
+                      className={cn(
+                        "flex flex-col items-center justify-center p-3 rounded-xl border transition-all",
+                        selectedVehicle === v.id 
+                          ? "bg-orange/20 border-orange text-orange shadow-[0_0_15px_rgba(255,128,0,0.2)]" 
+                          : "bg-navy/20 border-navy text-muted-foreground hover:border-orange/50"
+                      )}
+                    >
+                      <v.icon className="w-6 h-6 mb-1" />
+                      <span className="text-[10px] font-black uppercase">{v.name}</span>
+                    </button>
+                  ))}
+                </div>
+
                 <div className="bg-navy/10 p-4 rounded-lg border border-white/5 mb-4">
                    <div className="flex justify-between items-center mb-2">
-                      <span className="text-xs font-bold uppercase text-muted-foreground">Estimated Fare</span>
-                      <span className="text-lg font-black text-orange">₹154.00</span>
+                      <span className="text-xs font-bold uppercase text-muted-foreground">Est. Fare ({mockDistance}km)</span>
+                      <span className="text-lg font-black text-orange">₹{currentFare}</span>
                    </div>
-                   <p className="text-[10px] text-muted-foreground uppercase font-bold">Standard Bike • 12 mins est.</p>
+                   <p className="text-[10px] text-muted-foreground uppercase font-bold">{selectedVehicle} Protocol • Fast Dispatch</p>
                 </div>
                 <Button 
                   onClick={handleBookRide}
                   className="w-full bg-orange hover:bg-orange/90 h-14 font-black uppercase tracking-widest text-lg"
                 >
-                  Request Ride
+                  Request {selectedVehicle}
                 </Button>
               </>
             ) : currentRide.status === "Completed" ? (
@@ -183,20 +228,36 @@ export default function PassengerApp() {
               >
                 <div className="text-center mb-6">
                   <div className="w-16 h-16 bg-orange rounded-full flex items-center justify-center mx-auto mb-4 animate-bounce shadow-[0_0_20px_rgba(255,128,0,0.4)]">
-                    <Car className="w-8 h-8 text-white" />
+                    {currentRide.vehicleType === 'Bike' ? <Bike className="w-8 h-8 text-white" /> : <Car className="w-8 h-8 text-white" />}
                   </div>
                   <h3 className="text-lg font-black uppercase tracking-tighter mb-1">Ride {currentRide.status}</h3>
-                  {driverProfile && (
+                  <p className="text-xl font-black text-orange mb-2">₹{currentRide.fare}</p>
+                  
+                  {driverProfile ? (
                     <p className="text-xs text-orange font-black uppercase tracking-[0.2em] mb-4">
                       Captain: {driverProfile.name} • ID: {driverProfile.id.substring(0, 6)}
                     </p>
+                  ) : (
+                    <div className="space-y-4">
+                      <p className="text-[10px] text-muted-foreground uppercase font-bold animate-pulse">Scanning for nearby {currentRide.vehicleType} operators...</p>
+                      <Button 
+                        onClick={handleBoostFare}
+                        variant="outline"
+                        className="w-full border-orange text-orange hover:bg-orange/10 font-black uppercase text-xs"
+                      >
+                        <ArrowUpCircle className="w-4 h-4 mr-2" />
+                        Boost Offer (+₹20)
+                      </Button>
+                    </div>
                   )}
                 </div>
                 
-                <div className="flex gap-2">
-                  <Button variant="outline" className="flex-1 border-navy font-bold uppercase text-xs" onClick={() => toast({ title: "Secure Line", description: `Calling Captain ${driverProfile?.name || '...'}` })}><Phone className="w-4 h-4 mr-2" /> Call</Button>
-                  <Button variant="outline" className="flex-1 border-navy font-bold uppercase text-xs" onClick={() => toast({ title: "Messaging Subsystem", description: "Opening encrypted chat..." })}><MessageSquare className="w-4 h-4 mr-2" /> Chat</Button>
-                </div>
+                {driverProfile && (
+                  <div className="flex gap-2">
+                    <Button variant="outline" className="flex-1 border-navy font-bold uppercase text-xs" onClick={() => toast({ title: "Secure Line", description: `Calling Captain ${driverProfile?.name || '...'}` })}><Phone className="w-4 h-4 mr-2" /> Call</Button>
+                    <Button variant="outline" className="flex-1 border-navy font-bold uppercase text-xs" onClick={() => toast({ title: "Messaging Subsystem", description: "Opening encrypted chat..." })}><MessageSquare className="w-4 h-4 mr-2" /> Chat</Button>
+                  </div>
+                )}
 
                 {(currentRide.status === "Requested" || currentRide.status === "Accepted") && (
                   <Button 

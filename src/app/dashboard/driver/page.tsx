@@ -3,7 +3,7 @@
 
 import React, { useMemo } from "react"
 import { motion, AnimatePresence } from "framer-motion"
-import { Navigation, Power, AlertCircle, Phone, MessageSquare, CreditCard, Star } from "lucide-react"
+import { Navigation, Power, AlertCircle, Phone, MessageSquare, CreditCard, Star, Bike, Car, Zap } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -35,6 +35,7 @@ export default function DriverApp() {
 
   const { data: dailyStats } = useDoc(statsRef)
 
+  // Drivers only see requests matching their vehicle type or all requests for demo
   const activeRidesQuery = useMemoFirebase(() => {
     if (!user || !db) return null
     return query(collection(db, "rides"), where("status", "==", "Requested"))
@@ -126,7 +127,7 @@ export default function DriverApp() {
                 >
                   <div className="flex justify-between items-start">
                     <div>
-                      <Badge className="bg-orange/20 text-orange mb-2">RIDE IN PROGRESS</Badge>
+                      <Badge className="bg-orange/20 text-orange mb-2 uppercase">{activeRide.vehicleType} MISSION</Badge>
                       <h3 className="text-lg font-black uppercase">{activeRide.pickup.address}</h3>
                     </div>
                     <div className="text-right">
@@ -170,23 +171,31 @@ export default function DriverApp() {
               ) : isOnline ? (
                 <motion.div key="online" className="text-center py-12 space-y-4">
                   <div className="w-20 h-20 rounded-full border-4 border-active/30 border-t-active animate-spin mx-auto" />
-                  <p className="text-xs font-black uppercase tracking-widest text-active">Waiting for requests...</p>
+                  <p className="text-xs font-black uppercase tracking-widest text-active">Scanning for requests...</p>
                   
                   {pendingRides && pendingRides.length > 0 && (
                     <div className="pt-8 space-y-4">
-                      <h4 className="text-[10px] font-black uppercase text-muted-foreground tracking-[0.2em]">New Request Nearby</h4>
-                      <Card className="bg-navy/20 border-orange/30 p-4 text-left">
-                        <div className="flex justify-between items-start mb-3">
-                          <p className="text-sm font-bold">{pendingRides[0].pickup.address}</p>
-                          <span className="text-orange font-black">₹{pendingRides[0].fare}</span>
-                        </div>
-                        <Button 
-                          onClick={() => handleAcceptRide(pendingRides[0].id)}
-                          className="w-full bg-orange font-black uppercase text-xs"
-                        >
-                          Accept Ride
-                        </Button>
-                      </Card>
+                      <h4 className="text-[10px] font-black uppercase text-muted-foreground tracking-[0.2em]">Live Incoming Requests</h4>
+                      {pendingRides.map(ride => (
+                        <Card key={ride.id} className="bg-navy/20 border-orange/30 p-4 text-left">
+                          <div className="flex justify-between items-start mb-3">
+                            <div>
+                              <p className="text-[9px] font-black text-orange uppercase mb-1">{ride.vehicleType}</p>
+                              <p className="text-sm font-bold truncate max-w-[150px]">{ride.pickup.address}</p>
+                            </div>
+                            <div className="text-right">
+                              <span className="text-orange font-black block">₹{ride.fare}</span>
+                              <span className="text-[8px] text-muted-foreground font-bold uppercase">{ride.distance}km</span>
+                            </div>
+                          </div>
+                          <Button 
+                            onClick={() => handleAcceptRide(ride.id)}
+                            className="w-full bg-orange font-black uppercase text-xs"
+                          >
+                            Accept {ride.vehicleType}
+                          </Button>
+                        </Card>
+                      ))}
                     </div>
                   )}
                 </motion.div>

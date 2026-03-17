@@ -19,6 +19,8 @@
             "plate": { "type": "string" }
           }
         },
+        "walletBalance": { "type": "number" },
+        "rating": { "type": "number" },
         "createdAt": { "type": "string", "format": "date-time" }
       },
       "required": ["id", "name", "email", "role"]
@@ -49,12 +51,13 @@
         },
         "status": { "type": "string", "enum": ["Requested", "Accepted", "Arrived", "InProgress", "Completed", "Cancelled", "Paid"] },
         "fare": { "type": "number" },
-        "paymentMethod": { "type": "string" },
+        "vehicleType": { "type": "string", "enum": ["Bike", "Auto", "Cab"] },
         "distance": { "type": "number" },
+        "paymentMethod": { "type": "string" },
         "startTime": { "type": "string", "format": "date-time" },
         "endTime": { "type": "string", "format": "date-time" }
       },
-      "required": ["id", "passengerId", "status", "pickup", "dropoff"]
+      "required": ["id", "passengerId", "status", "pickup", "dropoff", "fare", "vehicleType"]
     },
     "ChatMessage": {
       "title": "ChatMessage",
