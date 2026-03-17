@@ -51,7 +51,6 @@ export default function PassengerApp() {
   const userProfileRef = useMemoFirebase(() => user && db ? doc(db, "userProfiles", user.uid) : null, [user, db])
   const { data: profile } = useDoc(userProfileRef)
 
-  // SECURITY FIX: Query must be filtered by passengerId to match ownership rules
   const activeRidesQuery = useMemoFirebase(() => {
     if (!user || !db) return null
     return query(
@@ -119,7 +118,7 @@ export default function PassengerApp() {
       </div>
 
       <div className="space-y-6">
-        <Card className="glass-panel passenger-card border-t-4 border-orange">
+        <Card className="glass-panel passenger-card border-t-4 border-orange bg-card/90">
           <CardHeader className="pb-2">
             {!currentRide && (
               <Tabs value={activeService} onValueChange={setActiveService} className="w-full">
@@ -137,7 +136,7 @@ export default function PassengerApp() {
                 </TabsList>
               </Tabs>
             )}
-            <CardTitle className="text-xl font-black uppercase tracking-tighter mt-6 text-white text-center">
+            <CardTitle className="text-2xl font-black uppercase tracking-tighter mt-6 text-white text-center">
               {currentRide ? `${currentRide.serviceType} Protocol` : "Initialize Mission"}
             </CardTitle>
           </CardHeader>
@@ -146,26 +145,26 @@ export default function PassengerApp() {
               <>
                 <div className="space-y-3 relative">
                   <div className="relative">
-                    <Label className="text-[11px] font-black text-white uppercase ml-1 mb-2 block tracking-widest">Origin Point</Label>
+                    <Label className="text-[12px] font-black text-white uppercase ml-1 mb-2 block tracking-widest opacity-100">Origin Point</Label>
                     <div className="relative">
                       <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-active" />
                       <Input 
                         placeholder="Pickup Location" 
                         value={pickup} 
                         onChange={e => setPickup(e.target.value)} 
-                        className="pl-10 bg-navy/80 border-navy text-sm text-white placeholder:text-white/40 font-black h-12" 
+                        className="pl-10 bg-navy/80 border-navy text-sm text-white placeholder:text-white/60 font-black h-12" 
                       />
                     </div>
                   </div>
                   <div className="relative">
-                    <Label className="text-[11px] font-black text-white uppercase ml-1 mb-2 block tracking-widest">Target Destination</Label>
+                    <Label className="text-[12px] font-black text-white uppercase ml-1 mb-2 block tracking-widest opacity-100">Target Destination</Label>
                     <div className="relative">
                       <Navigation className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-emergency" />
                       <Input 
                         placeholder="Dropoff Destination" 
                         value={dropoff} 
                         onChange={e => setDropoff(e.target.value)} 
-                        className="pl-10 bg-navy/80 border-navy text-sm text-white placeholder:text-white/40 font-black h-12" 
+                        className="pl-10 bg-navy/80 border-navy text-sm text-white placeholder:text-white/60 font-black h-12" 
                       />
                     </div>
                   </div>
@@ -224,7 +223,7 @@ export default function PassengerApp() {
                    <div className="absolute top-0 left-0 w-full h-2 bg-orange/20">
                      <motion.div animate={{ x: ["-100%", "100%"] }} transition={{ duration: 1.5, repeat: Infinity }} className="w-1/3 h-full bg-orange shadow-[0_0_10px_#FF8000]" />
                    </div>
-                   <p className="text-xs font-black text-orange uppercase tracking-[0.3em] mb-4 drop-shadow-[0_0_5px_rgba(255,128,0,0.5)]">{currentRide.status}</p>
+                   <p className="text-sm font-black text-orange uppercase tracking-[0.3em] mb-4 drop-shadow-[0_0_5px_rgba(255,128,0,0.5)]">{currentRide.status}</p>
                    {driverProfile ? (
                      <div className="space-y-4">
                        <div className="w-24 h-24 rounded-full bg-navy/80 mx-auto ring-4 ring-orange/40 flex items-center justify-center overflow-hidden shadow-2xl">
@@ -258,12 +257,12 @@ export default function PassengerApp() {
         </Card>
 
         <div className="grid grid-cols-2 gap-4">
-          <Card className="glass-panel passenger-card p-5 text-center border-2 border-white/10 bg-navy/40">
-            <p className="text-[10px] uppercase font-black text-white mb-1 tracking-widest">Operator Rep</p>
+          <Card className="glass-panel passenger-card p-5 text-center border-2 border-white/20 bg-navy/60">
+            <p className="text-[11px] uppercase font-black text-white mb-1 tracking-widest">Operator Rep</p>
             <p className="text-3xl font-black text-white">{profile?.rating ? profile.rating.toFixed(1) : '5.0'}</p>
           </Card>
-          <Card className="glass-panel passenger-card p-5 text-center border-2 border-white/10 bg-navy/40">
-            <p className="text-[10px] uppercase font-black text-white mb-1 tracking-widest">Nexus Credits</p>
+          <Card className="glass-panel passenger-card p-5 text-center border-2 border-white/20 bg-navy/60">
+            <p className="text-[11px] uppercase font-black text-white mb-1 tracking-widest">Nexus Credits</p>
             <p className="text-3xl font-black text-active">₹{profile?.walletBalance || 0}</p>
           </Card>
         </div>

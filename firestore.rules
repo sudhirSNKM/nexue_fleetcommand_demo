@@ -8,17 +8,15 @@ service cloud.firestore {
 
     match /userProfiles/{userId} {
       // Users can manage their own profiles.
-      // We also allow reading other profiles if signed in so passengers/drivers can see each other's ratings.
-      allow read: if isSignedIn();
-      allow write: if isSignedIn() && request.auth.uid == userId;
+      allow read, write: if isSignedIn() && request.auth.uid == userId;
     }
 
     match /rides/{rideId} {
-      // Only the passenger, the assigned driver, or discovery of new requests
+      // Simple ownership-based rules
       allow read: if isSignedIn() && (
         request.auth.uid == resource.data.passengerId ||
         request.auth.uid == resource.data.driverId ||
-        resource.data.status == "Requested"
+        resource.data.status == "Requested" // Allow discovery for drivers
       );
 
       allow create: if isSignedIn();
