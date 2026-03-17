@@ -122,12 +122,12 @@ export default function PassengerApp() {
           <CardHeader className="pb-2">
             {!currentRide && (
               <Tabs value={activeService} onValueChange={setActiveService} className="w-full">
-                <TabsList className="grid grid-cols-3 bg-navy border-2 border-white/30 p-1 h-24">
+                <TabsList className="grid grid-cols-3 bg-navy border-2 border-white/20 p-1 h-24">
                   {SERVICES.map(s => (
                     <TabsTrigger 
                       key={s.id} 
                       value={s.id} 
-                      className="text-[14px] font-black uppercase text-white/90 data-[state=active]:text-white data-[state=active]:bg-orange data-[state=active]:shadow-[0_0_20px_rgba(255,128,0,0.6)] transition-all flex flex-col items-center justify-center gap-2 py-4 h-full"
+                      className="text-white font-black uppercase text-xs data-[state=active]:text-white data-[state=active]:bg-orange data-[state=active]:shadow-[0_0_25px_rgba(255,128,0,0.8)] transition-all flex flex-col items-center justify-center gap-2 py-4 h-full"
                     >
                       <s.icon className="w-6 h-6" /> 
                       <span className="truncate">{s.name}</span>
@@ -145,7 +145,7 @@ export default function PassengerApp() {
               <>
                 <div className="space-y-3 relative">
                   <div className="relative">
-                    <Label className="text-[11px] font-black text-white uppercase ml-1 mb-2 block">Origin Point</Label>
+                    <Label className="text-[11px] font-black text-white uppercase ml-1 mb-2 block tracking-widest">Origin Point</Label>
                     <div className="relative">
                       <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-active" />
                       <Input 
@@ -157,7 +157,7 @@ export default function PassengerApp() {
                     </div>
                   </div>
                   <div className="relative">
-                    <Label className="text-[11px] font-black text-white uppercase ml-1 mb-2 block">Target Destination</Label>
+                    <Label className="text-[11px] font-black text-white uppercase ml-1 mb-2 block tracking-widest">Target Destination</Label>
                     <div className="relative">
                       <Navigation className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-emergency" />
                       <Input 
@@ -272,5 +272,5 @@ export default function PassengerApp() {
 }
 
 function Label({ className, children }: { className?: string, children: React.ReactNode }) {
-  return <label className={cn("text-sm font-medium leading-none", className)}>{children}</label>
+  return <label className={cn("text-sm font-black leading-none", className)}>{children}</label>
 }
