@@ -196,8 +196,8 @@ export default function PassengerApp() {
               </>
             ) : (
               <div className="space-y-6 pt-4">
-                <div className="text-center p-8 bg-slate-50 rounded-2xl border-2 border-slate-200 relative overflow-hidden shadow-sm">
-                   <div className="absolute top-0 left-0 w-full h-1 bg-slate-200">
+                <div className="text-center p-8 bg-white rounded-2xl border-2 border-slate-100 relative overflow-hidden shadow-sm">
+                   <div className="absolute top-0 left-0 w-full h-1 bg-slate-100">
                      <motion.div animate={{ x: ["-100%", "100%"] }} transition={{ duration: 1.5, repeat: Infinity }} className="w-1/3 h-full bg-orange" />
                    </div>
                    <p className="text-[10px] font-black text-orange uppercase tracking-[0.2em] mb-4">{currentRide.status}</p>
@@ -222,8 +222,12 @@ export default function PassengerApp() {
                    )}
                 </div>
                 <div className="grid grid-cols-2 gap-3">
-                  <Button variant="outline" className="border-slate-300 text-[10px] uppercase font-black h-12 text-slate-900 hover:bg-slate-100 shadow-sm"><Phone className="w-4 h-4 mr-2" /> Comms</Button>
-                  <Button variant="outline" className="border-slate-300 text-[10px] uppercase font-black h-12 text-slate-900 hover:bg-slate-100 shadow-sm"><ShieldAlert className="w-4 h-4 mr-2 text-red-600" /> SOS</Button>
+                  <Button className="bg-slate-900 hover:bg-slate-800 text-white text-[10px] uppercase font-black h-12 shadow-md">
+                    <Phone className="w-4 h-4 mr-2 text-orange" /> Comms
+                  </Button>
+                  <Button className="bg-red-600 hover:bg-red-700 text-white text-[10px] uppercase font-black h-12 shadow-md">
+                    <ShieldAlert className="w-4 h-4 mr-2" /> SOS
+                  </Button>
                 </div>
                 {(currentRide.status === "Requested" || currentRide.status === "Accepted") && (
                   <Button onClick={() => handleCancelRide(currentRide.id)} variant="ghost" className="w-full text-[10px] font-black uppercase h-10 text-slate-400 hover:text-red-600 transition-all">Abort Mission</Button>
