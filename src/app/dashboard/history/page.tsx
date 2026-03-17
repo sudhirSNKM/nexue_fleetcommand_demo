@@ -1,3 +1,4 @@
+
 "use client"
 
 import React, { useState } from "react"
@@ -33,7 +34,7 @@ export default function RideHistoryPage() {
   const role = profile?.role || "Passenger"
   const isMobilityUser = role === "Passenger" || role === "Driver"
 
-  // Filter query by user role and ID to comply with security rules
+  // Filter query by user role and ID to comply with security rules and avoid "list" permission errors
   const ridesQuery = useMemoFirebase(() => {
     if (!user || !db || !profile) return null
     const filterKey = role === "Driver" ? "driverId" : "passengerId"
@@ -107,7 +108,7 @@ export default function RideHistoryPage() {
                     </div>
                     <div className="text-right w-full md:w-auto">
                        <p className={cn("text-2xl font-black", isMobilityUser ? "text-slate-900" : "text-white")}>₹{ride.fare}</p>
-                       <Badge className={cn("text-[10px] font-black uppercase tracking-widest", ride.status === 'Completed' ? 'bg-green-500/10 text-green-600' : 'bg-orange/10 text-orange')}>
+                       <Badge className={cn("text-[10px] font-black uppercase tracking-widest", ride.status === 'Completed' || ride.status === 'Paid' ? 'bg-green-500/10 text-green-600' : 'bg-orange/10 text-orange')}>
                          {ride.status}
                        </Badge>
                     </div>
