@@ -11,18 +11,16 @@ import {
   BrainCircuit, 
   ShieldCheck, 
   TrendingUp, 
-  Info,
-  ChevronRight,
-  IndianRupee,
-  FileText
+  History as HistoryIcon
 } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { useUser, useFirestore, useCollection, useMemoFirebase, useDoc } from "@/firebase"
-import { collection, query, where, orderBy, doc, limit } from "firebase/firestore"
+import { collection, query, where, doc, limit } from "firebase/firestore"
 import { analyzeRoute, type AnalyzeRouteOutput } from "@/ai/flows/route-strategist-flow"
 import { Skeleton } from "@/components/ui/skeleton"
+import { cn } from "@/lib/utils"
 
 export default function RideHistoryPage() {
   const { user } = useUser()
@@ -39,14 +37,13 @@ export default function RideHistoryPage() {
   const { data: profile } = useDoc(userProfileRef)
   const role = profile?.role || "Passenger"
 
-  // REWRITTEN MISSION ARCHIVE QUERY: Explicitly filter by role ID to satisfy Security Rules
+  // MISSION ARCHIVE QUERY: Removed orderBy to bypass index-related permission errors
   const ridesQuery = useMemoFirebase(() => {
     if (!user || !db || !profile) return null
     const filterKey = role === "Driver" ? "driverId" : "passengerId"
     return query(
       collection(db, "rides"),
       where(filterKey, "==", user.uid),
-      orderBy("createdAt", "desc"),
       limit(20)
     )
   }, [user, db, profile, role])
@@ -76,7 +73,7 @@ export default function RideHistoryPage() {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div>
           <h1 className="text-3xl font-black uppercase tracking-tighter flex items-center gap-3 text-white">
-            <History className="w-10 h-10 text-orange" />
+            <HistoryIcon className="w-10 h-10 text-orange" />
             Mission Archives
           </h1>
           <p className="text-sm text-white/70 font-bold uppercase tracking-[0.2em] mt-1">Operational History & Tactical Auditing</p>
@@ -99,7 +96,7 @@ export default function RideHistoryPage() {
           {isLoading ? (
             [1, 2, 3].map(i => (
               <Card key={i} className="glass-panel p-6">
-                <Skeleton className="h-20 w-full bg-navy/20" />
+                <Skeleton className="h-24 w-full bg-navy/20" />
               </Card>
             ))
           ) : rides && rides.length > 0 ? (
@@ -114,7 +111,7 @@ export default function RideHistoryPage() {
                       <div>
                         <p className="text-[10px] font-black uppercase text-orange tracking-widest">{ride.vehicleType} PROTOCOL</p>
                         <p className="text-xs font-bold text-white/80">
-                          {ride.createdAt?.toDate?.()?.toLocaleDateString()} • {ride.createdAt?.toDate?.()?.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+                          ID: {ride.id.substring(0, 8).toUpperCase()}
                         </p>
                       </div>
                     </div>
@@ -131,14 +128,14 @@ export default function RideHistoryPage() {
                       <MapPin className="w-4 h-4 text-active shrink-0 mt-0.5" />
                       <div>
                         <p className="text-[9px] font-black text-white/40 uppercase">Origin</p>
-                        <p className="text-xs font-bold text-white/90 truncate max-w-[250px]">{ride.pickup.address}</p>
+                        <p className="text-xs font-bold text-white/90 truncate max-w-[250px]">{ride.pickup?.address || 'N/A'}</p>
                       </div>
                     </div>
                     <div className="flex gap-3">
                       <Navigation className="w-4 h-4 text-emergency shrink-0 mt-0.5" />
                       <div>
                         <p className="text-[9px] font-black text-white/40 uppercase">Target</p>
-                        <p className="text-xs font-bold text-white/90 truncate max-w-[250px]">{ride.dropoff.address}</p>
+                        <p className="text-xs font-bold text-white/90 truncate max-w-[250px]">{ride.dropoff?.address || 'N/A'}</p>
                       </div>
                     </div>
                   </div>
@@ -174,7 +171,7 @@ export default function RideHistoryPage() {
             ))
           ) : (
             <Card className="glass-panel p-20 text-center border-dashed border-white/10">
-              <History className="w-12 h-12 mx-auto text-white/10 mb-4" />
+              <HistoryIcon className="w-12 h-12 mx-auto text-white/10 mb-4" />
               <h3 className="text-xl font-black uppercase text-white mb-2">Logs Cleared</h3>
               <p className="text-xs font-bold text-white/40 uppercase tracking-widest">No previous deployments archived in this sector</p>
             </Card>
@@ -200,7 +197,7 @@ export default function RideHistoryPage() {
                 </div>
                 <div className="pt-4 border-t border-white/5">
                    <p className="text-[10px] font-bold text-white/40 uppercase leading-relaxed">
-                     Your tactical performance is optimal. 0% deviation detected in last 20 missions.
+                     Your tactical performance is optimal. No deviations detected in mission logs.
                    </p>
                 </div>
              </CardContent>

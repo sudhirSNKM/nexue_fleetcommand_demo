@@ -115,12 +115,12 @@ export default function PassengerApp() {
           <CardHeader className="pb-2">
             {!currentRide && (
               <Tabs value={activeService} onValueChange={setActiveService} className="w-full">
-                <TabsList className="grid grid-cols-3 bg-navy/80 border-2 border-white/20 p-1 h-24">
+                <TabsList className="grid grid-cols-3 bg-navy/90 border-2 border-white/20 p-1 h-24">
                   {SERVICES.map(s => (
                     <TabsTrigger 
                       key={s.id} 
                       value={s.id} 
-                      className="text-white/60 font-black uppercase text-sm data-[state=active]:text-white data-[state=active]:bg-orange data-[state=active]:shadow-[0_0_25px_rgba(255,128,0,0.6)] transition-all flex flex-col items-center justify-center gap-2 py-4 h-full"
+                      className="text-white font-black uppercase text-sm data-[state=active]:text-white data-[state=active]:bg-orange data-[state=active]:shadow-[0_0_25px_rgba(255,128,0,0.6)] transition-all flex flex-col items-center justify-center gap-2 py-4 h-full"
                     >
                       <s.icon className="w-8 h-8" /> 
                       <span className="truncate font-black text-white">{s.name}</span>
@@ -173,7 +173,7 @@ export default function PassengerApp() {
                             onClick={() => setSelectedVehicle(v.id)}
                             className={cn(
                               "flex flex-col items-center justify-center p-3 rounded-xl border-2 transition-all",
-                              selectedVehicle === v.id ? "bg-orange/20 border-orange text-orange shadow-[0_0_10px_rgba(255,128,0,0.4)]" : "bg-navy/60 border-white/10 text-white/70 hover:text-white hover:bg-navy/80"
+                              selectedVehicle === v.id ? "bg-orange/20 border-orange text-orange shadow-[0_0_10px_rgba(255,128,0,0.4)]" : "bg-navy/60 border-white/10 text-white hover:text-white hover:bg-navy/80"
                             )}
                           >
                             <v.icon className="w-6 h-6 mb-1" />

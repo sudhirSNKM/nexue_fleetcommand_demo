@@ -10,7 +10,7 @@ import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Shield, Zap, AlertTriangle, Users } from "lucide-react"
 import { useUser, useFirestore, useDoc, useCollection, useMemoFirebase } from "@/firebase"
-import { doc, collection, query, orderBy, limit } from "firebase/firestore"
+import { doc, collection, query, limit } from "firebase/firestore"
 import { cn } from "@/lib/utils"
 
 export default function AdminCommandCenter() {
@@ -23,11 +23,10 @@ export default function AdminCommandCenter() {
 
   const isUserAdmin = profile?.role === "Admin" || profile?.role === "Super Admin"
 
-  // SECURITY FIX: In production rules, admins need a filtered query or explicit "list" permission.
-  // We'll keep the limit small and ensure the profile is loaded.
+  // MISSION MONITORING QUERY: Removed orderBy temporarily to bypass index-related permission errors
   const ridesQuery = useMemoFirebase(() => {
     if (!db || !isUserAdmin) return null
-    return query(collection(db, "rides"), orderBy("createdAt", "desc"), limit(5))
+    return query(collection(db, "rides"), limit(10))
   }, [db, isUserAdmin])
 
   const { data: recentRides } = useCollection(ridesQuery)
@@ -119,7 +118,7 @@ export default function AdminCommandCenter() {
                   <div key={ride.id} className="p-3 hover:bg-navy/10 transition-colors flex items-center justify-between">
                     <div>
                       <p className="text-[10px] font-bold uppercase text-white">{ride.vehicleType}</p>
-                      <p className="text-[8px] text-white/60 truncate w-32">{ride.pickup.address}</p>
+                      <p className="text-[8px] text-white/60 truncate w-32">{ride.pickup?.address || 'Scanning...'}</p>
                     </div>
                     <Badge variant="outline" className="text-[8px] border-orange/50 text-orange">{ride.status}</Badge>
                   </div>
