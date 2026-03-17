@@ -51,7 +51,6 @@ export default function PassengerApp() {
   const userProfileRef = useMemoFirebase(() => user && db ? doc(db, "userProfiles", user.uid) : null, [user, db])
   const { data: profile } = useDoc(userProfileRef)
 
-  // FILTERED QUERY: Explicitly filter by passengerId to satisfy Security Rules
   const activeRidesQuery = useMemoFirebase(() => {
     if (!user || !db) return null
     return query(
@@ -123,14 +122,14 @@ export default function PassengerApp() {
           <CardHeader className="pb-2">
             {!currentRide && (
               <Tabs value={activeService} onValueChange={setActiveService} className="w-full">
-                <TabsList className="grid grid-cols-3 bg-navy/90 border-2 border-white/20 p-1 h-24">
+                <TabsList className="grid grid-cols-3 bg-navy border-2 border-white/20 p-1 h-24">
                   {SERVICES.map(s => (
                     <TabsTrigger 
                       key={s.id} 
                       value={s.id} 
-                      className="text-white font-black uppercase text-sm data-[state=active]:text-white data-[state=active]:bg-orange data-[state=active]:shadow-[0_0_25px_rgba(255,128,0,0.8)] transition-all flex flex-col items-center justify-center gap-2 py-4 h-full"
+                      className="text-white/70 font-black uppercase text-[11px] data-[state=active]:text-white data-[state=active]:bg-orange data-[state=active]:shadow-[0_0_25px_rgba(255,128,0,0.8)] transition-all flex flex-col items-center justify-center gap-2 py-4 h-full"
                     >
-                      <s.icon className="w-7 h-7" /> 
+                      <s.icon className="w-6 h-6" /> 
                       <span className="truncate">{s.name}</span>
                     </TabsTrigger>
                   ))}
@@ -189,7 +188,7 @@ export default function PassengerApp() {
                           </button>
                         ))}
                       </div>
-                      <div className="bg-navy/80 p-5 rounded-xl border-2 border-white/10 flex justify-between items-center mt-2 shadow-inner">
+                      <div className="bg-navy p-5 rounded-xl border-2 border-white/10 flex justify-between items-center mt-2 shadow-inner">
                         <div>
                           <p className="text-[11px] font-black text-white uppercase tracking-widest mb-1">Estimated credits</p>
                           <p className="text-3xl font-black text-orange">₹{currentFare}</p>
@@ -205,19 +204,6 @@ export default function PassengerApp() {
                   )}
                 </AnimatePresence>
               </>
-            ) : currentRide.status === "Completed" ? (
-              <div className="space-y-4 text-center py-6">
-                <CheckCircle2 className="w-16 h-16 text-active mx-auto animate-bounce mb-2" />
-                <h3 className="text-lg font-black uppercase text-white">Mission Finalized</h3>
-                <p className="text-4xl font-black text-active">₹{currentRide.fare}</p>
-                <div className="grid gap-3 pt-4">
-                  <Button onClick={() => handleProcessPayment(currentRide.id, 'Wallet', currentRide.fare)} variant="outline" className="border-navy h-14 justify-between text-white hover:bg-navy/40 px-6 bg-navy/20">
-                    <span className="font-black uppercase text-xs text-white">Nexus Wallet</span> 
-                    <span className="text-active font-black">₹{profile?.walletBalance || 0}</span>
-                  </Button>
-                  <Button onClick={() => handleProcessPayment(currentRide.id, 'Cash', currentRide.fare)} variant="outline" className="border-navy h-14 text-white hover:bg-navy/40 font-black uppercase text-xs bg-navy/20">Settlement via Cash</Button>
-                </div>
-              </div>
             ) : (
               <div className="space-y-6 pt-4">
                 <div className="text-center p-8 bg-orange/10 rounded-2xl border-2 border-orange/40 relative overflow-hidden">

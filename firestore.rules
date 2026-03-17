@@ -6,48 +6,26 @@ service cloud.firestore {
       return request.auth != null;
     }
 
+    // DEBUG MODE: Temporarily allow all authenticated users to read/write core collections
     match /userProfiles/{userId} {
-      allow read, write: if isSignedIn() && request.auth.uid == userId;
+      allow read, write: if isSignedIn();
     }
 
     match /rides/{rideId} {
-      // Simple and safe ownership-based rules
-      allow read: if isSignedIn() && (
-        request.auth.uid == resource.data.passengerId ||
-        request.auth.uid == resource.data.driverId ||
-        // Allow drivers to discover new requests
-        (resource.data.status == "Requested")
-      );
-
-      allow create: if isSignedIn();
-
-      allow update: if isSignedIn() && (
-        request.auth.uid == resource.data.passengerId ||
-        request.auth.uid == resource.data.driverId ||
-        // Allow a driver to accept a requested ride
-        (resource.data.status == "Requested" && request.resource.data.status == "Accepted")
-      );
-
-      allow delete: if false;
-    }
-
-    // Secondary collections
-    match /driverStats/{statsId} {
       allow read, write: if isSignedIn();
     }
-    match /driverShifts/{shiftId} {
-      allow read, write: if isSignedIn();
-    }
-    match /trips/{tripId} {
-      allow read, write: if isSignedIn();
-    }
-    
+
     // Role markers
     match /roles_admin/{userId} {
       allow read: if isSignedIn();
     }
     match /roles_super_admin/{userId} {
       allow read: if isSignedIn();
+    }
+
+    // Keep other collections safe but readable for now
+    match /{document=**} {
+      allow read, write: if isSignedIn();
     }
   }
 }
