@@ -74,6 +74,28 @@ export default function PassengerApp() {
     return sorted.find(r => liveStatuses.includes(r.status))
   }, [activeRides])
 
+  // Mission Notifications Effect
+  useEffect(() => {
+    if (!currentRide?.status) return;
+
+    if (currentRide.status === "Rejected") {
+      const timer = setTimeout(() => {
+        toast({ 
+          title: "Operator Busy", 
+          description: "Applying ₹20 surge for priority re-broadcast...",
+          variant: "destructive" 
+        })
+        const rideRef = doc(db, "rides", currentRide.id)
+        updateDocumentNonBlocking(rideRef, {
+          status: "Requested",
+          fare: increment(20),
+          lastRejectedAt: serverTimestamp()
+        })
+      }, 500);
+      return () => clearTimeout(timer);
+    }
+  }, [currentRide?.status, currentRide?.id, db, toast]);
+
   // Mission Timeout Logic (1 Minute)
   useEffect(() => {
     let interval: NodeJS.Timeout
@@ -101,26 +123,6 @@ export default function PassengerApp() {
     }
     return () => clearInterval(interval)
   }, [currentRide?.status, currentRide?.id])
-
-  // Surge Logic on Rejection
-  useEffect(() => {
-    if (currentRide?.status === "Rejected" && db) {
-      setTimeout(() => {
-        toast({ 
-          title: "Operator Busy", 
-          description: "Applying ₹20 surge for priority re-broadcast...",
-          variant: "destructive" 
-        })
-      }, 0)
-      
-      const rideRef = doc(db, "rides", currentRide.id)
-      updateDocumentNonBlocking(rideRef, {
-        status: "Requested",
-        fare: increment(20),
-        lastRejectedAt: serverTimestamp()
-      })
-    }
-  }, [currentRide?.status, currentRide?.id, db])
 
   const driverProfileRef = useMemoFirebase(() => currentRide?.driverId && db ? doc(db, "userProfiles", currentRide.driverId) : null, [currentRide?.driverId, db])
   const { data: driverProfile } = useDoc(driverProfileRef)
