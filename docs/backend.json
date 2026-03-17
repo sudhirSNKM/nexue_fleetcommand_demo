@@ -10,16 +10,13 @@
         "email": { "type": "string", "format": "email" },
         "name": { "type": "string" },
         "phone": { "type": "string" },
-        "role": { "type": "string", "enum": ["SuperAdmin", "Admin", "Driver", "Passenger"] },
+        "role": { "type": "string", "enum": ["Super Admin", "Admin", "Driver", "Passenger"] },
         "status": { "type": "string", "enum": ["Online", "Offline", "Suspended", "Active"] },
         "vehicleType": { "type": "string" },
         "vehicleNumber": { "type": "string" },
         "zone": { "type": "string" },
         "walletBalance": { "type": "number" },
         "rating": { "type": "number" },
-        "insuranceExpiry": { "type": "string", "format": "date" },
-        "rcExpiry": { "type": "string", "format": "date" },
-        "pollutionExpiry": { "type": "string", "format": "date" },
         "createdAt": { "type": "string", "format": "date-time" }
       },
       "required": ["id", "email", "name", "role", "createdAt"]
@@ -37,10 +34,31 @@
         "pickup": { "type": "object", "properties": { "address": { "type": "string" }, "lat": { "type": "number" }, "lng": { "type": "number" } } },
         "dropoff": { "type": "object", "properties": { "address": { "type": "string" }, "lat": { "type": "number" }, "lng": { "type": "number" } } },
         "fare": { "type": "number" },
-        "status": { "type": "string", "enum": ["Requested", "Accepted", "Arrived", "InProgress", "Completed", "Cancelled", "Paid"] },
+        "status": { "type": "string", "enum": ["Requested", "Accepted", "Arrived", "InProgress", "Completed", "Cancelled", "Paid", "Rejected"] },
         "createdAt": { "type": "string", "format": "date-time" }
       },
       "required": ["id", "passengerId", "serviceType", "vehicleType", "pickup", "dropoff", "fare", "status"]
+    },
+    "Vehicle": {
+      "title": "Vehicle",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "type": { "type": "string" },
+        "status": { "type": "string" },
+        "driverId": { "type": "string" },
+        "fuelLevel": { "type": "number" },
+        "lastServiceDate": { "type": "string" }
+      }
+    },
+    "AuditLog": {
+      "title": "AuditLog",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "action": { "type": "string" },
+        "timestamp": { "type": "string", "format": "date-time" }
+      }
     }
   },
   "auth": {
@@ -51,7 +69,9 @@
       { "path": "/userProfiles/{userId}", "definition": { "entityName": "User", "description": "Global user profiles." } },
       { "path": "/rides/{rideId}", "definition": { "entityName": "Ride", "description": "Active and historical ride data." } },
       { "path": "/driverStats/{statsId}", "definition": { "entityName": "DriverStats", "description": "Daily earnings telemetry." } },
-      { "path": "/driverLocations/{driverId}", "definition": { "entityName": "Location", "description": "Real-time tracking coordinates." } }
+      { "path": "/driverLocations/{driverId}", "definition": { "entityName": "Location", "description": "Real-time tracking coordinates." } },
+      { "path": "/auditLogs/{logId}", "definition": { "entityName": "AuditLog", "description": "System audit logs." } },
+      { "path": "/pricingRules/{ruleId}", "definition": { "entityName": "PricingRule", "description": "Fare configuration." } }
     ]
   }
 }

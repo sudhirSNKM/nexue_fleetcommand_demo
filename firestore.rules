@@ -1,3 +1,4 @@
+
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
@@ -15,12 +16,12 @@ service cloud.firestore {
     }
 
     function isAdmin() {
-      return isSignedIn() && getProfile().role == "Admin";
+      return isSignedIn() && (getProfile().role == "Admin" || getProfile().role == "Super Admin");
     }
 
     match /userProfiles/{userId} {
       allow read: if isSignedIn();
-      allow write: if isSignedIn() && request.auth.uid == userId;
+      allow write: if isSignedIn() && (request.auth.uid == userId || isSuperAdmin());
     }
 
     match /rides/{rideId} {
@@ -34,33 +35,28 @@ service cloud.firestore {
     }
 
     match /driverShifts/{shiftId} {
-      // Super Admin and Admin can read all shifts
-      allow read: if isSignedIn() && (isSuperAdmin() || isAdmin());
-      
-      // Driver can read their own shift
-      allow read: if isSignedIn() && resource.data.driverId == request.auth.uid;
-
-      // Super Admin and Admin can manage (write) all shifts
-      allow write: if isSignedIn() && (isSuperAdmin() || isAdmin());
-      
-      // Drivers can start/end their own shifts
-      allow create: if isSignedIn() && request.resource.data.driverId == request.auth.uid;
-      allow update: if isSignedIn() && resource.data.driverId == request.auth.uid;
+      allow read: if isSignedIn();
+      allow write: if isSignedIn() && (isAdmin() || resource.data.driverId == request.auth.uid);
     }
 
     match /driverLocations/{driverId} {
-      allow read, write: if isSignedIn();
+      allow read: if isSignedIn();
+      allow write: if isSignedIn() && (request.auth.uid == driverId || isSuperAdmin());
     }
 
-    match /roles_admin/{userId} {
-      allow read: if isSignedIn();
+    match /auditLogs/{logId} {
+      allow read: if isSignedIn() && isSuperAdmin();
+      allow create: if isSignedIn();
     }
-    match /roles_super_admin/{userId} {
+
+    match /pricingRules/{ruleId} {
       allow read: if isSignedIn();
+      allow write: if isSuperAdmin();
     }
 
     match /{document=**} {
-      allow read, write: if isSignedIn();
+      allow read: if isSignedIn();
+      allow write: if isSuperAdmin();
     }
   }
 }

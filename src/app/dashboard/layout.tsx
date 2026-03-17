@@ -16,7 +16,11 @@ import {
   Users,
   Cpu,
   Globe,
-  DollarSign
+  DollarSign,
+  Activity,
+  Layers,
+  Truck,
+  Car
 } from "lucide-react"
 import { motion, AnimatePresence } from "framer-motion"
 import Link from "next/link"
@@ -62,16 +66,22 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
     if (role === "Super Admin") {
       items.push(
-        { icon: Globe, label: "Platform Control", href: "/dashboard/super-admin" },
-        { icon: MapIcon, label: "Global Monitoring", href: "/dashboard/admin" },
-        { icon: BarChart3, label: "Revenue Analytics", href: "/dashboard/analytics" },
-        { icon: Cpu, label: "Infrastructure", href: "/dashboard/settings" }
+        { icon: Globe, label: "Command Center", href: "/dashboard/super-admin" },
+        { icon: BarChart3, label: "Analytics", href: "/dashboard/analytics" },
+        { icon: Users, label: "Drivers", href: "/dashboard/drivers" },
+        { icon: Car, label: "Vehicles", href: "/dashboard/fleet" },
+        { icon: Navigation, label: "Trips", href: "/dashboard/trips" },
+        { icon: Layers, label: "Zones", href: "/dashboard/zones" },
+        { icon: DollarSign, label: "Pricing Engine", href: "/dashboard/pricing" },
+        { icon: ShieldCheck, label: "Admin Ops", href: "/dashboard/admin-management" },
+        { icon: Activity, label: "Audit Logs", href: "/dashboard/audit-logs" }
       )
     } else if (role === "Admin") {
       items.push(
-        { icon: MapIcon, label: "Command Center", href: "/dashboard/admin" },
+        { icon: MapIcon, label: "Ops Command", href: "/dashboard/admin" },
         { icon: Users, label: "Driver Ops", href: "/dashboard/drivers" },
-        { icon: BarChart3, label: "Local Analytics", href: "/dashboard/analytics" }
+        { icon: Navigation, label: "Ride Monitoring", href: "/dashboard/trips" },
+        { icon: BarChart3, label: "Analytics", href: "/dashboard/analytics" }
       )
     } else if (role === "Driver") {
       items.push(
@@ -108,7 +118,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         </Link>
       </div>
 
-      <nav className="flex-1 px-4 space-y-1">
+      <nav className="flex-1 px-4 space-y-1 overflow-y-auto scrollbar-hide">
         {navItems.map((item) => {
           const isActive = pathname === item.href
           return (
@@ -123,7 +133,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 )}
               >
                 <item.icon className={cn("w-5 h-5", isActive ? "text-orange" : "group-hover:text-orange transition-colors")} />
-                <span className="font-bold text-xs uppercase tracking-widest">{item.label}</span>
+                <span className="font-bold text-[10px] uppercase tracking-widest">{item.label}</span>
               </motion.div>
             </Link>
           )
@@ -145,7 +155,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
   return (
     <div className={cn("flex h-screen overflow-hidden transition-colors duration-500", isMobilityUser ? "bg-slate-50" : "bg-charcoal")}>
-      {/* Desktop Sidebar */}
       <aside className="hidden lg:flex w-64 flex-col shrink-0">
         <SidebarContent />
       </aside>
