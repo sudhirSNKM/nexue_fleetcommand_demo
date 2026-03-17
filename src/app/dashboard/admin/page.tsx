@@ -6,7 +6,6 @@ import { motion, AnimatePresence } from "framer-motion"
 import gsap from "gsap"
 import LiveMap from "@/components/dashboard/LiveMap"
 import FleetStats from "@/components/dashboard/FleetStats"
-import FuelAnalytics from "@/components/dashboard/FuelAnalytics"
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { 
@@ -21,7 +20,10 @@ import {
   Map as MapIcon,
   Bell,
   Search,
-  Filter
+  Filter,
+  ShieldCheck,
+  Star,
+  Timer
 } from "lucide-react"
 import { useUser, useFirestore, useDoc, useCollection, useMemoFirebase } from "@/firebase"
 import { doc, collection, query, limit, where, orderBy } from "firebase/firestore"
@@ -50,6 +52,9 @@ export default function AdminOperationsCenter() {
 
   const locationsQuery = useMemoFirebase(() => db ? collection(db, "driverLocations") : null, [db])
   const { data: liveLocations } = useCollection(locationsQuery)
+
+  const shiftsQuery = useMemoFirebase(() => db ? query(collection(db, "driverShifts"), orderBy("punchInTime", "desc"), limit(10)) : null, [db])
+  const { data: recentShifts } = useCollection(shiftsQuery)
 
   useEffect(() => {
     if (isUserAdmin) {
@@ -99,9 +104,6 @@ export default function AdminOperationsCenter() {
           </div>
         </div>
         <div className="flex gap-4">
-          <Button variant="outline" className="border-navy border-2 h-10 px-4 text-[10px] font-black uppercase text-white hover:bg-white/5">
-            <Filter className="w-4 h-4 mr-2" /> Filter Sector
-          </Button>
           <div className="text-right border-l border-white/10 pl-4">
             <p className="text-[10px] font-black text-white/40 uppercase">Access Role</p>
             <p className="text-xs font-black text-orange uppercase tracking-widest">{profile?.role}</p>
@@ -110,11 +112,21 @@ export default function AdminOperationsCenter() {
       </div>
 
       {/* METRICS ROW */}
-      <FleetStats 
-        activeTrips={statsSummary.activeTrips} 
-        onlineDrivers={statsSummary.onlineDrivers}
-        revenue={statsSummary.revenue}
-      />
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        {[
+          { label: "Total Fleet Hours", value: "1,204h", trend: "+5%", icon: Clock, color: "text-orange" },
+          { label: "Safety Compliance", value: "99.2%", trend: "Optimal", icon: ShieldCheck, color: "text-active" },
+          { label: "Operator Avg Rating", value: "4.82", trend: "Stable", icon: Star, color: "text-orange" },
+          { label: "Active Drivers", value: statsSummary.onlineDrivers.toString(), trend: "Live", icon: Users, color: "text-white" },
+        ].map((stat, i) => (
+          <Card key={i} className="glass-panel admin-card p-6 bg-navy/20 border-none relative overflow-hidden group">
+            <stat.icon className="absolute -right-4 -bottom-4 w-20 h-20 opacity-5 group-hover:opacity-10 transition-opacity text-white" />
+            <p className="text-[10px] font-black uppercase text-white/40 tracking-widest mb-1">{stat.label}</p>
+            <h4 className={cn("text-2xl font-black font-mono", stat.color)}>{stat.value}</h4>
+            <Badge variant="outline" className="mt-2 text-[8px] border-white/10 text-white/40 font-black">{stat.trend}</Badge>
+          </Card>
+        ))}
+      </div>
 
       <div className="grid grid-cols-1 xl:grid-cols-4 gap-6">
         {/* TACTICAL MAP CONTAINER */}
@@ -125,31 +137,10 @@ export default function AdminOperationsCenter() {
           />
           <div className="absolute top-4 left-4 z-[1000] flex gap-2">
             <button 
-              onClick={() => setActiveTab('live')} 
-              className={cn(
-                "px-4 py-2 text-[10px] font-black uppercase rounded-lg border transition-all backdrop-blur-md", 
-                activeTab === 'live' ? "bg-orange border-orange text-white" : "bg-charcoal/80 border-white/10 text-white/70 hover:bg-white/5"
-              )}
+              className="px-4 py-2 text-[10px] font-black uppercase rounded-lg border bg-orange border-orange text-white transition-all backdrop-blur-md"
             >
-              <Signal className="w-3 h-3 mr-2 inline" /> Live Tracking
+              <Signal className="w-3 h-3 mr-2 inline" /> Live Tactical Feed
             </button>
-          </div>
-          
-          {/* MAP OVERLAY STATS */}
-          <div className="absolute bottom-4 right-4 z-[1000] space-y-2 pointer-events-none">
-            <div className="bg-charcoal/90 border border-white/10 p-3 rounded-xl backdrop-blur-md shadow-2xl">
-              <p className="text-[9px] font-black text-white/40 uppercase mb-2">Live Units</p>
-              <div className="flex gap-4">
-                <div className="text-center">
-                  <p className="text-lg font-black text-white font-mono">{statsSummary.onlineDrivers}</p>
-                  <p className="text-[8px] font-bold text-active uppercase">Online</p>
-                </div>
-                <div className="text-center">
-                  <p className="text-lg font-black text-white font-mono">{statsSummary.activeTrips}</p>
-                  <p className="text-[8px] font-bold text-orange uppercase">Active</p>
-                </div>
-              </div>
-            </div>
           </div>
         </div>
 
@@ -162,9 +153,9 @@ export default function AdminOperationsCenter() {
                 <CardTitle className="text-[10px] font-black uppercase text-emergency">Critical Exceptions</CardTitle>
               </div>
             </CardHeader>
-            <CardContent className="p-4 space-y-3">
+            <CardContent className="p-4 space-y-3 max-h-[300px] overflow-y-auto scrollbar-hide">
               <AnimatePresence>
-                {recentRides?.filter(r => r.status === "Cancelled" || r.status === "Rejected").slice(0, 3).map(alert => (
+                {recentRides?.filter(r => r.status === "Cancelled" || r.status === "Rejected").slice(0, 5).map(alert => (
                   <motion.div 
                     initial={{ opacity: 0, x: 20 }}
                     animate={{ opacity: 1, x: 0 }}
@@ -182,26 +173,24 @@ export default function AdminOperationsCenter() {
           <Card className="glass-panel admin-card flex-1 flex flex-col">
             <CardHeader className="p-4 bg-navy/10 border-b border-white/5">
               <div className="flex items-center gap-2">
-                <Clock className="w-4 h-4 text-orange" />
-                <CardTitle className="text-[10px] font-black uppercase text-white">Ops Activity</CardTitle>
+                <Timer className="w-4 h-4 text-orange" />
+                <CardTitle className="text-[10px] font-black uppercase text-white">Live Shift Pulse</CardTitle>
               </div>
             </CardHeader>
             <CardContent className="p-0 max-h-[400px] overflow-y-auto scrollbar-hide">
               <div className="divide-y divide-white/5">
-                {recentRides?.map(ride => (
-                  <div key={ride.id} className="p-4 hover:bg-white/5 transition-colors flex items-center justify-between group">
+                {recentShifts?.map(shift => (
+                  <div key={shift.id} className="p-4 hover:bg-white/5 transition-colors flex items-center justify-between group">
                     <div className="flex items-center gap-3">
                       <div className={cn(
                         "w-8 h-8 rounded flex items-center justify-center transition-colors",
-                        ride.status === 'Paid' ? "bg-active/10 text-active" : "bg-orange/10 text-orange"
+                        shift.status === 'Active' ? "bg-active/10 text-active" : "bg-white/5 text-white/20"
                       )}>
-                        {ride.status === 'Paid' ? <Zap className="w-4 h-4" /> : <MapIcon className="w-4 h-4" />}
+                        <Timer className="w-4 h-4" />
                       </div>
                       <div>
-                        <p className="text-[10px] font-bold uppercase text-white">
-                          {ride.status === 'Paid' ? 'Settlement Confirmed' : 'Mission Deployed'}
-                        </p>
-                        <p className="text-[8px] text-white/40 uppercase font-mono">{ride.vehicleType} • {ride.id.substring(0,8)}</p>
+                        <p className="text-[10px] font-bold uppercase text-white">Operator: {shift.driverId.substring(0,8)}</p>
+                        <p className="text-[8px] text-white/40 uppercase font-mono">{shift.status} • {shift.shiftDate}</p>
                       </div>
                     </div>
                   </div>

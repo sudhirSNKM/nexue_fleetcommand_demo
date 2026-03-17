@@ -1,67 +1,72 @@
 rules_version = '2';
+
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    function isSignedIn() {
+    function signedIn() {
       return request.auth != null;
     }
 
-    function getProfile() {
-      return get(/databases/$(database)/documents/userProfiles/$(request.auth.uid));
-    }
-
-    function getRole() {
-      // Get the role from the user profile, matching standardized kebab-case strings
-      return getProfile().data.role;
+    function role() {
+      return get(/databases/$(database)/documents/userProfiles/$(request.auth.uid)).data.role;
     }
 
     function isSuperAdmin() {
-      return isSignedIn() && getRole() == "super-admin";
+      return signedIn() && role() == "super-admin";
     }
 
     function isAdmin() {
-      return isSignedIn() && (getRole() == "admin" || getRole() == "super-admin");
+      return signedIn() && (role() == "admin" || role() == "super-admin");
     }
 
+    // USER PROFILES
     match /userProfiles/{userId} {
-      allow read: if isSignedIn();
-      allow write: if isSignedIn() && (request.auth.uid == userId || isSuperAdmin());
+      allow read: if signedIn();
+      allow write: if signedIn() && (request.auth.uid == userId || isSuperAdmin());
     }
 
-    match /rides/{rideId} {
-      allow read: if isSignedIn();
-      allow create: if isSignedIn();
-      allow update: if isSignedIn();
-    }
-
-    match /driverStats/{statsId} {
-      allow read, write: if isSignedIn();
-    }
-
+    // DRIVER SHIFTS
     match /driverShifts/{shiftId} {
-      // TEMPORARY DEBUG RULE: Allow all authenticated users read/write access
-      // This allows collection-wide list queries to succeed during the role-sync phase.
-      allow read, write: if request.auth != null;
+
+      // Admins can read the entire collection
+      allow read: if isAdmin();
+
+      // Drivers can read their own shifts
+      allow read: if signedIn() &&
+                  request.auth.uid == resource.data.driverId;
+
+      // Admins manage shifts
+      allow create, update, delete: if isAdmin();
+
+      // Drivers update their own shift
+      allow update: if signedIn() &&
+                    request.auth.uid == resource.data.driverId;
     }
 
+    // DRIVER LOCATIONS
     match /driverLocations/{driverId} {
-      allow read: if isSignedIn();
-      allow write: if isSignedIn() && (request.auth.uid == driverId || isSuperAdmin());
+      allow read: if signedIn();
+      allow write: if signedIn() && request.auth.uid == driverId;
     }
 
-    match /auditLogs/{logId} {
-      allow read: if isSignedIn() && isSuperAdmin();
-      allow create: if isSignedIn();
+    // RIDES
+    match /rides/{rideId} {
+      allow read: if signedIn();
+      allow create: if signedIn();
+      allow update: if signedIn();
     }
 
+    // PRICING RULES
     match /pricingRules/{ruleId} {
-      allow read: if isSignedIn();
+      allow read: if signedIn();
       allow write: if isSuperAdmin();
     }
 
-    match /{document=**} {
-      allow read: if isSignedIn();
-      allow write: if isSuperAdmin();
+    // AUDIT LOGS
+    match /auditLogs/{logId} {
+      allow read: if isSuperAdmin();
+      allow create: if signedIn();
     }
+
   }
 }

@@ -14,13 +14,15 @@ import {
   Map as MapIcon,
   BarChart3,
   Users,
-  Cpu,
   Globe,
   DollarSign,
   Activity,
   Layers,
-  Truck,
-  Car
+  Car,
+  Timer,
+  AlertTriangle,
+  User,
+  LayoutDashboard
 } from "lucide-react"
 import { motion, AnimatePresence } from "framer-motion"
 import Link from "next/link"
@@ -78,10 +80,14 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       )
     } else if (role === "admin") {
       items.push(
-        { icon: MapIcon, label: "Ops Command", href: "/dashboard/admin" },
-        { icon: Users, label: "Driver Ops", href: "/dashboard/drivers" },
-        { icon: Navigation, label: "Ride Monitoring", href: "/dashboard/trips" },
-        { icon: BarChart3, label: "Analytics", href: "/dashboard/analytics" }
+        { icon: LayoutDashboard, label: "Dashboard", href: "/dashboard/admin" },
+        { icon: Users, label: "Drivers", href: "/dashboard/drivers" },
+        { icon: Timer, label: "Duty / Shifts", href: "/dashboard/duty" },
+        { icon: Car, label: "Fleet", href: "/dashboard/fleet" },
+        { icon: History, label: "Trips", href: "/dashboard/history" },
+        { icon: User, label: "Passengers", href: "/dashboard/passengers-list" },
+        { icon: BarChart3, label: "Analytics", href: "/dashboard/analytics" },
+        { icon: AlertTriangle, label: "Alerts", href: "/dashboard/alerts" }
       )
     } else if (role === "driver") {
       items.push(
@@ -95,7 +101,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       )
     }
 
-    items.push({ icon: Settings, label: "Account", href: "/dashboard/settings" })
+    items.push({ icon: Settings, label: "Account", href: role === "admin" ? "/dashboard/account" : "/dashboard/settings" })
     return items
   }, [role])
 
