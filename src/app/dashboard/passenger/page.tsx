@@ -3,7 +3,7 @@
 import React, { useState, useMemo, useEffect } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { 
-  MapPin, Navigation, Car, Bike, Zap, Package, Truck, ShieldAlert, Star, Phone, QrCode, Banknote, CheckCircle2
+  MapPin, Navigation, Car, Bike, Zap, Package, Truck, ShieldAlert, Star, Phone, QrCode, Banknote, CheckCircle2, Clock, X
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -42,6 +42,7 @@ export default function PassengerApp() {
   const [dropoff, setDropoff] = useState("")
   const [selectedVehicle, setSelectedVehicle] = useState('Bike')
   const [payingOnline, setPayingOnline] = useState(false)
+  const [scanTimer, setScanTimer] = useState<number | null>(null)
   
   const hasLocations = pickup.trim().length > 2 && dropoff.trim().length > 2
   const mockDistance = useMemo(() => hasLocations ? Math.floor(Math.random() * 8) + 2 : 0, [hasLocations, pickup, dropoff])
@@ -62,11 +63,37 @@ export default function PassengerApp() {
   const { data: activeRides } = useCollection(activeRidesQuery)
   const currentRide = activeRides?.find(r => ["Requested", "Accepted", "Arrived", "InProgress", "Completed", "Rejected"].includes(r.status))
 
+  // Mission Timeout & Surge Logic
+  useEffect(() => {
+    let interval: NodeJS.Timeout
+    if (currentRide?.status === "Requested") {
+      setScanTimer(60)
+      interval = setInterval(() => {
+        setScanTimer((prev) => {
+          if (prev !== null && prev <= 1) {
+            clearInterval(interval)
+            handleCancelRide(currentRide.id)
+            toast({ 
+              title: "Mission Timeout", 
+              description: "No units responded. Terminal auto-decline triggered.",
+              variant: "destructive"
+            })
+            return 0
+          }
+          return prev !== null ? prev - 1 : null
+        })
+      }, 1000)
+    } else {
+      setScanTimer(null)
+    }
+    return () => clearInterval(interval)
+  }, [currentRide?.status, currentRide?.id])
+
   useEffect(() => {
     if (currentRide?.status === "Rejected") {
       toast({ 
         title: "Operator Busy", 
-        description: "Bumping credits for priority. Re-scanning sector...",
+        description: "Applying ₹20 surge for priority. Re-scanning sector...",
         variant: "destructive" 
       })
       
@@ -108,7 +135,6 @@ export default function PassengerApp() {
   const handleCancelRide = (rideId: string) => {
     if (!db) return
     updateDocumentNonBlocking(doc(db, "rides", rideId), { status: "Cancelled", cancelledAt: serverTimestamp() })
-    toast({ variant: "destructive", title: "Mission Aborted", description: "Request purged." })
   }
 
   return (
@@ -135,7 +161,7 @@ export default function PassengerApp() {
                       className="data-[state=active]:bg-orange data-[state=active]:text-white data-[state=active]:shadow-[0_0_15px_rgba(255,128,0,0.4)] transition-all flex flex-col items-center justify-center gap-1 py-2 h-full text-white font-black"
                     >
                       <s.icon className="w-7 h-7 mb-1" /> 
-                      <span className="text-[11px] uppercase tracking-tighter">
+                      <span className="text-[11px] uppercase tracking-tighter font-black">
                         {s.name}
                       </span>
                     </TabsTrigger>
@@ -269,7 +295,9 @@ export default function PassengerApp() {
                    ) : (
                      <div className="py-8 space-y-4">
                         <div className="w-12 h-12 border-4 border-orange/10 border-t-orange rounded-full animate-spin mx-auto" />
-                        <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Searching Sector for units...</p>
+                        <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">
+                          {scanTimer !== null ? `Searching Sector... ${scanTimer}s` : "Searching Sector..."}
+                        </p>
                      </div>
                    )}
                 </div>
