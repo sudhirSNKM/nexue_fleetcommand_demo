@@ -6,12 +6,24 @@ service cloud.firestore {
       return request.auth != null;
     }
 
-    // DEBUG MODE: Temporarily allow all authenticated users to read/write core collections
+    // Temporarily allow all authenticated users to read/write core collections for debugging
     match /userProfiles/{userId} {
       allow read, write: if isSignedIn();
     }
 
     match /rides/{rideId} {
+      allow read, write: if isSignedIn();
+    }
+
+    match /driverStats/{statsId} {
+      allow read, write: if isSignedIn();
+    }
+
+    match /driverShifts/{shiftId} {
+      allow read, write: if isSignedIn();
+    }
+
+    match /driverLocations/{driverId} {
       allow read, write: if isSignedIn();
     }
 
@@ -23,7 +35,7 @@ service cloud.firestore {
       allow read: if isSignedIn();
     }
 
-    // Keep other collections safe but readable for now
+    // Catch-all permissive rule for authenticated users
     match /{document=**} {
       allow read, write: if isSignedIn();
     }

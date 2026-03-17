@@ -115,15 +115,15 @@ export default function PassengerApp() {
           <CardHeader className="pb-2">
             {!currentRide && (
               <Tabs value={activeService} onValueChange={setActiveService} className="w-full">
-                <TabsList className="grid grid-cols-3 bg-navy border-2 border-white/20 p-1 h-24">
+                <TabsList className="grid grid-cols-3 bg-navy/80 border-2 border-white/20 p-1 h-24">
                   {SERVICES.map(s => (
                     <TabsTrigger 
                       key={s.id} 
                       value={s.id} 
-                      className="text-white font-black uppercase text-sm data-[state=active]:text-white data-[state=active]:bg-orange data-[state=active]:shadow-[0_0_25px_rgba(255,128,0,0.8)] transition-all flex flex-col items-center justify-center gap-2 py-4 h-full"
+                      className="text-white/60 font-black uppercase text-sm data-[state=active]:text-white data-[state=active]:bg-orange data-[state=active]:shadow-[0_0_25px_rgba(255,128,0,0.6)] transition-all flex flex-col items-center justify-center gap-2 py-4 h-full"
                     >
                       <s.icon className="w-8 h-8" /> 
-                      <span className="truncate">{s.name}</span>
+                      <span className="truncate font-black text-white">{s.name}</span>
                     </TabsTrigger>
                   ))}
                 </TabsList>
