@@ -4,7 +4,12 @@ service cloud.firestore {
   match /databases/{database}/documents {
     function isSignedIn() { return request.auth != null; }
     function isOwner(userId) { return isSignedIn() && request.auth.uid == userId; }
-    function isAdmin() { return isSignedIn() && (exists(/databases/$(database)/documents/roles_admin/$(request.auth.uid)) || exists(/databases/$(database)/documents/roles_super_admin/$(request.auth.uid))); }
+    function isAdmin() { 
+      return isSignedIn() && (
+        exists(/databases/$(database)/documents/roles_admin/$(request.auth.uid)) || 
+        exists(/databases/$(database)/documents/roles_super_admin/$(request.auth.uid))
+      ); 
+    }
 
     match /userProfiles/{userId} {
       allow read: if isSignedIn();
@@ -15,9 +20,9 @@ service cloud.firestore {
     match /roles_admin/{uid} { allow read: if isSignedIn(); allow write: if isOwner(uid); }
 
     match /rides/{rideId} {
-      allow read: if isSignedIn();
-      allow create: if isSignedIn();
-      allow update: if isSignedIn();
+      // Allow authenticated users to read and write rides.
+      // Frontend queries handle the necessary filtering for privacy.
+      allow read, write: if isSignedIn();
 
       match /messages/{messageId} {
         allow read, write: if isSignedIn();
@@ -25,8 +30,15 @@ service cloud.firestore {
     }
 
     match /driverStats/{statId} {
-      allow read: if isSignedIn();
-      allow write: if isSignedIn();
+      allow read, write: if isSignedIn();
+    }
+    
+    match /driverShifts/{shiftId} {
+      allow read, write: if isSignedIn();
+    }
+
+    match /trips/{tripId} {
+      allow read, write: if isSignedIn();
     }
 
     match /driver_locations/{driverId} {
