@@ -1,3 +1,4 @@
+
 "use client"
 
 import React, { useState } from "react"
@@ -19,7 +20,7 @@ export default function RegisterPage() {
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [name, setName] = useState("")
-  const [role, setRole] = useState("Passenger")
+  const [role, setRole] = useState("passenger")
   const [vehicleType, setVehicleType] = useState("Bike")
   const [isLoading, setIsLoading] = useState(false)
   
@@ -39,24 +40,18 @@ export default function RegisterPage() {
         id: user.uid,
         name,
         email,
-        role,
-        status: role === "Driver" ? "Offline" : "Active",
-        walletBalance: role === "Passenger" ? 500 : 0,
+        role, // standard kebab-case roles: passenger, driver, admin, super-admin
+        status: role === "driver" ? "Offline" : "Active",
+        walletBalance: role === "passenger" ? 500 : 0,
         rating: 5.0,
         createdAt: serverTimestamp(),
       }
 
-      if (role === "Driver") {
+      if (role === "driver") {
         profileData.vehicleType = vehicleType
       }
 
       await setDoc(doc(db, "userProfiles", user.uid), profileData)
-
-      if (role === "Super Admin") {
-        await setDoc(doc(db, "roles_super_admin", user.uid), { active: true })
-      } else if (role === "Admin") {
-        await setDoc(doc(db, "roles_admin", user.uid), { active: true })
-      }
 
       toast({
         title: "Terminal Initialized",
@@ -150,15 +145,15 @@ export default function RegisterPage() {
                     <SelectValue placeholder="Select Clearance Level" />
                   </SelectTrigger>
                   <SelectContent className="bg-charcoal border-navy text-white">
-                    <SelectItem value="Passenger">Passenger</SelectItem>
-                    <SelectItem value="Driver">Operator (Driver)</SelectItem>
-                    <SelectItem value="Admin">Logistics Admin</SelectItem>
-                    <SelectItem value="Super Admin">Command High Staff (Super Admin)</SelectItem>
+                    <SelectItem value="passenger">Passenger</SelectItem>
+                    <SelectItem value="driver">Operator (Driver)</SelectItem>
+                    <SelectItem value="admin">Logistics Admin</SelectItem>
+                    <SelectItem value="super-admin">Command High Staff (Super Admin)</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
 
-              {role === "Driver" && (
+              {role === "driver" && (
                 <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} className="space-y-2">
                   <Label className="text-[10px] uppercase font-black text-muted-foreground ml-1">Vehicle Class</Label>
                   <Select value={vehicleType} onValueChange={setVehicleType}>

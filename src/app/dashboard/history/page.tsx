@@ -31,13 +31,13 @@ export default function RideHistoryPage() {
   const userProfileRef = useMemoFirebase(() => user && db ? doc(db, "userProfiles", user.uid) : null, [user, db])
   const { data: profile } = useDoc(userProfileRef)
   
-  const role = profile?.role || "Passenger"
-  const isMobilityUser = role === "Passenger" || role === "Driver"
+  const role = profile?.role || "passenger"
+  const isMobilityUser = role === "passenger" || role === "driver"
 
   // Filter query by user role and ID to comply with security rules and avoid "list" permission errors
   const ridesQuery = useMemoFirebase(() => {
     if (!user || !db || !profile) return null
-    const filterKey = role === "Driver" ? "driverId" : "passengerId"
+    const filterKey = role === "driver" ? "driverId" : "passengerId"
     return query(
       collection(db, "rides"),
       where(filterKey, "==", user.uid),

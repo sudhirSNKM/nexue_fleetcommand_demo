@@ -7,17 +7,17 @@ service cloud.firestore {
       return request.auth != null;
     }
 
-    function getProfile() {
-      // Safer retrieval of user profile document reference
-      return get(/databases/$(database)/documents/userProfiles/$(request.auth.uid));
+    function getRole() {
+      // Safer retrieval of user role from profile document
+      return get(/databases/$(database)/documents/userProfiles/$(request.auth.uid)).data.role;
     }
 
     function isSuperAdmin() {
-      return isSignedIn() && getProfile().data.role == "Super Admin";
+      return isSignedIn() && getRole() == "super-admin";
     }
 
     function isAdmin() {
-      return isSignedIn() && (getProfile().data.role == "Admin" || getProfile().data.role == "Super Admin");
+      return isSignedIn() && (getRole() == "admin" || getRole() == "super-admin");
     }
 
     match /userProfiles/{userId} {
@@ -36,20 +36,20 @@ service cloud.firestore {
     }
 
     match /driverShifts/{shiftId} {
-      // Admins and Super Admins can read all shifts (supports unrestricted list queries)
+      // Admins and Super Admins can read all shifts
       allow read: if isAdmin();
 
-      // Drivers can read only their own shifts (query must include driverId filter)
-      allow read: if request.auth != null && request.auth.uid == resource.data.driverId;
+      // Drivers can read only their own shifts
+      allow read: if isSignedIn() && resource.data.driverId == request.auth.uid;
 
       // Admins can manage all shift records
       allow write: if isAdmin();
 
       // Drivers can update their own active shifts (e.g., punching out)
-      allow update: if request.auth != null && request.auth.uid == resource.data.driverId;
+      allow update: if isSignedIn() && resource.data.driverId == request.auth.uid;
       
       // Drivers can create their own shift entries
-      allow create: if request.auth != null && request.auth.uid == request.resource.data.driverId;
+      allow create: if isSignedIn() && (isAdmin() || request.resource.data.driverId == request.auth.uid);
     }
 
     match /driverLocations/{driverId} {

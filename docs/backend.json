@@ -10,7 +10,7 @@
         "email": { "type": "string", "format": "email" },
         "name": { "type": "string" },
         "phone": { "type": "string" },
-        "role": { "type": "string", "enum": ["Super Admin", "Admin", "Driver", "Passenger"] },
+        "role": { "type": "string", "enum": ["super-admin", "admin", "driver", "passenger"] },
         "status": { "type": "string", "enum": ["Online", "Offline", "Suspended", "Active"] },
         "vehicleType": { "type": "string" },
         "vehicleNumber": { "type": "string" },

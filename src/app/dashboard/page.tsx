@@ -20,13 +20,16 @@ export default function Dashboard() {
 
   useEffect(() => {
     if (!isProfileLoading && profile) {
-      if (profile.role === "Super Admin") {
+      const role = profile.role
+      if (role === "super-admin") {
         router.push("/dashboard/super-admin")
-      } else if (profile.role === "Admin") {
+      } else if (role === "admin") {
         router.push("/dashboard/admin")
-      } else if (profile.role === "Driver") {
+      } else if (role === "driver") {
         router.push("/dashboard/driver")
-      } else if (profile.role === "Passenger") {
+      } else if (role === "passenger") {
+        router.push("/dashboard/passenger")
+      } else {
         router.push("/dashboard/passenger")
       }
     }

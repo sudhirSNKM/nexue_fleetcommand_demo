@@ -58,13 +58,13 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     router.push("/login")
   }
 
-  const role = profile?.role || "Passenger"
-  const isMobilityUser = role === "Passenger" || role === "Driver"
+  const role = profile?.role || "passenger"
+  const isMobilityUser = role === "passenger" || role === "driver"
 
   const navItems = React.useMemo(() => {
     const items = []
 
-    if (role === "Super Admin") {
+    if (role === "super-admin") {
       items.push(
         { icon: Globe, label: "Command Center", href: "/dashboard/super-admin" },
         { icon: BarChart3, label: "Analytics", href: "/dashboard/analytics" },
@@ -76,19 +76,19 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         { icon: ShieldCheck, label: "Admin Ops", href: "/dashboard/admin-management" },
         { icon: Activity, label: "Audit Logs", href: "/dashboard/audit-logs" }
       )
-    } else if (role === "Admin") {
+    } else if (role === "admin") {
       items.push(
         { icon: MapIcon, label: "Ops Command", href: "/dashboard/admin" },
         { icon: Users, label: "Driver Ops", href: "/dashboard/drivers" },
         { icon: Navigation, label: "Ride Monitoring", href: "/dashboard/trips" },
         { icon: BarChart3, label: "Analytics", href: "/dashboard/analytics" }
       )
-    } else if (role === "Driver") {
+    } else if (role === "driver") {
       items.push(
         { icon: Navigation, label: "Duty Console", href: "/dashboard/driver" },
         { icon: History, label: "History", href: "/dashboard/history" }
       )
-    } else if (role === "Passenger") {
+    } else if (role === "passenger") {
       items.push(
         { icon: Zap, label: "Book Ride", href: "/dashboard/passenger" },
         { icon: History, label: "History", href: "/dashboard/history" }

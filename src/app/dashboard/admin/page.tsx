@@ -36,7 +36,7 @@ export default function AdminOperationsCenter() {
   const profileRef = useMemoFirebase(() => user && db ? doc(db, "userProfiles", user.uid) : null, [user, db])
   const { data: profile } = useDoc(profileRef)
 
-  const isUserAdmin = profile?.role === "Admin" || profile?.role === "Super Admin"
+  const isUserAdmin = profile?.role === "admin" || profile?.role === "super-admin"
 
   // LIVE DATA SUBSCRIPTIONS (Operational Focus)
   const ridesQuery = useMemoFirebase(() => db ? query(collection(db, "rides"), orderBy("createdAt", "desc"), limit(20)) : null, [db])
@@ -45,7 +45,7 @@ export default function AdminOperationsCenter() {
   const activeRidesQuery = useMemoFirebase(() => db ? query(collection(db, "rides"), where("status", "in", ["Accepted", "Arrived", "InProgress"])) : null, [db])
   const { data: activeMissions } = useCollection(activeRidesQuery)
 
-  const driversQuery = useMemoFirebase(() => db ? query(collection(db, "userProfiles"), where("role", "==", "Driver")) : null, [db])
+  const driversQuery = useMemoFirebase(() => db ? query(collection(db, "userProfiles"), where("role", "==", "driver")) : null, [db])
   const { data: allDrivers } = useCollection(driversQuery)
 
   const locationsQuery = useMemoFirebase(() => db ? collection(db, "driverLocations") : null, [db])

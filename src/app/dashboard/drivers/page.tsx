@@ -15,7 +15,7 @@ import { cn } from "@/lib/utils"
 export default function DriversPage() {
   const db = useFirestore()
   
-  const driversQuery = useMemoFirebase(() => query(collection(db, "userProfiles"), where("role", "==", "Driver")), [db])
+  const driversQuery = useMemoFirebase(() => query(collection(db, "userProfiles"), where("role", "==", "driver")), [db])
   const { data: drivers } = useCollection(driversQuery)
 
   const shiftsQuery = useMemoFirebase(() => query(collection(db, "driverShifts"), orderBy("punchInTime", "desc")), [db])
@@ -121,7 +121,7 @@ export default function DriversPage() {
                       <span className="text-[10px] font-black uppercase text-white/40 tracking-widest">{shift.shiftDate}</span>
                       <Badge className={cn(
                         "text-[8px] font-black uppercase",
-                        shift.status === 'Active' ? 'bg-active/10 text-active border-active/20' : 'bg-white/5 text-white/40 border-white/5'
+                        shift.status === 'Active' ? "bg-active/10 text-active border-active/20" : "bg-white/5 text-white/40 border-white/5"
                       )}>
                         {shift.status}
                       </Badge>
