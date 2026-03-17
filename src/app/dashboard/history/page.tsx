@@ -1,4 +1,3 @@
-
 "use client"
 
 import React, { useState } from "react"
@@ -20,8 +19,8 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { useUser, useFirestore, useCollection, useMemoFirebase } from "@/firebase"
-import { collection, query, where, orderBy } from "firebase/firestore"
+import { useUser, useFirestore, useCollection, useMemoFirebase, useDoc } from "@/firebase"
+import { collection, query, where, orderBy, doc } from "firebase/firestore"
 import { analyzeRoute, type AnalyzeRouteOutput } from "@/ai/flows/route-strategist-flow"
 import { Skeleton } from "@/components/ui/skeleton"
 
@@ -31,15 +30,27 @@ export default function RideHistoryPage() {
   const [analyzingRideId, setAnalyzingRideId] = useState<string | null>(null)
   const [aiAnalysis, setAiAnalysis] = useState<Record<string, AnalyzeRouteOutput>>({})
 
-  // MISSION ARCHIVE QUERY: Must use explicit passengerId filter for security compliance
+  // Fetch User Profile to determine role
+  const userProfileRef = useMemoFirebase(() => {
+    if (!user || !db) return null
+    return doc(db, "userProfiles", user.uid)
+  }, [user, db])
+
+  const { data: profile } = useDoc(userProfileRef)
+  const role = profile?.role || "Passenger"
+
+  // MISSION ARCHIVE QUERY: Dynamically switch filter based on role to satisfy Security Rules
   const ridesQuery = useMemoFirebase(() => {
     if (!user || !db) return null
+    
+    const filterKey = role === "Driver" ? "driverId" : "passengerId"
+    
     return query(
       collection(db, "rides"),
-      where("passengerId", "==", user.uid),
+      where(filterKey, "==", user.uid),
       orderBy("createdAt", "desc")
     )
-  }, [user, db])
+  }, [user, db, role])
 
   const { data: rides, isLoading } = useCollection(ridesQuery)
 

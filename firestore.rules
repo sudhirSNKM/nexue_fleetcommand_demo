@@ -15,9 +15,7 @@ service cloud.firestore {
 
     // --- USER PROFILES ---
     match /userProfiles/{userId} {
-      // Allow any signed-in user to read profiles (needed for driver/passenger discovery)
       allow read: if isSignedIn();
-      // Only the user themselves or an admin can modify a profile
       allow write: if isSignedIn() && (request.auth.uid == userId || isAdmin());
     }
 
@@ -33,23 +31,20 @@ service cloud.firestore {
 
     // --- RIDES ---
     match /rides/{rideId} {
-      // allow read covers both get and list. 
-      // For list, the query must be constrained to documents matching these rules.
+      // Simplified security rule: Admin, Passenger, Driver, or Requested status
       allow read: if isSignedIn() && (
         isAdmin() ||
-        resource.data.passengerId == request.auth.uid ||
-        resource.data.driverId == request.auth.uid ||
+        request.auth.uid == resource.data.passengerId ||
+        request.auth.uid == resource.data.driverId ||
         resource.data.status == 'Requested'
       );
 
-      // Any signed-in user can request a ride
       allow create: if isSignedIn();
 
-      // Allow update if admin, or if user is passenger/driver, or if a driver is accepting a requested ride
       allow update: if isSignedIn() && (
         isAdmin() ||
-        resource.data.passengerId == request.auth.uid ||
-        resource.data.driverId == request.auth.uid ||
+        request.auth.uid == resource.data.passengerId ||
+        request.auth.uid == resource.data.driverId ||
         resource.data.status == 'Requested'
       );
 
@@ -61,27 +56,25 @@ service cloud.firestore {
       }
     }
 
-    // --- DRIVER TELEMETRY ---
+    // --- DRIVER TELEMETRY & STATS ---
     match /driver_locations/{driverId} {
       allow read: if isSignedIn();
-      // Only the driver themselves can write their location
       allow write: if isSignedIn() && request.auth.uid == driverId;
     }
 
-    // --- TRIPS (Duty/Logistics) ---
-    match /trips/{tripId} {
-      allow read, write: if isSignedIn() && (
-        isAdmin() ||
-        resource.data.driverId == request.auth.uid
-      );
+    match /driverStats/{statId} {
+      allow read: if isSignedIn() && (isAdmin() || resource.data.driverId == request.auth.uid);
+      allow write: if isSignedIn() && (isAdmin() || resource.data.driverId == request.auth.uid);
     }
 
-    // --- ANALYTICS & SHIFTS ---
-    match /driverStats/{statId} {
-      allow read, write: if isSignedIn();
-    }
     match /driverShifts/{shiftId} {
-      allow read, write: if isSignedIn();
+      allow read, write: if isSignedIn() && (isAdmin() || resource.data.driverId == request.auth.uid);
+    }
+
+    // --- TRIPS (Logistics) ---
+    match /trips/{tripId} {
+      allow read: if isSignedIn() && (isAdmin() || resource.data.driverId == request.auth.uid);
+      allow write: if isSignedIn() && (isAdmin() || resource.data.driverId == request.auth.uid);
     }
 
     // --- LOGS ---
