@@ -122,12 +122,12 @@ export default function PassengerApp() {
           <CardHeader className="pb-2">
             {!currentRide && (
               <Tabs value={activeService} onValueChange={setActiveService} className="w-full">
-                <TabsList className="grid grid-cols-3 bg-navy/80 border border-white/20 p-1 h-14">
+                <TabsList className="grid grid-cols-3 bg-navy border border-white/20 p-1 h-16">
                   {SERVICES.map(s => (
                     <TabsTrigger 
                       key={s.id} 
                       value={s.id} 
-                      className="text-[12px] font-black uppercase text-white data-[state=active]:text-white data-[state=active]:bg-orange transition-all flex items-center justify-center gap-2"
+                      className="text-sm font-black uppercase text-white data-[state=active]:text-white data-[state=active]:bg-orange transition-all flex items-center justify-center gap-2"
                     >
                       <s.icon className="w-5 h-5" /> 
                       <span className="hidden sm:inline">{s.name}</span>
@@ -137,7 +137,7 @@ export default function PassengerApp() {
               </Tabs>
             )}
             <CardTitle className="text-xl font-black uppercase tracking-tighter mt-6 text-white text-center">
-              {currentRide ? `${currentRide.serviceType} In Progress` : "Initialize Mission"}
+              {currentRide ? `${currentRide.serviceType} Protocol` : "Initialize Mission"}
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4 pt-4">
@@ -150,7 +150,7 @@ export default function PassengerApp() {
                       placeholder="Pickup Origin" 
                       value={pickup} 
                       onChange={e => setPickup(e.target.value)} 
-                      className="pl-10 bg-navy/40 border-navy text-sm text-white placeholder:text-white/60 font-bold h-12" 
+                      className="pl-10 bg-navy/60 border-navy text-sm text-white placeholder:text-white/80 font-bold h-12" 
                     />
                   </div>
                   <div className="relative">
@@ -159,7 +159,7 @@ export default function PassengerApp() {
                       placeholder="Dropoff Destination" 
                       value={dropoff} 
                       onChange={e => setDropoff(e.target.value)} 
-                      className="pl-10 bg-navy/40 border-navy text-sm text-white placeholder:text-white/60 font-bold h-12" 
+                      className="pl-10 bg-navy/60 border-navy text-sm text-white placeholder:text-white/80 font-bold h-12" 
                     />
                   </div>
                 </div>
@@ -182,9 +182,9 @@ export default function PassengerApp() {
                           </button>
                         ))}
                       </div>
-                      <div className="bg-navy/30 p-5 rounded-xl border border-white/5 flex justify-between items-center mt-2">
+                      <div className="bg-navy/50 p-5 rounded-xl border border-white/10 flex justify-between items-center mt-2">
                         <div>
-                          <p className="text-[10px] font-black text-white/60 uppercase tracking-widest">Est. Credits</p>
+                          <p className="text-[10px] font-black text-white uppercase tracking-widest mb-1">Est. Credits</p>
                           <p className="text-3xl font-black text-orange">₹{currentFare}</p>
                         </div>
                         <Button 
@@ -202,7 +202,7 @@ export default function PassengerApp() {
               <div className="space-y-4 text-center py-6">
                 <CheckCircle2 className="w-16 h-16 text-active mx-auto animate-bounce mb-2" />
                 <h3 className="text-lg font-black uppercase text-white">Mission Finalized</h3>
-                <p className="text-3xl font-black text-active">₹{currentRide.fare}</p>
+                <p className="text-4xl font-black text-active">₹{currentRide.fare}</p>
                 <div className="grid gap-3 pt-4">
                   <Button onClick={() => handleProcessPayment(currentRide.id, 'Wallet', currentRide.fare)} variant="outline" className="border-navy h-14 justify-between text-white hover:bg-navy/40 px-6">
                     <span className="font-bold uppercase text-xs">Nexus Wallet</span> 
@@ -213,28 +213,28 @@ export default function PassengerApp() {
               </div>
             ) : (
               <div className="space-y-6 pt-4">
-                <div className="text-center p-8 bg-orange/5 rounded-2xl border border-orange/20 relative overflow-hidden">
-                   <div className="absolute top-0 left-0 w-full h-1 bg-orange/20">
+                <div className="text-center p-8 bg-orange/10 rounded-2xl border border-orange/20 relative overflow-hidden">
+                   <div className="absolute top-0 left-0 w-full h-1.5 bg-orange/20">
                      <motion.div animate={{ x: ["-100%", "100%"] }} transition={{ duration: 2, repeat: Infinity }} className="w-1/3 h-full bg-orange" />
                    </div>
                    <p className="text-xs font-black text-orange uppercase tracking-[0.3em] mb-4">{currentRide.status}</p>
                    {driverProfile ? (
                      <div className="space-y-3">
-                       <div className="w-16 h-16 rounded-full bg-navy/40 mx-auto ring-2 ring-orange/20 flex items-center justify-center overflow-hidden">
+                       <div className="w-20 h-20 rounded-full bg-navy/60 mx-auto ring-4 ring-orange/20 flex items-center justify-center overflow-hidden">
                           <img src={`https://picsum.photos/seed/${driverProfile.id}/100/100`} alt="Driver" />
                        </div>
                        <div>
-                         <p className="text-base font-black uppercase text-white">{driverProfile.name}</p>
+                         <p className="text-lg font-black uppercase text-white">{driverProfile.name}</p>
                          <div className="flex items-center justify-center gap-1 mt-1">
-                           <Star className="w-3 h-3 text-orange fill-orange" />
-                           <span className="text-[10px] text-white/60 uppercase font-black">{driverProfile.rating || '5.0'} • Sector 4 Dispatch</span>
+                           <Star className="w-4 h-4 text-orange fill-orange" />
+                           <span className="text-xs text-white uppercase font-black">{driverProfile.rating || '5.0'} • Sector 4 Dispatch</span>
                          </div>
                        </div>
                      </div>
                    ) : (
                      <div className="py-4 space-y-4">
-                        <div className="w-10 h-10 border-4 border-orange/20 border-t-orange rounded-full animate-spin mx-auto" />
-                        <p className="text-xs font-black uppercase tracking-widest text-white/60">Scanning for nearest unit...</p>
+                        <div className="w-12 h-12 border-4 border-orange/20 border-t-orange rounded-full animate-spin mx-auto" />
+                        <p className="text-xs font-black uppercase tracking-widest text-white">Scanning for nearest unit...</p>
                      </div>
                    )}
                 </div>
@@ -243,7 +243,7 @@ export default function PassengerApp() {
                   <Button variant="outline" className="flex-1 border-navy text-[10px] uppercase font-black h-14 text-white hover:bg-navy/40"><ShieldAlert className="w-4 h-4 mr-2 text-emergency" /> SOS Signal</Button>
                 </div>
                 {(currentRide.status === "Requested" || currentRide.status === "Accepted") && (
-                  <Button onClick={() => handleCancelRide(currentRide.id)} variant="ghost" className="w-full text-[10px] font-black uppercase h-10 text-white/60 hover:text-emergency transition-colors">Abort Mission</Button>
+                  <Button onClick={() => handleCancelRide(currentRide.id)} variant="ghost" className="w-full text-[10px] font-black uppercase h-10 text-white hover:text-emergency transition-colors">Abort Mission</Button>
                 )}
               </div>
             )}
@@ -251,12 +251,12 @@ export default function PassengerApp() {
         </Card>
 
         <div className="grid grid-cols-2 gap-4">
-          <Card className="glass-panel passenger-card p-5 text-center border-white/5 bg-navy/20">
-            <p className="text-[10px] uppercase font-black text-white/60 mb-1 tracking-widest">Operator Rep</p>
+          <Card className="glass-panel passenger-card p-5 text-center border-white/10 bg-navy/30">
+            <p className="text-[10px] uppercase font-black text-white mb-1 tracking-widest">Operator Rep</p>
             <p className="text-3xl font-black text-white">{profile?.rating ? profile.rating.toFixed(1) : '5.0'}</p>
           </Card>
-          <Card className="glass-panel passenger-card p-5 text-center border-white/5 bg-navy/20">
-            <p className="text-[10px] uppercase font-black text-white/60 mb-1 tracking-widest">Nexus Credits</p>
+          <Card className="glass-panel passenger-card p-5 text-center border-white/10 bg-navy/30">
+            <p className="text-[10px] uppercase font-black text-white mb-1 tracking-widest">Nexus Credits</p>
             <p className="text-3xl font-black text-active">₹{profile?.walletBalance || 0}</p>
           </Card>
         </div>

@@ -17,11 +17,12 @@ service cloud.firestore {
     }
 
     match /rides/{rideId} {
-      // DEBUG: Temporarily allow all access to confirm fixing permission issues
-      allow read, write: if true;
+      // Allow all signed-in users to read and write for the unified mobility platform
+      // This supports the matching engine (discovery) and user mission history
+      allow read, write: if isSignedIn();
 
       match /messages/{messageId} {
-        allow read, write: if true;
+        allow read, write: if isSignedIn();
       }
     }
 
