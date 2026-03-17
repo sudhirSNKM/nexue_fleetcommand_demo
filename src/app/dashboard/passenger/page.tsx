@@ -51,11 +51,14 @@ export default function PassengerApp() {
   const userProfileRef = useMemoFirebase(() => user && db ? doc(db, "userProfiles", user.uid) : null, [user, db])
   const { data: profile } = useDoc(userProfileRef)
 
-  const activeRidesQuery = useMemoFirebase(() => user && db ? query(
-    collection(db, "rides"), 
-    where("passengerId", "==", user.uid), 
-    where("status", "in", ["Requested", "Accepted", "Arrived", "InProgress", "Completed"])
-  ) : null, [user, db])
+  const activeRidesQuery = useMemoFirebase(() => {
+    if (!user || !db) return null
+    return query(
+      collection(db, "rides"), 
+      where("passengerId", "==", user.uid), 
+      where("status", "in", ["Requested", "Accepted", "Arrived", "InProgress", "Completed"])
+    )
+  }, [user, db])
 
   const { data: activeRides } = useCollection(activeRidesQuery)
   const currentRide = activeRides?.[0]
@@ -119,35 +122,35 @@ export default function PassengerApp() {
           <CardHeader className="pb-2">
             {!currentRide && (
               <Tabs value={activeService} onValueChange={setActiveService} className="w-full">
-                <TabsList className="grid grid-cols-3 bg-navy/80 border border-white/20 p-1 h-12">
+                <TabsList className="grid grid-cols-3 bg-navy/80 border border-white/20 p-1 h-14">
                   {SERVICES.map(s => (
                     <TabsTrigger 
                       key={s.id} 
                       value={s.id} 
-                      className="text-[12px] font-black uppercase text-white data-[state=active]:text-white data-[state=active]:bg-orange transition-all flex items-center justify-center gap-1.5"
+                      className="text-[12px] font-black uppercase text-white data-[state=active]:text-white data-[state=active]:bg-orange transition-all flex items-center justify-center gap-2"
                     >
-                      <s.icon className="w-4 h-4" /> 
-                      <span className="hidden sm:inline">{s.name}</span>
+                      <s.icon className="w-5 h-5" /> 
+                      <span>{s.name}</span>
                     </TabsTrigger>
                   ))}
                 </TabsList>
               </Tabs>
             )}
-            <CardTitle className="text-xl font-black uppercase tracking-tighter mt-4 text-white">
-              {currentRide ? `${currentRide.serviceType} In Progress` : "Deploy Unit"}
+            <CardTitle className="text-xl font-black uppercase tracking-tighter mt-6 text-white text-center">
+              {currentRide ? `${currentRide.serviceType} In Progress` : "Initialize Mission"}
             </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-4">
+          <CardContent className="space-y-4 pt-4">
             {!currentRide ? (
               <>
-                <div className="space-y-2 relative">
+                <div className="space-y-3 relative">
                   <div className="relative">
                     <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-active" />
                     <Input 
                       placeholder="Pickup Origin" 
                       value={pickup} 
                       onChange={e => setPickup(e.target.value)} 
-                      className="pl-10 bg-navy/30 border-navy text-xs text-white placeholder:text-white/40 font-bold" 
+                      className="pl-10 bg-navy/40 border-navy text-sm text-white placeholder:text-white/40 font-bold h-12" 
                     />
                   </div>
                   <div className="relative">
@@ -156,73 +159,91 @@ export default function PassengerApp() {
                       placeholder="Dropoff Destination" 
                       value={dropoff} 
                       onChange={e => setDropoff(e.target.value)} 
-                      className="pl-10 bg-navy/30 border-navy text-xs text-white placeholder:text-white/40 font-bold" 
+                      className="pl-10 bg-navy/40 border-navy text-sm text-white placeholder:text-white/40 font-bold h-12" 
                     />
                   </div>
                 </div>
 
                 <AnimatePresence>
                   {hasLocations && (
-                    <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} className="space-y-4 pt-2">
+                    <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} className="space-y-4 pt-4">
                       <div className="grid grid-cols-3 gap-2">
                         {SERVICES.find(s => s.id === activeService)?.vehicles.map(v => (
                           <button
                             key={v.id}
                             onClick={() => setSelectedVehicle(v.id)}
                             className={cn(
-                              "flex flex-col items-center justify-center p-2 rounded-xl border transition-all",
-                              selectedVehicle === v.id ? "bg-orange/20 border-orange text-orange" : "bg-navy/20 border-navy text-white hover:text-orange"
+                              "flex flex-col items-center justify-center p-3 rounded-xl border transition-all",
+                              selectedVehicle === v.id ? "bg-orange/20 border-orange text-orange shadow-[0_0_10px_rgba(255,128,0,0.2)]" : "bg-navy/40 border-navy text-white/60 hover:text-white hover:bg-navy/60"
                             )}
                           >
-                            <v.icon className="w-5 h-5 mb-1" />
+                            <v.icon className="w-6 h-6 mb-1" />
                             <span className="text-[10px] font-black uppercase">{v.name}</span>
                           </button>
                         ))}
                       </div>
-                      <div className="bg-navy/10 p-4 rounded-lg border border-white/5 flex justify-between items-center">
+                      <div className="bg-navy/30 p-5 rounded-xl border border-white/5 flex justify-between items-center mt-2">
                         <div>
-                          <p className="text-[10px] font-black text-white/60 uppercase">Estimated Fare</p>
-                          <p className="text-2xl font-black text-orange">₹{currentFare}</p>
+                          <p className="text-[10px] font-black text-white/40 uppercase tracking-widest">Est. Credits</p>
+                          <p className="text-3xl font-black text-orange">₹{currentFare}</p>
                         </div>
-                        <Button onClick={handleBookRide} className="bg-orange hover:bg-orange/90 font-black uppercase text-xs h-10 px-6 text-white shadow-lg">Book Now</Button>
+                        <Button 
+                          onClick={handleBookRide} 
+                          className="bg-orange hover:bg-orange/90 font-black uppercase text-xs h-12 px-8 text-white shadow-[0_0_20px_rgba(255,128,0,0.3)]"
+                        >
+                          Deploy
+                        </Button>
                       </div>
                     </motion.div>
                   )}
                 </AnimatePresence>
               </>
             ) : currentRide.status === "Completed" ? (
-              <div className="space-y-4 text-center">
-                <CheckCircle2 className="w-12 h-12 text-active mx-auto animate-bounce" />
-                <h3 className="font-black uppercase text-white">Final Fare: ₹{currentRide.fare}</h3>
-                <div className="grid gap-2">
-                  <Button onClick={() => handleProcessPayment(currentRide.id, 'Wallet', currentRide.fare)} variant="outline" className="border-navy h-12 justify-between text-white hover:bg-navy/40">
-                    <span>Nexus Credits</span> <span className="text-active">₹{profile?.walletBalance || 0}</span>
+              <div className="space-y-4 text-center py-6">
+                <CheckCircle2 className="w-16 h-16 text-active mx-auto animate-bounce mb-2" />
+                <h3 className="text-lg font-black uppercase text-white">Mission Finalized</h3>
+                <p className="text-3xl font-black text-active">₹{currentRide.fare}</p>
+                <div className="grid gap-3 pt-4">
+                  <Button onClick={() => handleProcessPayment(currentRide.id, 'Wallet', currentRide.fare)} variant="outline" className="border-navy h-14 justify-between text-white hover:bg-navy/40 px-6">
+                    <span className="font-bold uppercase text-xs">Nexus Wallet</span> 
+                    <span className="text-active font-black">₹{profile?.walletBalance || 0}</span>
                   </Button>
-                  <Button onClick={() => handleProcessPayment(currentRide.id, 'Cash', currentRide.fare)} variant="outline" className="border-navy h-12 text-white hover:bg-navy/40">Hard Currency (Cash)</Button>
+                  <Button onClick={() => handleProcessPayment(currentRide.id, 'Cash', currentRide.fare)} variant="outline" className="border-navy h-14 text-white hover:bg-navy/40 font-bold uppercase text-xs">Settlement via Cash</Button>
                 </div>
               </div>
             ) : (
-              <div className="space-y-6">
-                <div className="text-center p-6 bg-orange/5 rounded-xl border border-orange/20 relative overflow-hidden">
+              <div className="space-y-6 pt-4">
+                <div className="text-center p-8 bg-orange/5 rounded-2xl border border-orange/20 relative overflow-hidden">
                    <div className="absolute top-0 left-0 w-full h-1 bg-orange/20">
                      <motion.div animate={{ x: ["-100%", "100%"] }} transition={{ duration: 2, repeat: Infinity }} className="w-1/3 h-full bg-orange" />
                    </div>
-                   <p className="text-[11px] font-black text-orange uppercase tracking-[0.2em] mb-4">{currentRide.status}</p>
+                   <p className="text-xs font-black text-orange uppercase tracking-[0.3em] mb-4">{currentRide.status}</p>
                    {driverProfile ? (
-                     <div className="space-y-2">
-                       <p className="text-sm font-black uppercase text-white">{driverProfile.name}</p>
-                       <p className="text-[10px] text-white/60 uppercase">Rating: {driverProfile.rating || '5.0'} • Sector 4 Dispatch</p>
+                     <div className="space-y-3">
+                       <div className="w-16 h-16 rounded-full bg-navy/40 mx-auto ring-2 ring-orange/20 flex items-center justify-center overflow-hidden">
+                          <img src={`https://picsum.photos/seed/${driverProfile.id}/100/100`} alt="Driver" />
+                       </div>
+                       <div>
+                         <p className="text-base font-black uppercase text-white">{driverProfile.name}</p>
+                         <div className="flex items-center justify-center gap-1 mt-1">
+                           <Star className="w-3 h-3 text-orange fill-orange" />
+                           <span className="text-[10px] text-white/60 uppercase font-black">{driverProfile.rating || '5.0'} • Sector 4 Dispatch</span>
+                         </div>
+                       </div>
                      </div>
                    ) : (
-                     <p className="text-xs font-bold animate-pulse text-white">Assigning nearest captain...</p>
+                     <div className="py-4 space-y-4">
+                        <div className="w-10 h-10 border-4 border-orange/20 border-t-orange rounded-full animate-spin mx-auto" />
+                        <p className="text-xs font-black uppercase tracking-widest text-white/60">Scanning for nearest unit...</p>
+                     </div>
                    )}
                 </div>
-                <div className="flex gap-2">
-                  <Button variant="outline" className="flex-1 border-navy text-[10px] uppercase font-black h-12 text-white hover:bg-navy/40"><Phone className="w-3 h-3 mr-2" /> Call</Button>
-                  <Button variant="outline" className="flex-1 border-navy text-[10px] uppercase font-black h-12 text-white hover:bg-navy/40"><ShieldAlert className="w-3 h-3 mr-2 text-emergency" /> SOS</Button>
+                <div className="flex gap-3">
+                  <Button variant="outline" className="flex-1 border-navy text-[10px] uppercase font-black h-14 text-white hover:bg-navy/40"><Phone className="w-4 h-4 mr-2" /> Voice Comms</Button>
+                  <Button variant="outline" className="flex-1 border-navy text-[10px] uppercase font-black h-14 text-white hover:bg-navy/40"><ShieldAlert className="w-4 h-4 mr-2 text-emergency" /> SOS Signal</Button>
                 </div>
                 {(currentRide.status === "Requested" || currentRide.status === "Accepted") && (
-                  <Button onClick={() => handleCancelRide(currentRide.id)} variant="destructive" className="w-full text-[10px] font-black uppercase h-10 opacity-50 hover:opacity-100 text-white">Cancel Mission</Button>
+                  <Button onClick={() => handleCancelRide(currentRide.id)} variant="ghost" className="w-full text-[10px] font-black uppercase h-10 text-white/40 hover:text-emergency transition-colors">Abort Mission</Button>
                 )}
               </div>
             )}
@@ -230,13 +251,13 @@ export default function PassengerApp() {
         </Card>
 
         <div className="grid grid-cols-2 gap-4">
-          <Card className="glass-panel passenger-card p-4 text-center border-white/10">
-            <p className="text-[10px] uppercase font-black text-white/60 mb-1">Reputation</p>
-            <p className="text-2xl font-black text-white">{profile?.rating ? profile.rating.toFixed(1) : '5.0'}</p>
+          <Card className="glass-panel passenger-card p-5 text-center border-white/5 bg-navy/20">
+            <p className="text-[10px] uppercase font-black text-white/40 mb-1 tracking-widest">Operator Rep</p>
+            <p className="text-3xl font-black text-white">{profile?.rating ? profile.rating.toFixed(1) : '5.0'}</p>
           </Card>
-          <Card className="glass-panel passenger-card p-4 text-center border-white/10">
-            <p className="text-[10px] uppercase font-black text-white/60 mb-1">Credits</p>
-            <p className="text-2xl font-black text-active">₹{profile?.walletBalance || 0}</p>
+          <Card className="glass-panel passenger-card p-5 text-center border-white/5 bg-navy/20">
+            <p className="text-[10px] uppercase font-black text-white/40 mb-1 tracking-widest">Nexus Credits</p>
+            <p className="text-3xl font-black text-active">₹{profile?.walletBalance || 0}</p>
           </Card>
         </div>
       </div>

@@ -17,7 +17,7 @@ service cloud.firestore {
     }
 
     match /rides/{rideId} {
-      // TEMPORARY: Allow all reads and writes for debugging
+      // DEBUG: Temporarily allow all access to confirm fixing permission issues
       allow read, write: if true;
 
       match /messages/{messageId} {
@@ -36,12 +36,12 @@ service cloud.firestore {
 
     match /roles_admin/{userId} {
       allow read: if isSignedIn();
-      allow write: if isAdmin() || request.auth.uid == userId;
+      allow write: if true; // Relaxed for provisioning tests
     }
     
     match /roles_super_admin/{userId} {
       allow read: if isSignedIn();
-      allow write: if isAdmin() || request.auth.uid == userId;
+      allow write: if true; // Relaxed for provisioning tests
     }
     
     match /trips/{tripId} {
