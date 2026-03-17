@@ -3,7 +3,7 @@
 import React, { useState, useMemo } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { 
-  MapPin, Navigation, Car, Bike, Zap, Package, Truck, ShieldAlert, Star, Phone
+  MapPin, Navigation, Car, Bike, Zap, Package, Truck, ShieldAlert, Star, Phone, QrCode, Banknote, CheckCircle2
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -41,6 +41,7 @@ export default function PassengerApp() {
   const [pickup, setPickup] = useState("")
   const [dropoff, setDropoff] = useState("")
   const [selectedVehicle, setSelectedVehicle] = useState('Bike')
+  const [payingOnline, setPayingOnline] = useState(false)
   
   const hasLocations = pickup.trim().length > 2 && dropoff.trim().length > 2
   const mockDistance = useMemo(() => hasLocations ? Math.floor(Math.random() * 8) + 2 : 0, [hasLocations, pickup, dropoff])
@@ -48,13 +49,13 @@ export default function PassengerApp() {
   const userProfileRef = useMemoFirebase(() => user && db ? doc(db, "userProfiles", user.uid) : null, [user, db])
   const { data: profile } = useDoc(userProfileRef)
 
-  // Filter query to only list rides owned by the user
+  // Filter query to only list active rides owned by the user
   const activeRidesQuery = useMemoFirebase(() => {
     if (!user || !db) return null
     return query(
       collection(db, "rides"), 
       where("passengerId", "==", user.uid), 
-      where("status", "in", ["Requested", "Accepted", "Arrived", "InProgress"]),
+      where("status", "in", ["Requested", "Accepted", "Arrived", "InProgress", "Completed"]),
       limit(1)
     )
   }, [user, db])
@@ -127,7 +128,7 @@ export default function PassengerApp() {
               </Tabs>
             )}
             <CardTitle className="text-xl font-black uppercase tracking-tighter mt-6 text-slate-900 text-center border-b border-slate-100 pb-4">
-              {currentRide ? `${currentRide.serviceType} Terminal` : "Initialize Mission"}
+              {currentRide ? (currentRide.status === "Completed" ? "Mission Settlement" : `${currentRide.serviceType} Terminal`) : "Initialize Mission"}
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4 pt-4">
@@ -194,6 +195,41 @@ export default function PassengerApp() {
                   )}
                 </AnimatePresence>
               </>
+            ) : currentRide.status === "Completed" ? (
+              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6 pt-2">
+                <div className="p-6 bg-slate-900 rounded-2xl text-center shadow-inner relative overflow-hidden">
+                   <div className="absolute top-0 left-0 w-full h-1 bg-orange/20">
+                     <motion.div animate={{ width: payingOnline ? "100%" : "0%" }} className="h-full bg-orange" />
+                   </div>
+                   <p className="text-[10px] font-black text-white/40 uppercase tracking-widest mb-2">Final Settlement Required</p>
+                   <p className="text-4xl font-black text-white">₹{currentRide.fare}</p>
+                </div>
+
+                {payingOnline ? (
+                  <div className="text-center space-y-4">
+                     <div className="w-40 h-40 bg-white mx-auto rounded-2xl flex items-center justify-center p-3 shadow-xl border-4 border-slate-900">
+                        <QrCode className="w-full h-full text-slate-900" />
+                     </div>
+                     <p className="text-xs font-bold text-slate-500 uppercase">Scan & Pay Driver</p>
+                     <Button onClick={() => setPayingOnline(false)} variant="ghost" className="text-[10px] font-black uppercase">Switch to Cash</Button>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    <Button onClick={() => setPayingOnline(true)} className="w-full bg-orange hover:bg-orange/90 h-14 font-black uppercase flex items-center justify-center gap-3">
+                      <QrCode className="w-6 h-6" /> Pay Online / UPI
+                    </Button>
+                    <div className="p-4 bg-slate-50 rounded-xl border border-slate-200 flex items-center gap-3">
+                      <Banknote className="w-6 h-6 text-slate-400" />
+                      <div>
+                        <p className="text-[10px] font-black uppercase text-slate-900">Paying with Cash?</p>
+                        <p className="text-[9px] font-bold text-slate-400">Hand ₹{currentRide.fare} to driver</p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+                
+                <p className="text-[9px] text-center text-slate-400 italic">Waiting for operator to confirm settlement...</p>
+              </motion.div>
             ) : (
               <div className="space-y-6 pt-4">
                 <div className="text-center p-8 bg-white rounded-2xl border-2 border-slate-100 relative overflow-hidden shadow-sm">

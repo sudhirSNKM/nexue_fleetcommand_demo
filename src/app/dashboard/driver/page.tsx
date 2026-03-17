@@ -1,8 +1,8 @@
 "use client"
 
-import React, { useEffect } from "react"
+import React, { useState } from "react"
 import { motion, AnimatePresence } from "framer-motion"
-import { Navigation, Power, AlertCircle, Phone, Star, TrendingUp } from "lucide-react"
+import { Navigation, Power, AlertCircle, Phone, Star, TrendingUp, QrCode, Banknote, CheckCircle2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -16,6 +16,7 @@ export default function DriverApp() {
   const { user } = useUser()
   const db = useFirestore()
   const { toast } = useToast()
+  const [showUPI, setShowUPI] = useState(false)
 
   const todayDate = new Date().toISOString().split('T')[0]
   const statsId = `${user?.uid}_${todayDate}`
@@ -30,7 +31,7 @@ export default function DriverApp() {
   const pendingQuery = useMemoFirebase(() => db ? query(collection(db, "rides"), where("status", "==", "Requested")) : null, [db])
   const { data: pendingRides } = useCollection(pendingQuery)
 
-  const activeQuery = useMemoFirebase(() => user && db ? query(collection(db, "rides"), where("driverId", "==", user.uid), where("status", "in", ["Accepted", "Arrived", "InProgress"])) : null, [user, db])
+  const activeQuery = useMemoFirebase(() => user && db ? query(collection(db, "rides"), where("driverId", "==", user.uid), where("status", "in", ["Accepted", "Arrived", "InProgress", "Completed"])) : null, [user, db])
   const { data: activeRides } = useCollection(activeQuery)
 
   const handleToggleOnline = () => {
@@ -44,16 +45,41 @@ export default function DriverApp() {
     toast({ title: "Mission Accepted", description: "Proceed to pickup point." })
   }
 
-  const handleUpdateStatus = (rideId: string, nextStatus: string, fare?: number) => {
+  const handleUpdateStatus = (rideId: string, nextStatus: string) => {
+    if (!db) return
+    const rideRef = doc(db, "rides", rideId)
+    updateDocumentNonBlocking(rideRef, { status: nextStatus })
+    if (nextStatus === "Completed") {
+      toast({ title: "Destination Reached", description: "End trip successful. Awaiting settlement." })
+    }
+  }
+
+  const handleCompletePayment = (rideId: string, method: string, fare: number) => {
     if (!db || !user) return
     const rideRef = doc(db, "rides", rideId)
-    if (nextStatus === "Completed") {
-      updateDocumentNonBlocking(rideRef, { status: "Completed", endTime: serverTimestamp() })
-      if (statsRef) setDocumentNonBlocking(statsRef, { driverId: user.uid, date: todayDate, earnings: increment(fare || 0), rideCount: increment(1) }, { merge: true })
-      toast({ title: "Mission Complete", description: `Earnings logged: ₹${fare}` })
-    } else {
-      updateDocumentNonBlocking(rideRef, { status: nextStatus })
+    
+    // Update ride to Paid
+    updateDocumentNonBlocking(rideRef, { 
+      status: "Paid", 
+      paymentMethod: method,
+      paidAt: serverTimestamp() 
+    })
+
+    // Log earnings
+    if (statsRef) {
+      setDocumentNonBlocking(statsRef, { 
+        driverId: user.uid, 
+        date: todayDate, 
+        earnings: increment(fare || 0), 
+        rideCount: increment(1) 
+      }, { merge: true })
     }
+
+    setShowUPI(false)
+    toast({ 
+      title: "Settlement Successful", 
+      description: `₹${fare} logged via ${method}. Mission archived.` 
+    })
   }
 
   const activeRide = activeRides?.[0]
@@ -90,9 +116,49 @@ export default function DriverApp() {
                     </div>
                     <p className="text-lg font-black text-slate-900">₹{activeRide.fare}</p>
                   </div>
-                  {activeRide.status === "Accepted" && <Button onClick={() => handleUpdateStatus(activeRide.id, "Arrived")} className="w-full bg-orange text-white h-12 font-black uppercase text-xs">Arrived at Origin</Button>}
-                  {activeRide.status === "Arrived" && <Button onClick={() => handleUpdateStatus(activeRide.id, "InProgress")} className="w-full bg-slate-900 text-white h-12 font-black uppercase text-xs">Start Trip</Button>}
-                  {activeRide.status === "InProgress" && <Button onClick={() => handleUpdateStatus(activeRide.id, "Completed", activeRide.fare)} className="w-full bg-red-600 text-white h-12 font-black uppercase text-xs">End Trip</Button>}
+
+                  {activeRide.status === "Accepted" && (
+                    <Button onClick={() => handleUpdateStatus(activeRide.id, "Arrived")} className="w-full bg-orange text-white h-12 font-black uppercase text-xs">Arrived at Origin</Button>
+                  )}
+                  {activeRide.status === "Arrived" && (
+                    <Button onClick={() => handleUpdateStatus(activeRide.id, "InProgress")} className="w-full bg-slate-900 text-white h-12 font-black uppercase text-xs">Start Trip</Button>
+                  )}
+                  {activeRide.status === "InProgress" && (
+                    <Button onClick={() => handleUpdateStatus(activeRide.id, "Completed")} className="w-full bg-red-600 text-white h-12 font-black uppercase text-xs">End Trip</Button>
+                  )}
+
+                  {activeRide.status === "Completed" && (
+                    <div className="space-y-4 pt-2">
+                      <div className="p-4 bg-slate-100 rounded-xl text-center border-2 border-dashed border-slate-200">
+                        <p className="text-[10px] font-black text-slate-500 uppercase mb-1">Awaiting Settlement</p>
+                        <p className="text-2xl font-black text-slate-900">₹{activeRide.fare}</p>
+                      </div>
+
+                      {showUPI ? (
+                        <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} className="text-center space-y-4">
+                          <div className="w-32 h-32 bg-white border-2 border-slate-900 mx-auto rounded-xl flex items-center justify-center p-2">
+                            <QrCode className="w-full h-full text-slate-900" />
+                          </div>
+                          <p className="text-[10px] font-black uppercase text-slate-400">Scan to pay driver</p>
+                          <div className="grid grid-cols-2 gap-2">
+                             <Button onClick={() => setShowUPI(false)} variant="outline" className="text-[10px] font-black uppercase">Cancel</Button>
+                             <Button onClick={() => handleCompletePayment(activeRide.id, "Online", activeRide.fare)} className="bg-active text-white text-[10px] font-black uppercase">Paid Online</Button>
+                          </div>
+                        </motion.div>
+                      ) : (
+                        <div className="grid grid-cols-2 gap-3">
+                          <Button onClick={() => handleCompletePayment(activeRide.id, "Cash", activeRide.fare)} variant="outline" className="h-14 border-slate-900 flex flex-col items-center justify-center gap-1 group">
+                            <Banknote className="w-5 h-5 text-slate-900 group-hover:scale-110 transition-transform" />
+                            <span className="text-[9px] font-black uppercase">Cash</span>
+                          </Button>
+                          <Button onClick={() => setShowUPI(true)} className="h-14 bg-orange text-white flex flex-col items-center justify-center gap-1 group">
+                            <QrCode className="w-5 h-5 text-white group-hover:scale-110 transition-transform" />
+                            <span className="text-[9px] font-black uppercase">UPI / QR</span>
+                          </Button>
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </motion.div>
               ) : isOnline ? (
                 <div className="text-center py-6 space-y-4">
