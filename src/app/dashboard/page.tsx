@@ -2,6 +2,7 @@
 "use client"
 
 import React, { useState, useEffect } from "react"
+import { useRouter } from "next/navigation"
 import { motion } from "framer-motion"
 import FleetStats from "@/components/dashboard/FleetStats"
 import LiveMap from "@/components/dashboard/LiveMap"
@@ -9,9 +10,21 @@ import FuelAnalytics from "@/components/dashboard/FuelAnalytics"
 import DriverPerformance from "@/components/dashboard/DriverPerformance"
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card"
 import { AlertCircle, ShieldCheck, Timer } from "lucide-react"
+import { useUser, useFirestore, useDoc, useMemoFirebase } from "@/firebase"
+import { doc } from "firebase/firestore"
 
 export default function Dashboard() {
+  const router = useRouter()
+  const { user, isUserLoading } = useUser()
+  const db = useFirestore()
   const [currentTime, setCurrentTime] = useState<string | null>(null)
+
+  const userProfileRef = useMemoFirebase(() => {
+    if (!user || !db) return null
+    return doc(db, "userProfiles", user.uid)
+  }, [user, db])
+
+  const { data: profile, isLoading: isProfileLoading } = useDoc(userProfileRef)
 
   useEffect(() => {
     // Set time on client side mount to avoid hydration mismatch
@@ -24,6 +37,24 @@ export default function Dashboard() {
     
     return () => clearInterval(timer)
   }, [])
+
+  useEffect(() => {
+    if (!isProfileLoading && profile) {
+      if (profile.role === "Driver") {
+        router.push("/dashboard/driver")
+      } else if (profile.role === "Passenger") {
+        router.push("/dashboard/passenger")
+      }
+    }
+  }, [profile, isProfileLoading, router])
+
+  if (isUserLoading || isProfileLoading || (profile && profile.role !== "Admin" && profile.role !== "Super Admin")) {
+    return (
+      <div className="h-full w-full flex items-center justify-center bg-charcoal">
+        <div className="w-8 h-8 border-4 border-orange/20 border-t-orange rounded-full animate-spin" />
+      </div>
+    )
+  }
 
   return (
     <div className="space-y-8">
