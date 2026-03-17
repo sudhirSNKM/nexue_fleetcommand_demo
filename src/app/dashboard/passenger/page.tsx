@@ -51,6 +51,7 @@ export default function PassengerApp() {
   const userProfileRef = useMemoFirebase(() => user && db ? doc(db, "userProfiles", user.uid) : null, [user, db])
   const { data: profile } = useDoc(userProfileRef)
 
+  // SECURITY FIX: Query must be filtered by passengerId to match ownership rules
   const activeRidesQuery = useMemoFirebase(() => {
     if (!user || !db) return null
     return query(

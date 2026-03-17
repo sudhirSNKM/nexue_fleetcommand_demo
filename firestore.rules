@@ -1,37 +1,55 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    // TEMPORARY DEBUG RULES: Allowing all authenticated users full access
-    // to confirm core functionality and resolve list permission errors.
     
-    match /rides/{rideId} {
-      allow read, write: if request.auth != null;
+    function isSignedIn() {
+      return request.auth != null;
     }
 
     match /userProfiles/{userId} {
-      allow read, write: if request.auth != null;
+      // Users can manage their own profiles.
+      // We also allow reading other profiles if signed in so passengers/drivers can see each other's ratings.
+      allow read: if isSignedIn();
+      allow write: if isSignedIn() && request.auth.uid == userId;
     }
 
-    // Allow other collections mentioned in backend.json for debugging
+    match /rides/{rideId} {
+      // Only the passenger, the assigned driver, or discovery of new requests
+      allow read: if isSignedIn() && (
+        request.auth.uid == resource.data.passengerId ||
+        request.auth.uid == resource.data.driverId ||
+        resource.data.status == "Requested"
+      );
+
+      allow create: if isSignedIn();
+
+      allow update: if isSignedIn() && (
+        request.auth.uid == resource.data.passengerId ||
+        request.auth.uid == resource.data.driverId ||
+        // Allow a driver to take a "Requested" ride
+        (resource.data.status == "Requested" && request.resource.data.status == "Accepted")
+      );
+
+      allow delete: if false;
+    }
+
+    // Role marker collections for admin discovery
+    match /roles_admin/{userId} {
+      allow read: if isSignedIn();
+    }
+    match /roles_super_admin/{userId} {
+      allow read: if isSignedIn();
+    }
+    
+    // Support and stats collections
     match /driverStats/{statsId} {
-      allow read, write: if request.auth != null;
+      allow read, write: if isSignedIn();
     }
-
-    match /driverLocations/{driverId} {
-      allow read, write: if request.auth != null;
-    }
-    
     match /driverShifts/{shiftId} {
-      allow read, write: if request.auth != null;
+      allow read, write: if isSignedIn();
     }
-    
     match /trips/{tripId} {
-      allow read, write: if request.auth != null;
-    }
-
-    // Fallback for any other specialized role markers
-    match /{document=**} {
-      allow read, write: if request.auth != null;
+      allow read, write: if isSignedIn();
     }
   }
 }

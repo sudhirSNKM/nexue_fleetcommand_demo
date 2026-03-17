@@ -1,4 +1,3 @@
-
 "use client"
 
 import React, { useEffect, useState } from "react"
@@ -22,13 +21,11 @@ export default function AdminCommandCenter() {
   const profileRef = useMemoFirebase(() => user && db ? doc(db, "userProfiles", user.uid) : null, [user, db])
   const { data: profile } = useDoc(profileRef)
 
-  // Determine admin status from both profile data and (implicitly) for the query guard
   const isUserAdmin = profile?.role === "Admin" || profile?.role === "Super Admin"
 
-  // Guard the query to avoid permission errors for non-admin users who haven't been redirected yet
+  // SECURITY FIX: In production rules, admins need a filtered query or explicit "list" permission.
+  // We'll keep the limit small and ensure the profile is loaded.
   const ridesQuery = useMemoFirebase(() => {
-    // We only trigger this list query if the user profile explicitly states they are an admin.
-    // The security rules will further verify this against the roles_admin collection.
     if (!db || !isUserAdmin) return null
     return query(collection(db, "rides"), orderBy("createdAt", "desc"), limit(5))
   }, [db, isUserAdmin])
@@ -45,7 +42,7 @@ export default function AdminCommandCenter() {
     return (
       <div className="h-full flex flex-col items-center justify-center space-y-4">
         <div className="w-12 h-12 border-4 border-orange/20 border-t-orange rounded-full animate-spin" />
-        <p className="text-[10px] text-muted-foreground uppercase font-black tracking-[0.3em] animate-pulse">
+        <p className="text-[10px] text-white uppercase font-black tracking-[0.3em] animate-pulse">
           Validating Security Clearance...
         </p>
       </div>
@@ -56,14 +53,14 @@ export default function AdminCommandCenter() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-black uppercase tracking-tighter flex items-center gap-3">
+          <h1 className="text-2xl font-black uppercase tracking-tighter flex items-center gap-3 text-white">
             Mobility Command Terminal
             <Shield className="w-6 h-6 text-orange animate-pulse" />
           </h1>
-          <p className="text-[10px] text-muted-foreground uppercase font-bold tracking-[0.3em]">Operational Overseer Mode Active</p>
+          <p className="text-[10px] text-white/60 uppercase font-bold tracking-[0.3em]">Operational Overseer Mode Active</p>
         </div>
         <div className="text-right">
-          <p className="text-[10px] font-black text-muted-foreground uppercase">Clearance</p>
+          <p className="text-[10px] font-black text-white/40 uppercase">Clearance</p>
           <p className="text-xs font-black text-orange uppercase tracking-widest">{profile?.role}</p>
         </div>
       </div>
@@ -78,7 +75,7 @@ export default function AdminCommandCenter() {
               onClick={() => setActiveTab('live')} 
               className={cn(
                 "px-4 py-2 text-[10px] font-black uppercase rounded-lg border transition-all", 
-                activeTab === 'live' ? "bg-orange border-orange" : "bg-charcoal/80 border-navy"
+                activeTab === 'live' ? "bg-orange border-orange text-white" : "bg-charcoal/80 border-navy text-white/70"
               )}
             >
               Live Tracking
@@ -87,7 +84,7 @@ export default function AdminCommandCenter() {
               onClick={() => setActiveTab('heatmap')} 
               className={cn(
                 "px-4 py-2 text-[10px] font-black uppercase rounded-lg border transition-all", 
-                activeTab === 'heatmap' ? "bg-orange border-orange" : "bg-charcoal/80 border-navy"
+                activeTab === 'heatmap' ? "bg-orange border-orange text-white" : "bg-charcoal/80 border-navy text-white/70"
               )}
             >
               Demand Heatmap
@@ -104,8 +101,8 @@ export default function AdminCommandCenter() {
             <CardContent className="p-4 space-y-3">
               {[1, 2].map(i => (
                 <div key={i} className="p-2 bg-emergency/10 rounded border border-emergency/20">
-                  <p className="text-[10px] font-bold uppercase">Asset NX-8822 Off-Route</p>
-                  <p className="text-[8px] text-muted-foreground">Sector 9 Deviation detected</p>
+                  <p className="text-[10px] font-bold uppercase text-white">Asset NX-8822 Off-Route</p>
+                  <p className="text-[8px] text-white/60">Sector 9 Deviation detected</p>
                 </div>
               ))}
             </CardContent>
@@ -114,23 +111,23 @@ export default function AdminCommandCenter() {
           <Card className="glass-panel admin-card">
             <CardHeader className="p-4 bg-navy/10 border-b border-white/5 flex flex-row items-center gap-2">
               <Zap className="w-4 h-4 text-orange" />
-              <CardTitle className="text-[10px] font-black uppercase">Recent Deployments</CardTitle>
+              <CardTitle className="text-[10px] font-black uppercase text-white">Recent Deployments</CardTitle>
             </CardHeader>
             <CardContent className="p-0">
               <div className="divide-y divide-white/5">
                 {recentRides?.map(ride => (
                   <div key={ride.id} className="p-3 hover:bg-navy/10 transition-colors flex items-center justify-between">
                     <div>
-                      <p className="text-[10px] font-bold uppercase">{ride.vehicleType}</p>
-                      <p className="text-[8px] text-muted-foreground truncate w-32">{ride.pickup.address}</p>
+                      <p className="text-[10px] font-bold uppercase text-white">{ride.vehicleType}</p>
+                      <p className="text-[8px] text-white/60 truncate w-32">{ride.pickup.address}</p>
                     </div>
                     <Badge variant="outline" className="text-[8px] border-orange/50 text-orange">{ride.status}</Badge>
                   </div>
                 ))}
                 {!recentRides?.length && (
                   <div className="p-8 text-center opacity-20">
-                    <Zap className="w-8 h-8 mx-auto mb-2" />
-                    <p className="text-[8px] font-black uppercase">No active missions</p>
+                    <Zap className="w-8 h-8 mx-auto mb-2 text-white" />
+                    <p className="text-[8px] font-black uppercase text-white">No active missions</p>
                   </div>
                 )}
               </div>
@@ -143,7 +140,7 @@ export default function AdminCommandCenter() {
         <FuelAnalytics />
         <Card className="glass-panel admin-card">
            <CardHeader className="p-4 border-b border-white/5">
-             <CardTitle className="text-[10px] font-black uppercase flex items-center gap-2">
+             <CardTitle className="text-[10px] font-black uppercase flex items-center gap-2 text-white">
                <Users className="w-4 h-4 text-active" /> Operator Compliance
              </CardTitle>
            </CardHeader>
@@ -155,7 +152,7 @@ export default function AdminCommandCenter() {
                   { label: "Maintenance Required", val: 5, color: "bg-emergency" }
                 ].map(stat => (
                   <div key={stat.label}>
-                    <div className="flex justify-between text-[10px] font-bold uppercase mb-1">
+                    <div className="flex justify-between text-[10px] font-bold uppercase mb-1 text-white/80">
                       <span>{stat.label}</span>
                       <span>{stat.val}%</span>
                     </div>
