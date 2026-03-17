@@ -35,19 +35,23 @@ service cloud.firestore {
 
     // DRIVER SHIFTS
     match /driverShifts/{shiftId} {
-      // Admins and Super Admins can read all shifts for tactical auditing (including list queries)
-      allow read: if isAdmin();
-      
-      // Drivers can read only their own shifts (requires filtered query where driverId == auth.uid)
-      allow read: if signedIn() && 
-                  resource.data.driverId == request.auth.uid;
+      // Admins and Super Admins can read all shifts for tactical auditing
+      // Drivers can read their own shifts (requires filtered query where driverId == auth.uid)
+      allow read: if isAdmin() || 
+                  (signedIn() && resource.data.driverId == request.auth.uid);
 
       // Admins manage the fleet's shifts globally
-      allow create, update, delete: if isAdmin();
+      // Drivers can create their own shift status
+      allow create: if isAdmin() || 
+                    (signedIn() && request.resource.data.driverId == request.auth.uid);
 
-      // Drivers can create and update their own shift status
-      allow create: if signedIn() && request.resource.data.driverId == request.auth.uid;
-      allow update: if signedIn() && resource.data.driverId == request.auth.uid;
+      // Admins manage the fleet's shifts globally
+      // Drivers can update their own shift status (e.g., punching out)
+      allow update: if isAdmin() || 
+                    (signedIn() && resource.data.driverId == request.auth.uid);
+
+      // Only admins can purge shift records
+      allow delete: if isAdmin();
     }
 
     // DRIVER LOCATIONS
