@@ -1,9 +1,8 @@
-
 "use client"
 
 import React, { useState } from "react"
 import { motion } from "framer-motion"
-import { ShieldCheck, Lock, Mail, User, UserPlus } from "lucide-react"
+import { ShieldCheck, Lock, Mail, User, UserPlus, Truck } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
@@ -21,6 +20,7 @@ export default function RegisterPage() {
   const [password, setPassword] = useState("")
   const [name, setName] = useState("")
   const [role, setRole] = useState("Passenger")
+  const [vehicleType, setVehicleType] = useState("Bike")
   const [isLoading, setIsLoading] = useState(false)
   
   const auth = useAuth()
@@ -35,19 +35,23 @@ export default function RegisterPage() {
       const userCredential = await createUserWithEmailAndPassword(auth, email, password)
       const user = userCredential.user
 
-      // Create User Profile with initial Wallet and Rating
-      await setDoc(doc(db, "userProfiles", user.uid), {
+      const profileData: any = {
         id: user.uid,
         name,
         email,
         role,
         status: role === "Driver" ? "Offline" : "Active",
-        walletBalance: role === "Passenger" ? 500 : 0, // Bonus for new passengers
-        rating: 5.0, // Start with clean rating
+        walletBalance: role === "Passenger" ? 500 : 0,
+        rating: 5.0,
         createdAt: serverTimestamp(),
-      })
+      }
 
-      // Add specialized role flags for security rules
+      if (role === "Driver") {
+        profileData.vehicleType = vehicleType
+      }
+
+      await setDoc(doc(db, "userProfiles", user.uid), profileData)
+
       if (role === "Super Admin") {
         await setDoc(doc(db, "roles_super_admin", user.uid), { active: true })
       } else if (role === "Admin") {
@@ -153,6 +157,23 @@ export default function RegisterPage() {
                   </SelectContent>
                 </Select>
               </div>
+
+              {role === "Driver" && (
+                <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} className="space-y-2">
+                  <Label className="text-[10px] uppercase font-black text-muted-foreground ml-1">Vehicle Class</Label>
+                  <Select value={vehicleType} onValueChange={setVehicleType}>
+                    <SelectTrigger className="bg-navy/20 border-navy/50 h-11 text-sm font-medium">
+                      <SelectValue placeholder="Select Unit Class" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-charcoal border-navy text-white">
+                      <SelectItem value="Bike">Bike (Unit Scout)</SelectItem>
+                      <SelectItem value="Auto">Auto (Unit Pulse)</SelectItem>
+                      <SelectItem value="Cab">Cab (Unit Prime)</SelectItem>
+                      <SelectItem value="Truck">Truck (Heavy Transport)</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </motion.div>
+              )}
 
               <Button 
                 type="submit" 

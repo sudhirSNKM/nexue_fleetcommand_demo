@@ -11,16 +11,19 @@ service cloud.firestore {
     }
 
     match /rides/{rideId} {
+      // Allow read if user is the passenger, the driver, or if the ride is still Requested (for discovery)
       allow read: if isSignedIn() && (
         request.auth.uid == resource.data.passengerId || 
-        request.auth.uid == resource.data.driverId
+        request.auth.uid == resource.data.driverId ||
+        resource.data.status == "Requested"
       );
       
       allow create: if isSignedIn();
       
       allow update: if isSignedIn() && (
         request.auth.uid == resource.data.passengerId || 
-        request.auth.uid == resource.data.driverId
+        request.auth.uid == resource.data.driverId ||
+        (resource.data.status == "Requested" && request.resource.data.status == "Accepted")
       );
       
       allow delete: if false;

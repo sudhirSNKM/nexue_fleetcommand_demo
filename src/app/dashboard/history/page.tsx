@@ -1,7 +1,7 @@
 "use client"
 
 import React, { useState } from "react"
-import { motion, AnimatePresence } from "framer-motion"
+import { motion } from "framer-motion"
 import { 
   Clock, 
   MapPin, 
@@ -33,6 +33,7 @@ export default function RideHistoryPage() {
   const role = profile?.role || "Passenger"
   const isMobilityUser = role === "Passenger" || role === "Driver"
 
+  // Filter query by user role and ID to comply with security rules
   const ridesQuery = useMemoFirebase(() => {
     if (!user || !db || !profile) return null
     const filterKey = role === "Driver" ? "driverId" : "passengerId"
@@ -75,11 +76,11 @@ export default function RideHistoryPage() {
         </div>
         
         <div className="flex gap-4">
-          <Card className={cn("px-6 py-3 border-l-4 border-orange shadow-lg", isMobilityUser ? "bg-white" : "glass-panel bg-navy/40")}>
+          <Card className={cn("px-6 py-3 border-l-4 border-orange shadow-lg", isMobilityUser ? "bg-white border-slate-200" : "glass-panel bg-navy/40")}>
             <p className={cn("text-[10px] uppercase font-black tracking-widest mb-1", isMobilityUser ? "text-slate-400" : "text-white/50")}>Deployments</p>
             <p className={cn("text-2xl font-mono font-black", isMobilityUser ? "text-slate-900" : "text-white")}>{rides?.length || 0}</p>
           </Card>
-          <Card className={cn("px-6 py-3 border-l-4 border-active shadow-lg", isMobilityUser ? "bg-white" : "glass-panel bg-navy/40")}>
+          <Card className={cn("px-6 py-3 border-l-4 border-active shadow-lg", isMobilityUser ? "bg-white border-slate-200" : "glass-panel bg-navy/40")}>
             <p className={cn("text-[10px] uppercase font-black tracking-widest mb-1", isMobilityUser ? "text-slate-400" : "text-white/50")}>Credits</p>
             <p className={cn("text-2xl font-mono font-black", isMobilityUser ? "text-slate-900" : "text-active")}>₹{totalEarnings}</p>
           </Card>
@@ -92,7 +93,7 @@ export default function RideHistoryPage() {
             [1, 2, 3].map(i => <Skeleton key={i} className={cn("h-40 w-full rounded-2xl", isMobilityUser ? "bg-slate-200" : "bg-navy/20")} />)
           ) : rides && rides.length > 0 ? (
             rides.map((ride) => (
-              <Card key={ride.id} className={cn("border-none shadow-xl hover:shadow-2xl transition-all duration-300 overflow-hidden", isMobilityUser ? "bg-white" : "glass-panel bg-card/80")}>
+              <Card key={ride.id} className={cn("border-none shadow-xl hover:shadow-2xl transition-all duration-300 overflow-hidden", isMobilityUser ? "bg-white border-slate-200" : "glass-panel bg-card/80")}>
                 <CardContent className="p-0">
                   <div className={cn("p-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-4", isMobilityUser ? "bg-slate-50 border-b border-slate-100" : "bg-navy/20 border-b border-white/5")}>
                     <div className="flex items-center gap-4">
@@ -174,7 +175,7 @@ export default function RideHistoryPage() {
         </div>
 
         <aside className="space-y-6">
-          <Card className={cn("border-t-4 border-green-500 shadow-xl overflow-hidden", isMobilityUser ? "bg-white" : "glass-panel bg-navy/40")}>
+          <Card className={cn("border-t-4 border-green-500 shadow-xl overflow-hidden", isMobilityUser ? "bg-white border-slate-200" : "glass-panel bg-navy/40")}>
              <CardHeader className={cn("p-6", isMobilityUser ? "bg-slate-50 border-b border-slate-100" : "bg-navy/20 border-b border-white/5")}>
                <CardTitle className={cn("text-xs font-black uppercase tracking-widest flex items-center gap-2", isMobilityUser ? "text-slate-900" : "text-white")}>
                  <TrendingUp className="w-4 h-4 text-green-500" /> Performance Audit

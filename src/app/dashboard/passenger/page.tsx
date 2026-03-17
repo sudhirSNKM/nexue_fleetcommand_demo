@@ -48,6 +48,7 @@ export default function PassengerApp() {
   const userProfileRef = useMemoFirebase(() => user && db ? doc(db, "userProfiles", user.uid) : null, [user, db])
   const { data: profile } = useDoc(userProfileRef)
 
+  // Filter query to only list rides owned by the user
   const activeRidesQuery = useMemoFirebase(() => {
     if (!user || !db) return null
     return query(
@@ -114,10 +115,10 @@ export default function PassengerApp() {
                     <TabsTrigger 
                       key={s.id} 
                       value={s.id} 
-                      className="data-[state=active]:bg-orange data-[state=active]:text-white data-[state=active]:shadow-[0_0_15px_rgba(255,128,0,0.4)] transition-all flex flex-col items-center justify-center gap-1 py-2 h-full text-slate-400"
+                      className="data-[state=active]:bg-orange data-[state=active]:text-white data-[state=active]:shadow-[0_0_15px_rgba(255,128,0,0.4)] transition-all flex flex-col items-center justify-center gap-1 py-2 h-full text-white font-black"
                     >
-                      <s.icon className="w-6 h-6" /> 
-                      <span className="text-[10px] font-black uppercase tracking-tighter">
+                      <s.icon className="w-7 h-7 mb-1" /> 
+                      <span className="text-[11px] uppercase tracking-tighter">
                         {s.name}
                       </span>
                     </TabsTrigger>
@@ -179,12 +180,12 @@ export default function PassengerApp() {
                       </div>
                       <div className="bg-slate-900 p-6 rounded-2xl flex justify-between items-center mt-2 shadow-2xl">
                         <div>
-                          <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Est. Credits</p>
+                          <p className="text-[9px] font-black text-white/50 uppercase tracking-widest mb-1">Est. Credits</p>
                           <p className="text-2xl font-black text-white">₹{currentFare}</p>
                         </div>
                         <Button 
                           onClick={handleBookRide} 
-                          className="bg-orange hover:bg-orange/90 font-black uppercase text-xs h-12 px-6 shadow-lg"
+                          className="bg-orange hover:bg-orange/90 font-black uppercase text-xs h-12 px-6 shadow-lg text-white"
                         >
                           Deploy Unit
                         </Button>
@@ -233,11 +234,11 @@ export default function PassengerApp() {
         </Card>
 
         <div className="grid grid-cols-2 gap-4">
-          <Card className="p-4 text-center border-none shadow-xl bg-white">
+          <Card className="p-4 text-center border-none shadow-xl bg-white border-slate-100">
             <p className="text-[9px] uppercase font-black text-slate-500 mb-1">Operator Rep</p>
             <p className="text-2xl font-black text-slate-900">{profile?.rating ? profile.rating.toFixed(1) : '5.0'}</p>
           </Card>
-          <Card className="p-4 text-center border-none shadow-xl bg-white">
+          <Card className="p-4 text-center border-none shadow-xl bg-white border-slate-100">
             <p className="text-[9px] uppercase font-black text-slate-500 mb-1">Nexus Credits</p>
             <p className="text-2xl font-black text-orange">₹{profile?.walletBalance || 0}</p>
           </Card>
