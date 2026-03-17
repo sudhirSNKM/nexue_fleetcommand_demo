@@ -8,13 +8,20 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import TacticalMap from "@/components/dashboard/TacticalMap"
-import { useUser, useFirestore, useCollection, useMemoFirebase, updateDocumentNonBlocking } from "@/firebase"
+import { useUser, useFirestore, useCollection, useMemoFirebase, updateDocumentNonBlocking, useDoc } from "@/firebase"
 import { collection, query, where, doc, serverTimestamp } from "firebase/firestore"
 
 export default function DriverApp() {
   const { user } = useUser()
   const db = useFirestore()
-  const [isOnline, setIsOnline] = useState(false)
+
+  const userProfileRef = useMemoFirebase(() => {
+    if (!user || !db) return null
+    return doc(db, "userProfiles", user.uid)
+  }, [user, db])
+
+  const { data: profile } = useDoc(userProfileRef)
+  const isOnline = profile?.status === "Online"
 
   const activeRidesQuery = useMemoFirebase(() => {
     if (!user) return null
@@ -30,6 +37,13 @@ export default function DriverApp() {
   }, [user, db])
 
   const { data: assignedRides } = useCollection(assignedRidesQuery)
+
+  const handleToggleOnline = () => {
+    if (!user || !userProfileRef) return
+    updateDocumentNonBlocking(userProfileRef, {
+      status: isOnline ? "Offline" : "Online"
+    })
+  }
 
   const handleAcceptRide = (rideId: string) => {
     if (!user) return
@@ -62,7 +76,7 @@ export default function DriverApp() {
           <CardHeader className="p-4 bg-navy/20 flex flex-row items-center justify-between">
             <CardTitle className="text-sm font-black uppercase tracking-widest">Captain Terminal</CardTitle>
             <Button 
-              onClick={() => setIsOnline(!isOnline)}
+              onClick={handleToggleOnline}
               size="sm" 
               className={isOnline ? "bg-active hover:bg-active/90" : "bg-muted hover:bg-muted/90"}
             >
