@@ -12,7 +12,11 @@ import {
   Menu,
   History,
   Map as MapIcon,
-  BarChart3
+  BarChart3,
+  Users,
+  Cpu,
+  Globe,
+  DollarSign
 } from "lucide-react"
 import { motion, AnimatePresence } from "framer-motion"
 import Link from "next/link"
@@ -56,24 +60,28 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const navItems = React.useMemo(() => {
     const items = []
 
-    if (role === "Passenger") {
+    if (role === "Super Admin") {
       items.push(
-        { icon: Zap, label: "Book Ride", href: "/dashboard/passenger" },
-        { icon: History, label: "History", href: "/dashboard/history" }
+        { icon: Globe, label: "Platform Control", href: "/dashboard/super-admin" },
+        { icon: MapIcon, label: "Global Monitoring", href: "/dashboard/admin" },
+        { icon: BarChart3, label: "Revenue Analytics", href: "/dashboard/analytics" },
+        { icon: Cpu, label: "Infrastructure", href: "/dashboard/settings" }
       )
-    }
-
-    if (role === "Driver") {
+    } else if (role === "Admin") {
+      items.push(
+        { icon: MapIcon, label: "Command Center", href: "/dashboard/admin" },
+        { icon: Users, label: "Driver Ops", href: "/dashboard/drivers" },
+        { icon: BarChart3, label: "Local Analytics", href: "/dashboard/analytics" }
+      )
+    } else if (role === "Driver") {
       items.push(
         { icon: Navigation, label: "Duty Console", href: "/dashboard/driver" },
         { icon: History, label: "History", href: "/dashboard/history" }
       )
-    }
-
-    if (role === "Admin" || role === "Super Admin") {
+    } else if (role === "Passenger") {
       items.push(
-        { icon: MapIcon, label: "Command Center", href: "/dashboard/admin" },
-        { icon: BarChart3, label: "Analytics", href: "/dashboard/analytics" }
+        { icon: Zap, label: "Book Ride", href: "/dashboard/passenger" },
+        { icon: History, label: "History", href: "/dashboard/history" }
       )
     }
 
@@ -152,10 +160,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 </Button>
               </SheetTrigger>
               <SheetContent side="left" className={cn("p-0 w-64 border-r", isMobilityUser ? "bg-white" : "bg-charcoal border-navy/20")}>
-                <div className="sr-only">
-                  <SheetTitle>Navigation Menu</SheetTitle>
-                  <SheetDescription>Access dashboard routes and account settings</SheetDescription>
-                </div>
+                <SheetTitle className="sr-only">Platform Navigation</SheetTitle>
+                <SheetDescription className="sr-only">Access tactical terminals and account controls</SheetDescription>
                 <SidebarContent />
               </SheetContent>
             </Sheet>
