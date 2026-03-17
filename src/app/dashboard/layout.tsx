@@ -125,7 +125,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         <Button 
           variant="ghost" 
           onClick={handleSignOut}
-          className={cn("w-full justify-start", isMobilityUser ? "text-slate-500 hover:text-red-600 hover:bg-red-50" : "text-muted-foreground hover:text-emergency hover:bg-emergency/10")}
+          className={cn("w-full justify-start font-black uppercase text-[10px]", isMobilityUser ? "text-slate-500 hover:text-red-600 hover:bg-red-50" : "text-muted-foreground hover:text-emergency hover:bg-emergency/10")}
         >
           <LogOut className="w-5 h-5 mr-3" />
           Abort Session
@@ -135,14 +135,14 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   )
 
   return (
-    <div className={cn("flex h-screen overflow-hidden", isMobilityUser ? "bg-slate-50" : "bg-charcoal")}>
+    <div className={cn("flex h-screen overflow-hidden transition-colors duration-500", isMobilityUser ? "bg-slate-50" : "bg-charcoal")}>
       {/* Desktop Sidebar */}
       <aside className="hidden lg:flex w-64 flex-col shrink-0">
         <SidebarContent />
       </aside>
 
       <main className="flex-1 flex flex-col overflow-hidden relative">
-        <header className={cn("h-16 border-b z-10 flex items-center justify-between px-4 lg:px-8", isMobilityUser ? "bg-white border-slate-100" : "bg-card/20 backdrop-blur-md border-navy/20")}>
+        <header className={cn("h-16 border-b z-20 flex items-center justify-between px-4 lg:px-8 transition-colors duration-500", isMobilityUser ? "bg-white border-slate-100 shadow-sm" : "bg-card/20 backdrop-blur-md border-navy/20")}>
           <div className="flex items-center gap-4">
             <Sheet>
               <SheetTrigger asChild>
