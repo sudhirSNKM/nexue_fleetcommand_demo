@@ -44,6 +44,8 @@ export default function PassengerApp() {
   const [selectedVehicle, setSelectedVehicle] = useState('Bike')
   const [payingOnline, setPayingOnline] = useState(false)
   const [scanTimer, setScanTimer] = useState<number | null>(null)
+  const [rating, setRating] = useState(0)
+  const [reviewSubmitted, setReviewSubmitted] = useState(false)
   
   const hasLocations = pickup.trim().length > 2 && dropoff.trim().length > 2
   const mockDistance = useMemo(() => hasLocations ? Math.floor(Math.random() * 8) + 2 : 0, [hasLocations, pickup, dropoff])
@@ -64,7 +66,7 @@ export default function PassengerApp() {
   
   const currentRide = useMemo(() => {
     if (!activeRides) return null
-    const liveStatuses = ["Requested", "Accepted", "Arrived", "InProgress", "Completed", "Rejected"]
+    const liveStatuses = ["Requested", "Accepted", "Arrived", "InProgress", "Completed", "Paid", "Rejected"]
     const sorted = [...activeRides].sort((a, b) => {
       const aTime = a.createdAt?.toMillis?.() || 0
       const bTime = b.createdAt?.toMillis?.() || 0
@@ -83,7 +85,6 @@ export default function PassengerApp() {
           if (prev !== null && prev <= 1) {
             clearInterval(interval)
             handleCancelRide(currentRide.id)
-            // Use setTimeout to decouple toast from the render cycle and avoid the "Toaster" render error
             setTimeout(() => {
               toast({ 
                 title: "Mission Timeout", 
@@ -155,6 +156,14 @@ export default function PassengerApp() {
     updateDocumentNonBlocking(doc(db, "rides", rideId), { status: "Cancelled", cancelledAt: serverTimestamp() })
   }
 
+  const handleSubmitReview = (rideId: string) => {
+    if (!db || !rating) return
+    const rideRef = doc(db, "rides", rideId)
+    updateDocumentNonBlocking(rideRef, { rating, reviewedAt: serverTimestamp() })
+    setReviewSubmitted(true)
+    toast({ title: "Review Logged", description: "Tactical performance updated." })
+  }
+
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-full text-slate-900">
       <div className="lg:col-span-2 relative h-[400px] lg:h-full rounded-2xl overflow-hidden border border-slate-200 shadow-sm bg-white">
@@ -188,7 +197,7 @@ export default function PassengerApp() {
               </Tabs>
             )}
             <CardTitle className="text-lg font-black uppercase tracking-tighter mt-4 text-slate-900 text-center border-b border-slate-100 pb-3">
-              {currentRide ? (currentRide.status === "Completed" ? "Mission Settlement" : `${currentRide.serviceType} Terminal`) : "Initialize Mission"}
+              {currentRide ? (currentRide.status === "Completed" || currentRide.status === "Paid" ? "Mission Finalization" : `${currentRide.serviceType} Terminal`) : "Initialize Mission"}
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4 pt-4">
@@ -255,40 +264,70 @@ export default function PassengerApp() {
                   )}
                 </AnimatePresence>
               </motion.div>
-            ) : currentRide.status === "Completed" ? (
+            ) : currentRide.status === "Completed" || currentRide.status === "Paid" ? (
               <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6 pt-2">
-                <div className="p-6 bg-slate-900 rounded-2xl text-center shadow-inner relative overflow-hidden">
-                   <div className="absolute top-0 left-0 w-full h-1 bg-orange/20">
-                     <motion.div animate={{ width: payingOnline ? "100%" : "0%" }} className="h-full bg-orange" />
-                   </div>
-                   <p className="text-[10px] font-black text-white/40 uppercase tracking-widest mb-2">Final Settlement Required</p>
-                   <p className="text-3xl font-black text-white">₹{currentRide.fare}</p>
-                </div>
-
-                {payingOnline ? (
-                  <div className="text-center space-y-4">
-                     <div className="w-36 h-36 bg-white mx-auto rounded-2xl flex items-center justify-center p-3 shadow-xl border-4 border-slate-900">
-                        <QrCode className="w-full h-full text-slate-900" />
-                     </div>
-                     <p className="text-xs font-bold text-slate-500 uppercase tracking-widest">Scan & Pay Operator</p>
-                     <Button onClick={() => setPayingOnline(false)} variant="ghost" className="text-[10px] font-black uppercase text-slate-400">Switch to Cash</Button>
-                  </div>
-                ) : (
-                  <div className="space-y-3">
-                    <Button onClick={() => setPayingOnline(true)} className="w-full bg-orange hover:bg-orange/90 h-12 font-black uppercase flex items-center justify-center gap-3 text-white shadow-lg border-none">
-                      <QrCode className="w-6 h-6" /> Pay Online / UPI
-                    </Button>
-                    <div className="p-4 bg-slate-50 rounded-xl border border-slate-200 flex items-center gap-3 shadow-sm">
-                      <Banknote className="w-6 h-6 text-slate-400" />
-                      <div>
-                        <p className="text-[10px] font-black uppercase text-slate-900">Paying with Cash?</p>
-                        <p className="text-[9px] font-bold text-slate-400">Hand ₹{currentRide.fare} to operator</p>
-                      </div>
-                    </div>
+                {currentRide.status === "Completed" && (
+                  <div className="p-6 bg-slate-900 rounded-2xl text-center shadow-inner relative overflow-hidden">
+                    <p className="text-[10px] font-black text-white/40 uppercase tracking-widest mb-2">Final Settlement Required</p>
+                    <p className="text-3xl font-black text-white">₹{currentRide.fare}</p>
                   </div>
                 )}
-                
-                <p className="text-[9px] text-center text-slate-400 italic">Waiting for operator to confirm settlement...</p>
+
+                {currentRide.status === "Paid" && !reviewSubmitted && (
+                  <div className="text-center space-y-4">
+                    <div className="w-16 h-16 bg-active/10 rounded-full flex items-center justify-center mx-auto mb-2">
+                      <CheckCircle2 className="w-10 h-10 text-active" />
+                    </div>
+                    <h3 className="text-sm font-black uppercase tracking-widest text-slate-900">Settlement Confirmed</h3>
+                    <p className="text-xs text-slate-500 font-bold uppercase">Rate your Operator</p>
+                    <div className="flex justify-center gap-2">
+                      {[1, 2, 3, 4, 5].map((s) => (
+                        <button key={s} onClick={() => setRating(s)} className="transition-transform active:scale-90">
+                          <Star className={cn("w-8 h-8", rating >= s ? "text-orange fill-orange" : "text-slate-200")} />
+                        </button>
+                      ))}
+                    </div>
+                    {rating > 0 && (
+                      <Button onClick={() => handleSubmitReview(currentRide.id)} className="w-full bg-slate-900 text-white font-black uppercase text-xs h-12 shadow-lg border-none">
+                        Submit Tactical Review
+                      </Button>
+                    )}
+                  </div>
+                )}
+
+                {reviewSubmitted && (
+                  <div className="text-center py-10 space-y-4">
+                    <Zap className="w-12 h-12 text-orange mx-auto animate-pulse" />
+                    <p className="text-sm font-black uppercase tracking-widest">Mission Archived</p>
+                    <p className="text-[10px] text-slate-400 font-bold uppercase">Returning to Standby Protocol...</p>
+                    <Button onClick={() => window.location.reload()} variant="outline" className="text-[10px] font-black uppercase border-slate-200">New Mission</Button>
+                  </div>
+                )}
+
+                {currentRide.status === "Completed" && (
+                  payingOnline ? (
+                    <div className="text-center space-y-4">
+                       <div className="w-36 h-36 bg-white mx-auto rounded-2xl flex items-center justify-center p-3 shadow-xl border-4 border-slate-900">
+                          <QrCode className="w-full h-full text-slate-900" />
+                       </div>
+                       <p className="text-xs font-bold text-slate-500 uppercase tracking-widest">Scan & Pay Operator</p>
+                       <Button onClick={() => setPayingOnline(false)} variant="ghost" className="text-[10px] font-black uppercase text-slate-400">Switch to Cash</Button>
+                    </div>
+                  ) : (
+                    <div className="space-y-3">
+                      <Button onClick={() => setPayingOnline(true)} className="w-full bg-orange hover:bg-orange/90 h-12 font-black uppercase flex items-center justify-center gap-3 text-white shadow-lg border-none">
+                        <QrCode className="w-6 h-6" /> Pay Online / UPI
+                      </Button>
+                      <div className="p-4 bg-slate-50 rounded-xl border border-slate-200 flex items-center gap-3 shadow-sm">
+                        <Banknote className="w-6 h-6 text-slate-400" />
+                        <div>
+                          <p className="text-[10px] font-black uppercase text-slate-900">Paying with Cash?</p>
+                          <p className="text-[9px] font-bold text-slate-400">Hand ₹{currentRide.fare} to operator</p>
+                        </div>
+                      </div>
+                    </div>
+                  )
+                )}
               </motion.div>
             ) : (
               <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6 pt-4">
