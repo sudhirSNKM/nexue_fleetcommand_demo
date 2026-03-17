@@ -1,4 +1,3 @@
-
 "use client"
 
 import * as React from "react"
@@ -14,7 +13,8 @@ import {
   ShieldCheck,
   User,
   Zap,
-  Menu
+  Menu,
+  History
 } from "lucide-react"
 import { motion, AnimatePresence } from "framer-motion"
 import Link from "next/link"
@@ -60,13 +60,14 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     if (role === "Passenger") {
       items.push(
         { icon: Zap, label: "Book Ride", href: "/dashboard/passenger" },
-        { icon: LayoutDashboard, label: "Ride History", href: "/dashboard/history" }
+        { icon: History, label: "Ride History", href: "/dashboard/history" }
       )
     }
 
     if (role === "Driver") {
       items.push(
         { icon: Navigation, label: "Duty Console", href: "/dashboard/driver" },
+        { icon: History, label: "Ride History", href: "/dashboard/history" },
         { icon: ShieldCheck, label: "Safety Score", href: "/dashboard/safety" }
       )
     }
