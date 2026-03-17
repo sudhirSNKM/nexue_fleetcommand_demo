@@ -7,14 +7,35 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Button } from "@/components/ui/button"
 import { Switch } from "@/components/ui/switch"
-import { Settings, Shield, Bell, Cpu, Database } from "lucide-react"
+import { Settings, Shield, Bell, Cpu, Database, AlertTriangle } from "lucide-react"
+import { useUser, useFirestore, useDoc, useMemoFirebase } from "@/firebase"
+import { doc } from "firebase/firestore"
 
 export default function SettingsPage() {
+  const { user } = useUser()
+  const db = useFirestore()
+
+  const userProfileRef = useMemoFirebase(() => {
+    if (!user || !db) return null
+    return doc(db, "userProfiles", user.uid)
+  }, [user, db])
+
+  const { data: profile } = useDoc(userProfileRef)
+  const isSuperAdmin = profile?.role === "Super Admin"
+
   return (
     <div className="space-y-8 max-w-5xl mx-auto">
-      <div>
-        <h1 className="text-2xl font-black uppercase tracking-tighter">System Configuration</h1>
-        <p className="text-sm text-muted-foreground">Adjust tactical parameters and security protocols</p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-black uppercase tracking-tighter">System Configuration</h1>
+          <p className="text-sm text-muted-foreground">Adjust tactical parameters and security protocols</p>
+        </div>
+        {isSuperAdmin && (
+          <div className="flex items-center gap-2 bg-emergency/10 border border-emergency/20 px-3 py-1 rounded-full">
+            <Shield className="w-4 h-4 text-emergency" />
+            <span className="text-[10px] font-black text-emergency uppercase tracking-widest">Elevated Clearance Active</span>
+          </div>
+        )}
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
@@ -77,20 +98,31 @@ export default function SettingsPage() {
             </CardFooter>
           </Card>
 
-          <Card className="glass-panel border-destructive/20">
-            <CardHeader>
-              <CardTitle className="text-lg font-black uppercase text-emergency">Danger Zone</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-bold">Factory Protocol Reset</p>
-                  <p className="text-[10px] text-muted-foreground">Wipe all operational data and driver logs</p>
+          {isSuperAdmin ? (
+            <Card className="glass-panel border-emergency/20 border-2">
+              <CardHeader>
+                <CardTitle className="text-lg font-black uppercase text-emergency flex items-center gap-2">
+                  <AlertTriangle className="w-5 h-5" />
+                  Danger Zone
+                </CardTitle>
+                <CardDescription className="text-xs text-emergency/70 font-bold uppercase">Restricted to Super Admin Clearance only</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-bold">Factory Protocol Reset</p>
+                    <p className="text-[10px] text-muted-foreground">Wipe all operational data and driver logs. This cannot be undone.</p>
+                  </div>
+                  <Button variant="destructive" size="sm" className="font-black uppercase text-[10px]">Initiate Purge</Button>
                 </div>
-                <Button variant="destructive" size="sm" className="font-black uppercase text-[10px]">Initiate Purge</Button>
-              </div>
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
+          ) : (
+            <div className="p-8 border-2 border-dashed border-navy/20 rounded-xl text-center opacity-50">
+              <Shield className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
+              <p className="text-xs font-black uppercase tracking-widest text-muted-foreground">Super Admin Authorization Required for System Reset Protocols</p>
+            </div>
+          )}
         </div>
       </div>
     </div>

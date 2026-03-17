@@ -9,7 +9,7 @@ import LiveMap from "@/components/dashboard/LiveMap"
 import FuelAnalytics from "@/components/dashboard/FuelAnalytics"
 import DriverPerformance from "@/components/dashboard/DriverPerformance"
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card"
-import { AlertCircle, ShieldCheck, Timer } from "lucide-react"
+import { AlertCircle, ShieldCheck, Timer, Shield } from "lucide-react"
 import { useUser, useFirestore, useDoc, useMemoFirebase } from "@/firebase"
 import { doc } from "firebase/firestore"
 
@@ -27,14 +27,10 @@ export default function Dashboard() {
   const { data: profile, isLoading: isProfileLoading } = useDoc(userProfileRef)
 
   useEffect(() => {
-    // Set time on client side mount to avoid hydration mismatch
     setCurrentTime(new Date().toLocaleTimeString())
-    
-    // Update time every second for a live dashboard feel
     const timer = setInterval(() => {
       setCurrentTime(new Date().toLocaleTimeString())
     }, 1000)
-    
     return () => clearInterval(timer)
   }, [])
 
@@ -56,16 +52,29 @@ export default function Dashboard() {
     )
   }
 
+  const isSuperAdmin = profile?.role === "Super Admin"
+
   return (
     <div className="space-y-8">
       {/* Hero Stats */}
       <section>
-        <div className="mb-6">
-          <h1 className="text-2xl font-black uppercase tracking-tighter">Command Control Terminal</h1>
-          <p className="text-sm text-muted-foreground">
-            Fleet status: <span className="text-active font-bold">OPERATIONAL</span> | 
-            Current Time: <span className="font-mono">{currentTime || "--:--:--"}</span>
-          </p>
+        <div className="mb-6 flex items-start justify-between">
+          <div>
+            <h1 className="text-2xl font-black uppercase tracking-tighter flex items-center gap-3">
+              {isSuperAdmin ? "High Command Staff Terminal" : "Logistics Command Terminal"}
+              {isSuperAdmin && <Shield className="w-6 h-6 text-orange animate-pulse" />}
+            </h1>
+            <p className="text-sm text-muted-foreground">
+              Fleet status: <span className="text-active font-bold uppercase tracking-widest">OPERATIONAL</span> | 
+              Current Time: <span className="font-mono">{currentTime || "--:--:--"}</span>
+            </p>
+          </div>
+          <div className="text-right">
+            <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Access Level</span>
+            <p className={`text-sm font-black uppercase ${isSuperAdmin ? 'text-orange' : 'text-active'}`}>
+              {profile?.role || "UNKNOWN"}
+            </p>
+          </div>
         </div>
         <FleetStats />
       </section>
