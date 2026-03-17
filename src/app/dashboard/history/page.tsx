@@ -6,12 +6,11 @@ import {
   Clock, 
   MapPin, 
   Navigation, 
-  History, 
+  History as HistoryIcon, 
   Zap, 
   BrainCircuit, 
   ShieldCheck, 
-  TrendingUp, 
-  History as HistoryIcon
+  TrendingUp 
 } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -28,16 +27,11 @@ export default function RideHistoryPage() {
   const [analyzingRideId, setAnalyzingRideId] = useState<string | null>(null)
   const [aiAnalysis, setAiAnalysis] = useState<Record<string, AnalyzeRouteOutput>>({})
 
-  // Fetch User Profile
-  const userProfileRef = useMemoFirebase(() => {
-    if (!user || !db) return null
-    return doc(db, "userProfiles", user.uid)
-  }, [user, db])
-
+  const userProfileRef = useMemoFirebase(() => user && db ? doc(db, "userProfiles", user.uid) : null, [user, db])
   const { data: profile } = useDoc(userProfileRef)
   const role = profile?.role || "Passenger"
 
-  // MISSION ARCHIVE QUERY: Removed orderBy to bypass index-related permission errors
+  // Explicitly filtered query to match security rules
   const ridesQuery = useMemoFirebase(() => {
     if (!user || !db || !profile) return null
     const filterKey = role === "Driver" ? "driverId" : "passengerId"
@@ -60,7 +54,7 @@ export default function RideHistoryPage() {
       })
       setAiAnalysis(prev => ({ ...prev, [ride.id]: result }))
     } catch (error) {
-      console.error("NexAI Analysis Failed:", error)
+      console.error("Analysis failed:", error)
     } finally {
       setAnalyzingRideId(null)
     }
@@ -76,7 +70,7 @@ export default function RideHistoryPage() {
             <HistoryIcon className="w-10 h-10 text-orange" />
             Mission Archives
           </h1>
-          <p className="text-sm text-white/70 font-bold uppercase tracking-[0.2em] mt-1">Operational History & Tactical Auditing</p>
+          <p className="text-sm text-white/70 font-bold uppercase tracking-widest mt-1">Operational History Audit</p>
         </div>
         
         <div className="flex gap-4">
@@ -94,25 +88,19 @@ export default function RideHistoryPage() {
       <div className="grid grid-cols-1 xl:grid-cols-4 gap-8">
         <div className="xl:col-span-3 space-y-4">
           {isLoading ? (
-            [1, 2, 3].map(i => (
-              <Card key={i} className="glass-panel p-6">
-                <Skeleton className="h-24 w-full bg-navy/20" />
-              </Card>
-            ))
+            [1, 2, 3].map(i => <Skeleton key={i} className="h-32 w-full bg-navy/20" />)
           ) : rides && rides.length > 0 ? (
             rides.map((ride) => (
-              <Card key={ride.id} className="glass-panel border-white/5 bg-card/80 hover:border-orange/30 transition-all">
+              <Card key={ride.id} className="glass-panel border-white/10 bg-card/80 hover:border-orange/30 transition-all">
                 <CardContent className="p-6">
-                  <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                  <div className="flex justify-between items-center mb-6">
                     <div className="flex items-center gap-4">
-                      <div className="w-10 h-10 rounded-lg bg-navy/40 flex items-center justify-center text-orange border border-white/5">
-                        {ride.vehicleType === 'Bike' ? <Zap className="w-5 h-5" /> : <Navigation className="w-5 h-5" />}
+                      <div className="w-10 h-10 rounded bg-navy/40 flex items-center justify-center text-orange">
+                        <Zap className="w-5 h-5" />
                       </div>
                       <div>
-                        <p className="text-[10px] font-black uppercase text-orange tracking-widest">{ride.vehicleType} PROTOCOL</p>
-                        <p className="text-xs font-bold text-white/80">
-                          ID: {ride.id.substring(0, 8).toUpperCase()}
-                        </p>
+                        <p className="text-[10px] font-black uppercase text-orange">{ride.vehicleType} PROTOCOL</p>
+                        <p className="text-xs font-bold text-white/80">ID: {ride.id.substring(0, 8).toUpperCase()}</p>
                       </div>
                     </div>
                     <div className="text-right">
@@ -123,35 +111,34 @@ export default function RideHistoryPage() {
                     </div>
                   </div>
 
-                  <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                     <div className="flex gap-3">
                       <MapPin className="w-4 h-4 text-active shrink-0 mt-0.5" />
                       <div>
                         <p className="text-[9px] font-black text-white/40 uppercase">Origin</p>
-                        <p className="text-xs font-bold text-white/90 truncate max-w-[250px]">{ride.pickup?.address || 'N/A'}</p>
+                        <p className="text-xs font-bold text-white/90">{ride.pickup?.address}</p>
                       </div>
                     </div>
                     <div className="flex gap-3">
                       <Navigation className="w-4 h-4 text-emergency shrink-0 mt-0.5" />
                       <div>
                         <p className="text-[9px] font-black text-white/40 uppercase">Target</p>
-                        <p className="text-xs font-bold text-white/90 truncate max-w-[250px]">{ride.dropoff?.address || 'N/A'}</p>
+                        <p className="text-xs font-bold text-white/90">{ride.dropoff?.address}</p>
                       </div>
                     </div>
                   </div>
 
-                  <div className="mt-6 pt-4 border-t border-white/5">
+                  <div className="pt-4 border-t border-white/5">
                     {aiAnalysis[ride.id] ? (
                       <div className="bg-navy/20 p-4 rounded-lg border border-orange/10">
-                        <div className="flex items-center gap-2 mb-2">
-                           <BrainCircuit className="w-4 h-4 text-orange" />
-                           <span className="text-[10px] font-black uppercase text-orange">Tactical Briefing</span>
-                        </div>
+                        <p className="text-[10px] font-black uppercase text-orange mb-2 flex items-center gap-2">
+                          <BrainCircuit className="w-3 h-3" /> Tactical Briefing
+                        </p>
                         <p className="text-xs text-white/70 italic leading-relaxed">"{aiAnalysis[ride.id].strategy}"</p>
-                        <div className="mt-3 flex items-center gap-4">
-                           <div className="flex items-center gap-1 text-[10px] font-bold text-active uppercase">
+                        <div className="mt-2 flex items-center gap-4 text-[9px] font-black uppercase">
+                           <span className="text-active flex items-center gap-1">
                              <ShieldCheck className="w-3 h-3" /> Efficiency: {aiAnalysis[ride.id].efficiencyScore}%
-                           </div>
+                           </span>
                         </div>
                       </div>
                     ) : (
@@ -162,7 +149,7 @@ export default function RideHistoryPage() {
                         className="text-[10px] font-black uppercase text-white/40 hover:text-orange hover:bg-orange/10"
                       >
                         {analyzingRideId === ride.id ? <Zap className="w-3 h-3 animate-spin mr-2" /> : <BrainCircuit className="w-3 h-3 mr-2" />}
-                        {analyzingRideId === ride.id ? "Analyzing Sector..." : "Run NexAI Analysis"}
+                        {analyzingRideId === ride.id ? "Analyzing..." : "Run Analysis"}
                       </Button>
                     )}
                   </div>
@@ -172,8 +159,7 @@ export default function RideHistoryPage() {
           ) : (
             <Card className="glass-panel p-20 text-center border-dashed border-white/10">
               <HistoryIcon className="w-12 h-12 mx-auto text-white/10 mb-4" />
-              <h3 className="text-xl font-black uppercase text-white mb-2">Logs Cleared</h3>
-              <p className="text-xs font-bold text-white/40 uppercase tracking-widest">No previous deployments archived in this sector</p>
+              <p className="text-xs font-bold text-white/40 uppercase tracking-widest">No previous deployments archived</p>
             </Card>
           )}
         </div>
@@ -182,22 +168,22 @@ export default function RideHistoryPage() {
           <Card className="glass-panel bg-navy/40 border-t-4 border-active">
              <CardHeader className="p-6">
                <CardTitle className="text-xs font-black uppercase tracking-widest flex items-center gap-2">
-                 <TrendingUp className="w-4 h-4 text-active" /> Performance Matrix
+                 <TrendingUp className="w-4 h-4 text-active" /> Performance
                </CardTitle>
              </CardHeader>
-             <CardContent className="p-6 space-y-6">
-                <div>
-                   <div className="flex justify-between text-[10px] font-black uppercase mb-2">
-                     <span className="text-white/60">Mission Success</span>
-                     <span className="text-active">100%</span>
+             <CardContent className="p-6">
+                <div className="space-y-4">
+                   <div>
+                      <div className="flex justify-between text-[10px] font-black uppercase mb-1">
+                        <span className="text-white/60">Success Rate</span>
+                        <span className="text-active">100%</span>
+                      </div>
+                      <div className="h-1 w-full bg-navy/60 rounded-full overflow-hidden">
+                        <div className="h-full bg-active" style={{ width: "100%" }} />
+                      </div>
                    </div>
-                   <div className="h-1 w-full bg-navy/60 rounded-full overflow-hidden">
-                      <div className="h-full bg-active" style={{ width: "100%" }} />
-                   </div>
-                </div>
-                <div className="pt-4 border-t border-white/5">
                    <p className="text-[10px] font-bold text-white/40 uppercase leading-relaxed">
-                     Your tactical performance is optimal. No deviations detected in mission logs.
+                     Tactical performance is within optimal parameters.
                    </p>
                 </div>
              </CardContent>

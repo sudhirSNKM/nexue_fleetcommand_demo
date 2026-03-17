@@ -14,7 +14,7 @@ import { Input } from "@/components/ui/input"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import TacticalMap from "@/components/dashboard/TacticalMap"
 import { useUser, useFirestore, useCollection, useMemoFirebase, useDoc, updateDocumentNonBlocking } from "@/firebase"
-import { collection, query, where, addDoc, serverTimestamp, doc, increment } from "firebase/firestore"
+import { collection, query, where, addDoc, serverTimestamp, doc, limit } from "firebase/firestore"
 import { useToast } from "@/hooks/use-toast"
 import { cn } from "@/lib/utils"
 
@@ -51,12 +51,14 @@ export default function PassengerApp() {
   const userProfileRef = useMemoFirebase(() => user && db ? doc(db, "userProfiles", user.uid) : null, [user, db])
   const { data: profile } = useDoc(userProfileRef)
 
+  // Explicitly filtered query to match security rules
   const activeRidesQuery = useMemoFirebase(() => {
     if (!user || !db) return null
     return query(
       collection(db, "rides"), 
       where("passengerId", "==", user.uid), 
-      where("status", "in", ["Requested", "Accepted", "Arrived", "InProgress", "Completed"])
+      where("status", "in", ["Requested", "Accepted", "Arrived", "InProgress"]),
+      limit(1)
     )
   }, [user, db])
 
@@ -115,15 +117,15 @@ export default function PassengerApp() {
           <CardHeader className="pb-2">
             {!currentRide && (
               <Tabs value={activeService} onValueChange={setActiveService} className="w-full">
-                <TabsList className="grid grid-cols-3 bg-navy/90 border-2 border-white/20 p-1 h-24">
+                <TabsList className="grid grid-cols-3 bg-navy border-2 border-white/20 p-1 h-24">
                   {SERVICES.map(s => (
                     <TabsTrigger 
                       key={s.id} 
                       value={s.id} 
-                      className="text-white font-black uppercase text-sm data-[state=active]:text-white data-[state=active]:bg-orange data-[state=active]:shadow-[0_0_25px_rgba(255,128,0,0.6)] transition-all flex flex-col items-center justify-center gap-2 py-4 h-full"
+                      className="text-slate-400 font-black uppercase text-sm data-[state=active]:text-white data-[state=active]:bg-orange data-[state=active]:shadow-[0_0_25px_rgba(255,128,0,0.6)] transition-all flex flex-col items-center justify-center gap-2 py-4 h-full hover:text-white"
                     >
                       <s.icon className="w-8 h-8" /> 
-                      <span className="truncate font-black text-white">{s.name}</span>
+                      <span className="truncate font-black">{s.name}</span>
                     </TabsTrigger>
                   ))}
                 </TabsList>
@@ -145,7 +147,7 @@ export default function PassengerApp() {
                         placeholder="Pickup Location" 
                         value={pickup} 
                         onChange={e => setPickup(e.target.value)} 
-                        className="pl-10 bg-navy border-2 border-white/20 text-white placeholder:text-white/40 font-bold h-12 text-sm focus:border-orange/50" 
+                        className="pl-10 bg-navy/50 border-2 border-white/30 text-white placeholder:text-white/40 font-bold h-12 text-sm focus:border-orange/50" 
                       />
                     </div>
                   </div>
@@ -157,7 +159,7 @@ export default function PassengerApp() {
                         placeholder="Dropoff Destination" 
                         value={dropoff} 
                         onChange={e => setDropoff(e.target.value)} 
-                        className="pl-10 bg-navy border-2 border-white/20 text-white placeholder:text-white/40 font-bold h-12 text-sm focus:border-orange/50" 
+                        className="pl-10 bg-navy/50 border-2 border-white/30 text-white placeholder:text-white/40 font-bold h-12 text-sm focus:border-orange/50" 
                       />
                     </div>
                   </div>
@@ -173,7 +175,7 @@ export default function PassengerApp() {
                             onClick={() => setSelectedVehicle(v.id)}
                             className={cn(
                               "flex flex-col items-center justify-center p-3 rounded-xl border-2 transition-all",
-                              selectedVehicle === v.id ? "bg-orange/20 border-orange text-orange shadow-[0_0_10px_rgba(255,128,0,0.4)]" : "bg-navy/60 border-white/10 text-white hover:text-white hover:bg-navy/80"
+                              selectedVehicle === v.id ? "bg-orange/20 border-orange text-orange shadow-[0_0_10px_rgba(255,128,0,0.4)]" : "bg-navy/60 border-white/10 text-slate-300 hover:text-white hover:bg-navy/80"
                             )}
                           >
                             <v.icon className="w-6 h-6 mb-1" />
@@ -181,7 +183,7 @@ export default function PassengerApp() {
                           </button>
                         ))}
                       </div>
-                      <div className="bg-navy p-5 rounded-xl border-2 border-white/10 flex justify-between items-center mt-2 shadow-inner">
+                      <div className="bg-navy p-5 rounded-xl border-2 border-white/20 flex justify-between items-center mt-2 shadow-inner">
                         <div>
                           <p className="text-[11px] font-black text-white uppercase tracking-widest mb-1">Estimated credits</p>
                           <p className="text-3xl font-black text-orange">₹{currentFare}</p>
