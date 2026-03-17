@@ -8,7 +8,7 @@ service cloud.firestore {
     }
 
     function getProfile() {
-      // Safer retrieval of user profile document
+      // Safer retrieval of user profile document reference
       return get(/databases/$(database)/documents/userProfiles/$(request.auth.uid));
     }
 
@@ -36,17 +36,20 @@ service cloud.firestore {
     }
 
     match /driverShifts/{shiftId} {
-      // Allow read if user is Admin OR if the driver is reading their own shift
-      allow read: if isAdmin() || (isSignedIn() && request.auth.uid == resource.data.driverId);
+      // Admins and Super Admins can read all shifts (supports unrestricted list queries)
+      allow read: if isAdmin();
+
+      // Drivers can read only their own shifts (query must include driverId filter)
+      allow read: if request.auth != null && request.auth.uid == resource.data.driverId;
+
+      // Admins can manage all shift records
+      allow write: if isAdmin();
+
+      // Drivers can update their own active shifts (e.g., punching out)
+      allow update: if request.auth != null && request.auth.uid == resource.data.driverId;
       
-      // Allow creation if user is Admin OR if the driver is creating their own shift entry
-      allow create: if isAdmin() || (isSignedIn() && request.auth.uid == request.resource.data.driverId);
-      
-      // Allow updates if user is Admin OR if the driver is updating their own shift (e.g., punching out)
-      allow update: if isAdmin() || (isSignedIn() && request.auth.uid == resource.data.driverId);
-      
-      // Only Admins can delete shift records
-      allow delete: if isAdmin();
+      // Drivers can create their own shift entries
+      allow create: if request.auth != null && request.auth.uid == request.resource.data.driverId;
     }
 
     match /driverLocations/{driverId} {
