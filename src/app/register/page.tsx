@@ -20,7 +20,7 @@ export default function RegisterPage() {
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [name, setName] = useState("")
-  const [role, setRole] = useState("Driver")
+  const [role, setRole] = useState("Passenger")
   const [isLoading, setIsLoading] = useState(false)
   
   const auth = useAuth()
@@ -41,6 +41,7 @@ export default function RegisterPage() {
         name,
         email,
         role,
+        status: role === "Driver" ? "Offline" : "Active",
         createdAt: serverTimestamp(),
       })
 
@@ -53,7 +54,7 @@ export default function RegisterPage() {
 
       toast({
         title: "Terminal Initialized",
-        description: `Welcome, ${name}. Your ${role} clearance is active.`,
+        description: `Welcome, ${name}. Your ${role} account is active.`,
       })
       router.push("/dashboard")
     } catch (error: any) {
@@ -143,6 +144,7 @@ export default function RegisterPage() {
                     <SelectValue placeholder="Select Clearance Level" />
                   </SelectTrigger>
                   <SelectContent className="bg-charcoal border-navy text-white">
+                    <SelectItem value="Passenger">Passenger</SelectItem>
                     <SelectItem value="Driver">Operator (Driver)</SelectItem>
                     <SelectItem value="Admin">Logistics Admin</SelectItem>
                     <SelectItem value="Super Admin">Command High Staff (Super Admin)</SelectItem>
