@@ -83,6 +83,7 @@ export default function PassengerApp() {
           if (prev !== null && prev <= 1) {
             clearInterval(interval)
             handleCancelRide(currentRide.id)
+            // Use setTimeout to avoid React state update loop with Toaster
             setTimeout(() => {
               toast({ 
                 title: "Mission Timeout", 
