@@ -42,13 +42,13 @@ export default function DriverApp() {
   const handleAcceptRide = (rideId: string) => {
     if (!user || !db) return
     updateDocumentNonBlocking(doc(db, "rides", rideId), { driverId: user.uid, status: "Accepted", acceptedAt: serverTimestamp() })
-    toast({ title: "Mission Accepted", description: "Proceed to pickup point." })
+    toast({ title: "Mission Accepted", description: "Proceed to pickup point immediately." })
   }
 
   const handleRejectRide = (rideId: string) => {
     if (!db) return
     updateDocumentNonBlocking(doc(db, "rides", rideId), { status: "Rejected", rejectedAt: serverTimestamp() })
-    toast({ variant: "destructive", title: "Mission Declined", description: "Request cleared from terminal." })
+    toast({ variant: "destructive", title: "Mission Declined", description: "Request cleared from operator terminal." })
   }
 
   const handleUpdateStatus = (rideId: string, nextStatus: string) => {
@@ -82,7 +82,7 @@ export default function DriverApp() {
     setShowUPI(false)
     toast({ 
       title: "Settlement Successful", 
-      description: `₹${fare} logged via ${method}. Mission archived.` 
+      description: `₹${fare} credits logged via ${method}. Mission archived.` 
     })
   }
 
@@ -105,7 +105,7 @@ export default function DriverApp() {
         <Card className="border-none shadow-xl bg-white/95 backdrop-blur-md">
           <CardHeader className="p-4 bg-slate-50 flex flex-row items-center justify-between rounded-t-2xl border-b border-slate-100">
             <CardTitle className="text-xs font-black uppercase tracking-widest text-slate-900">Operator Terminal</CardTitle>
-            <Button onClick={handleToggleOnline} size="sm" className={isOnline ? "bg-green-500 text-white hover:bg-green-600" : "bg-slate-200 text-slate-600"}>
+            <Button onClick={handleToggleOnline} size="sm" className={cn("border-none", isOnline ? "bg-green-500 text-white hover:bg-green-600" : "bg-slate-200 text-slate-600")}>
               <Power className="w-3 h-3 mr-2" /> {isOnline ? "ONLINE" : "OFFLINE"}
             </Button>
           </CardHeader>
@@ -115,20 +115,20 @@ export default function DriverApp() {
                 <motion.div initial={{ x: 20, opacity: 0 }} animate={{ x: 0, opacity: 1 }} className="space-y-4">
                   <div className="flex justify-between items-start">
                     <div>
-                      <Badge className="bg-orange/10 text-orange mb-1 uppercase text-[8px] font-black">{activeRide.serviceType} PROTOCOL</Badge>
+                      <Badge className="bg-orange/10 text-orange mb-1 uppercase text-[8px] font-black border-none">{activeRide.serviceType} PROTOCOL</Badge>
                       <h3 className="text-sm font-black text-slate-900 uppercase truncate max-w-[150px]">{activeRide.pickup.address}</h3>
                     </div>
                     <p className="text-lg font-black text-slate-900">₹{activeRide.fare}</p>
                   </div>
 
                   {activeRide.status === "Accepted" && (
-                    <Button onClick={() => handleUpdateStatus(activeRide.id, "Arrived")} className="w-full bg-orange text-white h-12 font-black uppercase text-xs shadow-lg">Arrived at Origin</Button>
+                    <Button onClick={() => handleUpdateStatus(activeRide.id, "Arrived")} className="w-full bg-orange text-white h-12 font-black uppercase text-xs shadow-lg border-none">Arrived at Origin</Button>
                   )}
                   {activeRide.status === "Arrived" && (
-                    <Button onClick={() => handleUpdateStatus(activeRide.id, "InProgress")} className="w-full bg-slate-900 text-white h-12 font-black uppercase text-xs shadow-lg">Start Trip</Button>
+                    <Button onClick={() => handleUpdateStatus(activeRide.id, "InProgress")} className="w-full bg-slate-900 text-white h-12 font-black uppercase text-xs shadow-lg border-none">Start Trip</Button>
                   )}
                   {activeRide.status === "InProgress" && (
-                    <Button onClick={() => handleUpdateStatus(activeRide.id, "Completed")} className="w-full bg-red-600 text-white h-12 font-black uppercase text-xs shadow-lg">End Trip</Button>
+                    <Button onClick={() => handleUpdateStatus(activeRide.id, "Completed")} className="w-full bg-red-600 text-white h-12 font-black uppercase text-xs shadow-lg border-none">End Trip</Button>
                   )}
 
                   {activeRide.status === "Completed" && (
@@ -145,8 +145,8 @@ export default function DriverApp() {
                           </div>
                           <p className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Scan to pay operator</p>
                           <div className="grid grid-cols-2 gap-2">
-                             <Button onClick={() => setShowUPI(false)} variant="outline" className="text-[10px] font-black uppercase">Cancel</Button>
-                             <Button onClick={() => handleCompletePayment(activeRide.id, "Online", activeRide.fare)} className="bg-active text-white text-[10px] font-black uppercase shadow-lg">Paid Online</Button>
+                             <Button onClick={() => setShowUPI(false)} variant="outline" className="text-[10px] font-black uppercase border-slate-200">Cancel</Button>
+                             <Button onClick={() => handleCompletePayment(activeRide.id, "Online", activeRide.fare)} className="bg-active text-white text-[10px] font-black uppercase shadow-lg border-none">Paid Online</Button>
                           </div>
                         </motion.div>
                       ) : (
@@ -155,7 +155,7 @@ export default function DriverApp() {
                             <Banknote className="w-5 h-5 text-slate-900 group-hover:scale-110 transition-transform" />
                             <span className="text-[9px] font-black uppercase">Cash Settlement</span>
                           </Button>
-                          <Button onClick={() => setShowUPI(true)} className="h-14 bg-orange text-white flex flex-col items-center justify-center gap-1 group shadow-lg">
+                          <Button onClick={() => setShowUPI(true)} className="h-14 bg-orange text-white flex flex-col items-center justify-center gap-1 group shadow-lg border-none">
                             <QrCode className="w-5 h-5 text-white group-hover:scale-110 transition-transform" />
                             <span className="text-[9px] font-black uppercase">UPI / QR Link</span>
                           </Button>
@@ -172,7 +172,7 @@ export default function DriverApp() {
                     {pendingRides?.slice(0, 3).map(ride => (
                       <Card key={ride.id} className="bg-slate-50 border-slate-100 p-4 text-left shadow-md">
                         <div className="flex justify-between items-center mb-3">
-                          <Badge className="bg-slate-900 text-white text-[8px] font-black uppercase">{ride.vehicleType}</Badge>
+                          <Badge className="bg-slate-900 text-white text-[8px] font-black uppercase border-none">{ride.vehicleType}</Badge>
                           <span className="text-sm font-black text-slate-900">₹{ride.fare}</span>
                         </div>
                         <p className="text-[10px] font-bold text-slate-500 uppercase mb-4 truncate">{ride.pickup.address}</p>

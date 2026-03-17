@@ -54,20 +54,30 @@ export default function PassengerApp() {
     if (!user || !db) return null
     return query(
       collection(db, "rides"), 
-      where("passengerId", "==", user.uid), 
-      where("status", "in", ["Requested", "Accepted", "Arrived", "InProgress", "Completed", "Rejected", "Paid"]),
-      limit(1)
+      where("passengerId", "==", user.uid),
+      limit(5) // Fetch more to find the truly active one manually
     )
   }, [user, db])
 
   const { data: activeRides } = useCollection(activeRidesQuery)
-  const currentRide = activeRides?.find(r => ["Requested", "Accepted", "Arrived", "InProgress", "Completed", "Rejected"].includes(r.status))
+  
+  const currentRide = useMemo(() => {
+    if (!activeRides) return null
+    // Filter for truly live missions only
+    const liveStatuses = ["Requested", "Accepted", "Arrived", "InProgress", "Completed", "Rejected"]
+    const sorted = [...activeRides].sort((a, b) => {
+      const aTime = a.createdAt?.toMillis?.() || 0
+      const bTime = b.createdAt?.toMillis?.() || 0
+      return bTime - aTime
+    })
+    return sorted.find(r => liveStatuses.includes(r.status))
+  }, [activeRides])
 
-  // Mission Timeout & Surge Logic
+  // Mission Timeout Logic (1 Minute)
   useEffect(() => {
     let interval: NodeJS.Timeout
     if (currentRide?.status === "Requested") {
-      setScanTimer(60)
+      if (scanTimer === null) setScanTimer(60)
       interval = setInterval(() => {
         setScanTimer((prev) => {
           if (prev !== null && prev <= 1) {
@@ -75,7 +85,7 @@ export default function PassengerApp() {
             handleCancelRide(currentRide.id)
             toast({ 
               title: "Mission Timeout", 
-              description: "No units responded. Terminal auto-decline triggered.",
+              description: "No units responded within the tactical window.",
               variant: "destructive"
             })
             return 0
@@ -89,15 +99,16 @@ export default function PassengerApp() {
     return () => clearInterval(interval)
   }, [currentRide?.status, currentRide?.id])
 
+  // Surge Logic on Rejection
   useEffect(() => {
-    if (currentRide?.status === "Rejected") {
+    if (currentRide?.status === "Rejected" && db) {
       toast({ 
         title: "Operator Busy", 
-        description: "Applying ₹20 surge for priority. Re-scanning sector...",
+        description: "Applying ₹20 surge for priority re-broadcast...",
         variant: "destructive" 
       })
       
-      const rideRef = doc(db!, "rides", currentRide.id)
+      const rideRef = doc(db, "rides", currentRide.id)
       updateDocumentNonBlocking(rideRef, {
         status: "Requested",
         fare: increment(20),
@@ -129,7 +140,7 @@ export default function PassengerApp() {
       fare: currentFare,
       createdAt: serverTimestamp()
     })
-    toast({ title: `${activeService} Broadcasted`, description: "Scanning sector for units." })
+    toast({ title: "Broadcast Initiated", description: "Scanning sector for available units." })
   }
 
   const handleCancelRide = (rideId: string) => {
@@ -158,10 +169,10 @@ export default function PassengerApp() {
                     <TabsTrigger 
                       key={s.id} 
                       value={s.id} 
-                      className="data-[state=active]:bg-orange data-[state=active]:text-white data-[state=active]:shadow-[0_0_15px_rgba(255,128,0,0.4)] transition-all flex flex-col items-center justify-center gap-1 py-2 h-full text-white font-black"
+                      className="data-[state=active]:bg-orange data-[state=active]:text-white data-[state=active]:shadow-lg transition-all flex flex-col items-center justify-center gap-1 py-2 h-full text-white font-black"
                     >
-                      <s.icon className="w-7 h-7 mb-1" /> 
-                      <span className="text-[11px] uppercase tracking-tighter font-black">
+                      <s.icon className="w-6 h-6 mb-1" /> 
+                      <span className="text-[10px] uppercase tracking-tighter font-black">
                         {s.name}
                       </span>
                     </TabsTrigger>
@@ -173,9 +184,9 @@ export default function PassengerApp() {
               {currentRide ? (currentRide.status === "Completed" ? "Mission Settlement" : `${currentRide.serviceType} Terminal`) : "Initialize Mission"}
             </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-4 pt-4">
+          <CardContent className="space-y-4 pt-4 min-h-[300px]">
             {!currentRide ? (
-              <>
+              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-4">
                 <div className="space-y-4">
                   <div>
                     <label className="text-[10px] font-black text-slate-900 uppercase ml-1 mb-1 block tracking-widest">Origin Point</label>
@@ -228,7 +239,7 @@ export default function PassengerApp() {
                         </div>
                         <Button 
                           onClick={handleBookRide} 
-                          className="bg-orange hover:bg-orange/90 font-black uppercase text-xs h-12 px-6 shadow-lg text-white"
+                          className="bg-orange hover:bg-orange/90 font-black uppercase text-xs h-12 px-6 shadow-lg text-white border-none"
                         >
                           Deploy Unit
                         </Button>
@@ -236,7 +247,7 @@ export default function PassengerApp() {
                     </motion.div>
                   )}
                 </AnimatePresence>
-              </>
+              </motion.div>
             ) : currentRide.status === "Completed" ? (
               <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6 pt-2">
                 <div className="p-6 bg-slate-900 rounded-2xl text-center shadow-inner relative overflow-hidden">
@@ -253,11 +264,11 @@ export default function PassengerApp() {
                         <QrCode className="w-full h-full text-slate-900" />
                      </div>
                      <p className="text-xs font-bold text-slate-500 uppercase tracking-widest">Scan & Pay Operator</p>
-                     <Button onClick={() => setPayingOnline(false)} variant="ghost" className="text-[10px] font-black uppercase">Switch to Cash</Button>
+                     <Button onClick={() => setPayingOnline(false)} variant="ghost" className="text-[10px] font-black uppercase text-slate-400">Switch to Cash</Button>
                   </div>
                 ) : (
                   <div className="space-y-3">
-                    <Button onClick={() => setPayingOnline(true)} className="w-full bg-orange hover:bg-orange/90 h-14 font-black uppercase flex items-center justify-center gap-3 text-white shadow-lg">
+                    <Button onClick={() => setPayingOnline(true)} className="w-full bg-orange hover:bg-orange/90 h-14 font-black uppercase flex items-center justify-center gap-3 text-white shadow-lg border-none">
                       <QrCode className="w-6 h-6" /> Pay Online / UPI
                     </Button>
                     <div className="p-4 bg-slate-50 rounded-xl border border-slate-200 flex items-center gap-3 shadow-sm">
@@ -273,12 +284,12 @@ export default function PassengerApp() {
                 <p className="text-[9px] text-center text-slate-400 italic">Waiting for operator to confirm settlement...</p>
               </motion.div>
             ) : (
-              <div className="space-y-6 pt-4">
+              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6 pt-4">
                 <div className="text-center p-8 bg-white rounded-2xl border-2 border-slate-100 relative overflow-hidden shadow-sm">
                    <div className="absolute top-0 left-0 w-full h-1 bg-slate-100">
                      <motion.div animate={{ x: ["-100%", "100%"] }} transition={{ duration: 1.5, repeat: Infinity }} className="w-1/3 h-full bg-orange" />
                    </div>
-                   <p className="text-[10px] font-black text-orange uppercase tracking-[0.2em] mb-4">{currentRide.status}</p>
+                   <p className="text-[12px] font-black text-orange uppercase tracking-[0.2em] mb-4">{currentRide.status}</p>
                    {driverProfile ? (
                      <div className="space-y-4">
                        <div className="w-20 h-20 rounded-full bg-white mx-auto ring-4 ring-slate-100 flex items-center justify-center overflow-hidden shadow-lg">
@@ -296,23 +307,23 @@ export default function PassengerApp() {
                      <div className="py-8 space-y-4">
                         <div className="w-12 h-12 border-4 border-orange/10 border-t-orange rounded-full animate-spin mx-auto" />
                         <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">
-                          {scanTimer !== null ? `Searching Sector... ${scanTimer}s` : "Searching Sector..."}
+                          {scanTimer !== null ? `Scanning Sector... ${scanTimer}s Remaining` : "Scanning Sector for Units..."}
                         </p>
                      </div>
                    )}
                 </div>
                 <div className="grid grid-cols-2 gap-3">
-                  <Button className="bg-slate-900 hover:bg-slate-800 text-white text-[10px] uppercase font-black h-12 shadow-md">
+                  <Button className="bg-slate-900 hover:bg-slate-800 text-white text-[10px] uppercase font-black h-12 shadow-md border-none">
                     <Phone className="w-4 h-4 mr-2 text-orange" /> Comms Link
                   </Button>
-                  <Button className="bg-red-600 hover:bg-red-700 text-white text-[10px] uppercase font-black h-12 shadow-md">
+                  <Button className="bg-red-600 hover:bg-red-700 text-white text-[10px] uppercase font-black h-12 shadow-md border-none">
                     <ShieldAlert className="w-4 h-4 mr-2" /> SOS Signal
                   </Button>
                 </div>
                 {(currentRide.status === "Requested" || currentRide.status === "Accepted") && (
                   <Button onClick={() => handleCancelRide(currentRide.id)} variant="ghost" className="w-full text-[10px] font-black uppercase h-10 text-slate-400 hover:text-red-600 transition-all">Abort Mission</Button>
                 )}
-              </div>
+              </motion.div>
             )}
           </CardContent>
         </Card>
