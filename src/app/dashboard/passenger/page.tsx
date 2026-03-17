@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useState, useMemo } from "react"
+import React, { useState, useMemo, useEffect } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { 
   MapPin, Navigation, Car, Bike, Zap, Package, Truck, ShieldAlert, Star, Phone, QrCode, Banknote, CheckCircle2
@@ -11,7 +11,7 @@ import { Input } from "@/components/ui/input"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import TacticalMap from "@/components/dashboard/TacticalMap"
 import { useUser, useFirestore, useCollection, useMemoFirebase, useDoc, updateDocumentNonBlocking } from "@/firebase"
-import { collection, query, where, addDoc, serverTimestamp, doc, limit } from "firebase/firestore"
+import { collection, query, where, addDoc, serverTimestamp, doc, limit, increment } from "firebase/firestore"
 import { useToast } from "@/hooks/use-toast"
 import { cn } from "@/lib/utils"
 
@@ -49,19 +49,37 @@ export default function PassengerApp() {
   const userProfileRef = useMemoFirebase(() => user && db ? doc(db, "userProfiles", user.uid) : null, [user, db])
   const { data: profile } = useDoc(userProfileRef)
 
-  // Filter query to only list active rides owned by the user
   const activeRidesQuery = useMemoFirebase(() => {
     if (!user || !db) return null
     return query(
       collection(db, "rides"), 
       where("passengerId", "==", user.uid), 
-      where("status", "in", ["Requested", "Accepted", "Arrived", "InProgress", "Completed"]),
+      where("status", "in", ["Requested", "Accepted", "Arrived", "InProgress", "Completed", "Rejected", "Paid"]),
       limit(1)
     )
   }, [user, db])
 
   const { data: activeRides } = useCollection(activeRidesQuery)
-  const currentRide = activeRides?.[0]
+  // We want the most recent active ride that isn't fully archived (Paid/Cancelled)
+  const currentRide = activeRides?.find(r => ["Requested", "Accepted", "Arrived", "InProgress", "Completed", "Rejected"].includes(r.status))
+
+  useEffect(() => {
+    if (currentRide?.status === "Rejected") {
+      toast({ 
+        title: "Operator Busy", 
+        description: "Bumping fare for priority. Re-scanning sector...",
+        variant: "destructive" 
+      })
+      
+      const rideRef = doc(db!, "rides", currentRide.id)
+      // Automated Re-search Logic: Increment fare and reset status
+      updateDocumentNonBlocking(rideRef, {
+        status: "Requested",
+        fare: increment(20), // Extra money for pickup incentive
+        lastRejectedAt: serverTimestamp()
+      })
+    }
+  }, [currentRide?.status, currentRide?.id, db, toast])
 
   const driverProfileRef = useMemoFirebase(() => currentRide?.driverId && db ? doc(db, "userProfiles", currentRide.driverId) : null, [currentRide?.driverId, db])
   const { data: driverProfile } = useDoc(driverProfileRef)
@@ -96,7 +114,7 @@ export default function PassengerApp() {
   }
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-full">
+    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-full text-slate-900">
       <div className="lg:col-span-2 relative h-[400px] lg:h-full rounded-2xl overflow-hidden border border-slate-200 shadow-sm bg-white">
         <TacticalMap 
           markers={currentRide || hasLocations ? [
@@ -215,7 +233,7 @@ export default function PassengerApp() {
                   </div>
                 ) : (
                   <div className="space-y-3">
-                    <Button onClick={() => setPayingOnline(true)} className="w-full bg-orange hover:bg-orange/90 h-14 font-black uppercase flex items-center justify-center gap-3">
+                    <Button onClick={() => setPayingOnline(true)} className="w-full bg-orange hover:bg-orange/90 h-14 font-black uppercase flex items-center justify-center gap-3 text-white">
                       <QrCode className="w-6 h-6" /> Pay Online / UPI
                     </Button>
                     <div className="p-4 bg-slate-50 rounded-xl border border-slate-200 flex items-center gap-3">

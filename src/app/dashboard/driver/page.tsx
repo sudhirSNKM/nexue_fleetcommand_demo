@@ -1,8 +1,8 @@
 "use client"
 
 import React, { useState } from "react"
-import { motion, AnimatePresence } from "framer-motion"
-import { Navigation, Power, AlertCircle, Phone, Star, TrendingUp, QrCode, Banknote, CheckCircle2 } from "lucide-react"
+import { motion, AnimatePresence, useMotionValue, useTransform } from "framer-motion"
+import { Navigation, Power, AlertCircle, Phone, Star, TrendingUp, QrCode, Banknote, CheckCircle2, ArrowRight, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -45,6 +45,13 @@ export default function DriverApp() {
     toast({ title: "Mission Accepted", description: "Proceed to pickup point." })
   }
 
+  const handleRejectRide = (rideId: string) => {
+    if (!db) return
+    // Setting to Rejected triggers the passenger's fare-surge/re-search logic
+    updateDocumentNonBlocking(doc(db, "rides", rideId), { status: "Rejected", rejectedAt: serverTimestamp() })
+    toast({ variant: "destructive", title: "Mission Declined", description: "Request cleared from terminal." })
+  }
+
   const handleUpdateStatus = (rideId: string, nextStatus: string) => {
     if (!db) return
     const rideRef = doc(db, "rides", rideId)
@@ -58,14 +65,12 @@ export default function DriverApp() {
     if (!db || !user) return
     const rideRef = doc(db, "rides", rideId)
     
-    // Update ride to Paid
     updateDocumentNonBlocking(rideRef, { 
       status: "Paid", 
       paymentMethod: method,
       paidAt: serverTimestamp() 
     })
 
-    // Log earnings
     if (statsRef) {
       setDocumentNonBlocking(statsRef, { 
         driverId: user.uid, 
@@ -89,7 +94,7 @@ export default function DriverApp() {
   ]
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 h-full">
+    <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 h-full text-slate-900">
       <div className="lg:col-span-3 relative h-[400px] lg:h-full rounded-2xl overflow-hidden border border-slate-200 bg-white">
         <TacticalMap markers={activeRide ? [
           { id: 'p', lat: activeRide.pickup.lat, lng: activeRide.pickup.lng, label: 'Pickup', type: 'pickup' },
@@ -164,14 +169,27 @@ export default function DriverApp() {
                 <div className="text-center py-6 space-y-4">
                   <div className="w-10 h-10 rounded-full border-4 border-orange/10 border-t-orange animate-spin mx-auto" />
                   <p className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Scanning sector...</p>
-                  <div className="space-y-3">
+                  <div className="space-y-4">
                     {pendingRides?.slice(0, 3).map(ride => (
-                      <Card key={ride.id} className="bg-slate-50 border-slate-100 p-3 text-left">
-                        <div className="flex justify-between items-center mb-2">
-                          <span className="text-[8px] font-black text-slate-500 uppercase">{ride.vehicleType}</span>
-                          <span className="text-xs font-black text-slate-900">₹{ride.fare}</span>
+                      <Card key={ride.id} className="bg-slate-50 border-slate-100 p-4 text-left shadow-sm">
+                        <div className="flex justify-between items-center mb-3">
+                          <Badge className="bg-slate-900 text-white text-[8px] font-black uppercase">{ride.vehicleType}</Badge>
+                          <span className="text-sm font-black text-slate-900">₹{ride.fare}</span>
                         </div>
-                        <Button onClick={() => handleAcceptRide(ride.id)} className="w-full bg-slate-900 text-white h-10 text-[10px] font-black uppercase">Accept mission</Button>
+                        <p className="text-[10px] font-bold text-slate-500 uppercase mb-4 truncate">{ride.pickup.address}</p>
+                        
+                        <div className="space-y-2">
+                          {/* SWIPE TO ACCEPT COMPONENT */}
+                          <SwipeToAccept onAccept={() => handleAcceptRide(ride.id)} />
+                          
+                          <Button 
+                            variant="ghost" 
+                            onClick={() => handleRejectRide(ride.id)}
+                            className="w-full text-red-500 hover:text-red-600 hover:bg-red-50 text-[10px] font-black uppercase h-8"
+                          >
+                            <X className="w-3 h-3 mr-1" /> Decline Mission
+                          </Button>
+                        </div>
                       </Card>
                     ))}
                   </div>
@@ -207,15 +225,48 @@ export default function DriverApp() {
 
         <div className="grid grid-cols-2 gap-4">
           <Card className="p-4 text-center border-none shadow-md bg-white">
-            <p className="text-[9px] uppercase font-black text-slate-400 mb-1">Total ₹</p>
+            <p className="text-[9px] uppercase font-black text-slate-400 mb-1">Total Earnings</p>
             <h4 className="text-xl font-black text-slate-900">₹{dailyStats?.earnings || 0}</h4>
           </Card>
           <Card className="p-4 text-center border-none shadow-md bg-white">
-            <p className="text-[9px] uppercase font-black text-slate-400 mb-1">Rides</p>
+            <p className="text-[9px] uppercase font-black text-slate-400 mb-1">Missions</p>
             <h4 className="text-xl font-black text-slate-900">{dailyStats?.rideCount || 0}</h4>
           </Card>
         </div>
       </div>
+    </div>
+  )
+}
+
+function SwipeToAccept({ onAccept }: { onAccept: () => void }) {
+  const x = useMotionValue(0)
+  const opacity = useTransform(x, [0, 150], [1, 0])
+  const textOpacity = useTransform(x, [0, 50], [1, 0])
+
+  return (
+    <div className="relative h-12 bg-slate-100 rounded-full border border-slate-200 overflow-hidden group">
+      <motion.div style={{ opacity: textOpacity }} className="absolute inset-0 flex items-center justify-center">
+        <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
+          Accept Mission <ArrowRight className="w-3 h-3 animate-pulse" />
+        </span>
+      </motion.div>
+      
+      <motion.div
+        drag="x"
+        dragConstraints={{ left: 0, right: 200 }}
+        dragElastic={0.1}
+        style={{ x }}
+        onDragEnd={(_, info) => {
+          if (info.offset.x > 150) {
+            onAccept()
+          } else {
+            x.set(0)
+          }
+        }}
+        className="absolute left-1 top-1 w-10 h-10 bg-orange rounded-full flex items-center justify-center cursor-grab active:cursor-grabbing shadow-lg"
+      >
+        <CheckCircle2 className="w-5 h-5 text-white" />
+      </motion.div>
     </div>
   )
 }
