@@ -8,9 +8,11 @@ import LiveMap from "@/components/dashboard/LiveMap"
 import FleetStats from "@/components/dashboard/FleetStats"
 import FuelAnalytics from "@/components/dashboard/FuelAnalytics"
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card"
-import { Shield, Zap, Timer, AlertTriangle, Users, Map as MapIcon } from "lucide-react"
+import { Badge } from "@/components/ui/badge"
+import { Shield, Zap, AlertTriangle, Users } from "lucide-react"
 import { useUser, useFirestore, useDoc, useCollection, useMemoFirebase } from "@/firebase"
 import { doc, collection, query, orderBy, limit } from "firebase/firestore"
+import { cn } from "@/lib/utils"
 
 export default function AdminCommandCenter() {
   const { user } = useUser()
@@ -20,15 +22,31 @@ export default function AdminCommandCenter() {
   const profileRef = useMemoFirebase(() => user && db ? doc(db, "userProfiles", user.uid) : null, [user, db])
   const { data: profile } = useDoc(profileRef)
 
-  const ridesQuery = useMemoFirebase(() => db ? query(collection(db, "rides"), orderBy("createdAt", "desc"), limit(5)) : null, [db])
+  const isAdmin = profile?.role === "Admin" || profile?.role === "Super Admin"
+
+  // Guard the query to avoid permission errors for non-admin users who haven't been redirected yet
+  const ridesQuery = useMemoFirebase(() => {
+    if (!db || !isAdmin) return null
+    return query(collection(db, "rides"), orderBy("createdAt", "desc"), limit(5))
+  }, [db, isAdmin])
+
   const { data: recentRides } = useCollection(ridesQuery)
 
   useEffect(() => {
-    gsap.from(".admin-card", { y: 30, opacity: 0, duration: 0.6, stagger: 0.1, ease: "power2.out" })
-  }, [])
+    if (isAdmin) {
+      gsap.from(".admin-card", { y: 30, opacity: 0, duration: 0.6, stagger: 0.1, ease: "power2.out" })
+    }
+  }, [isAdmin])
 
-  if (profile?.role !== "Admin" && profile?.role !== "Super Admin") {
-    return <div className="h-full flex items-center justify-center text-muted-foreground uppercase font-black tracking-widest animate-pulse">Access Level Restricted</div>
+  if (!isAdmin) {
+    return (
+      <div className="h-full flex flex-col items-center justify-center space-y-4">
+        <div className="w-12 h-12 border-4 border-orange/20 border-t-orange rounded-full animate-spin" />
+        <p className="text-[10px] text-muted-foreground uppercase font-black tracking-[0.3em] animate-pulse">
+          Validating Security Clearance...
+        </p>
+      </div>
+    )
   }
 
   return (
@@ -43,7 +61,7 @@ export default function AdminCommandCenter() {
         </div>
         <div className="text-right">
           <p className="text-[10px] font-black text-muted-foreground uppercase">Clearance</p>
-          <p className="text-xs font-black text-orange uppercase tracking-widest">{profile.role}</p>
+          <p className="text-xs font-black text-orange uppercase tracking-widest">{profile?.role}</p>
         </div>
       </div>
 
@@ -53,8 +71,24 @@ export default function AdminCommandCenter() {
         <div className="xl:col-span-3 min-h-[500px] border border-navy rounded-2xl overflow-hidden shadow-2xl relative">
           <LiveMap />
           <div className="absolute top-4 left-4 z-[1000] flex gap-2">
-            <button onClick={() => setActiveTab('live')} className={cn("px-4 py-2 text-[10px] font-black uppercase rounded-lg border transition-all", activeTab === 'live' ? "bg-orange border-orange" : "bg-charcoal/80 border-navy")}>Live Tracking</button>
-            <button onClick={() => setActiveTab('heatmap')} className={cn("px-4 py-2 text-[10px] font-black uppercase rounded-lg border transition-all", activeTab === 'heatmap' ? "bg-orange border-orange" : "bg-charcoal/80 border-navy")}>Demand Heatmap</button>
+            <button 
+              onClick={() => setActiveTab('live')} 
+              className={cn(
+                "px-4 py-2 text-[10px] font-black uppercase rounded-lg border transition-all", 
+                activeTab === 'live' ? "bg-orange border-orange" : "bg-charcoal/80 border-navy"
+              )}
+            >
+              Live Tracking
+            </button>
+            <button 
+              onClick={() => setActiveTab('heatmap')} 
+              className={cn(
+                "px-4 py-2 text-[10px] font-black uppercase rounded-lg border transition-all", 
+                activeTab === 'heatmap' ? "bg-orange border-orange" : "bg-charcoal/80 border-navy"
+              )}
+            >
+              Demand Heatmap
+            </button>
           </div>
         </div>
 
@@ -90,6 +124,12 @@ export default function AdminCommandCenter() {
                     <Badge variant="outline" className="text-[8px] border-orange/50 text-orange">{ride.status}</Badge>
                   </div>
                 ))}
+                {!recentRides?.length && (
+                  <div className="p-8 text-center opacity-20">
+                    <Zap className="w-8 h-8 mx-auto mb-2" />
+                    <p className="text-[8px] font-black uppercase">No active missions</p>
+                  </div>
+                )}
               </div>
             </CardContent>
           </Card>
