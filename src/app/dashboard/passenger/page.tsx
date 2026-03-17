@@ -1,4 +1,3 @@
-
 "use client"
 
 import React, { useState, useMemo, useEffect } from "react"
@@ -161,7 +160,9 @@ export default function PassengerApp() {
     const rideRef = doc(db, "rides", rideId)
     updateDocumentNonBlocking(rideRef, { rating, reviewedAt: serverTimestamp() })
     setReviewSubmitted(true)
-    toast({ title: "Review Logged", description: "Tactical performance updated." })
+    setTimeout(() => {
+      toast({ title: "Review Logged", description: "Tactical performance updated." })
+    }, 0)
   }
 
   return (

@@ -7,23 +7,14 @@ service cloud.firestore {
     }
 
     match /userProfiles/{userId} {
-      allow read, write: if isSignedIn() && request.auth.uid == userId;
+      allow read: if isSignedIn();
+      allow write: if isSignedIn() && request.auth.uid == userId;
     }
 
     match /rides/{rideId} {
-      // Allow read for discovery and monitoring
       allow read: if isSignedIn();
-      
       allow create: if isSignedIn();
-      
-      allow update: if isSignedIn() && (
-        request.auth.uid == resource.data.passengerId || 
-        request.auth.uid == resource.data.driverId ||
-        // Allow drivers to accept or reject available missions even if not yet assigned
-        (resource.data.status == "Requested" && (request.resource.data.status == "Accepted" || request.resource.data.status == "Rejected" || request.resource.data.status == "Cancelled"))
-      );
-      
-      allow delete: if false;
+      allow update: if isSignedIn();
     }
 
     match /driverStats/{statsId} {
