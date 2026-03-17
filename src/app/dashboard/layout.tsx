@@ -63,6 +63,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     router.push("/login")
   }
 
+  // Role Normalization Protocol
   const role = (profile?.role || "passenger").toLowerCase().replace(/\s+/g, '-')
   const status = (profile?.status || "Active").toLowerCase()
   const isMobilityUser = role === "passenger" || role === "driver"
@@ -230,9 +231,10 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               <Avatar className="h-8 w-8 ring-2 ring-orange/20">
                 <AvatarImage src={`https://picsum.photos/seed/${user.uid}/100/100`} />
                 <AvatarFallback>{profile?.name?.[0] || "U"}</AvatarFallback>
-              </div>
+              </Avatar>
             </div>
-          </header>
+          </div>
+        </header>
 
         <section className="flex-1 overflow-auto p-4 lg:p-8 relative scrollbar-hide">
           <AnimatePresence mode="wait">
