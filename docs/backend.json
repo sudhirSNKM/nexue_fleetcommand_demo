@@ -47,13 +47,34 @@
             "lng": { "type": "number" }
           }
         },
-        "status": { "type": "string", "enum": ["Requested", "Accepted", "Arrived", "InProgress", "Completed", "Cancelled"] },
+        "status": { "type": "string", "enum": ["Requested", "Accepted", "Arrived", "InProgress", "Completed", "Cancelled", "Paid"] },
         "fare": { "type": "number" },
+        "paymentMethod": { "type": "string" },
         "distance": { "type": "number" },
         "startTime": { "type": "string", "format": "date-time" },
         "endTime": { "type": "string", "format": "date-time" }
       },
       "required": ["id", "passengerId", "status", "pickup", "dropoff"]
+    },
+    "ChatMessage": {
+      "title": "ChatMessage",
+      "type": "object",
+      "properties": {
+        "rideId": { "type": "string" },
+        "senderId": { "type": "string" },
+        "text": { "type": "string" },
+        "timestamp": { "type": "string", "format": "date-time" }
+      }
+    },
+    "DriverDailyStats": {
+      "title": "DriverDailyStats",
+      "type": "object",
+      "properties": {
+        "driverId": { "type": "string" },
+        "date": { "type": "string" },
+        "earnings": { "type": "number" },
+        "rideCount": { "type": "number" }
+      }
     }
   },
   "auth": {
@@ -70,8 +91,12 @@
         "definition": { "entityName": "Ride", "schema": { "$ref": "#/backend/entities/Ride" }, "description": "Ride transactions and history." }
       },
       {
-        "path": "/driver_locations/{driverId}",
-        "definition": { "schema": { "type": "object" }, "description": "Real-time driver GPS coordinates." }
+        "path": "/rides/{rideId}/messages/{messageId}",
+        "definition": { "entityName": "ChatMessage", "schema": { "$ref": "#/backend/entities/ChatMessage" }, "description": "In-ride messages." }
+      },
+      {
+        "path": "/driverStats/{statId}",
+        "definition": { "entityName": "DriverDailyStats", "schema": { "$ref": "#/backend/entities/DriverDailyStats" }, "description": "Aggregated daily earnings." }
       }
     ]
   }

@@ -3,33 +3,39 @@
 
 import React, { useState } from "react"
 import { motion, AnimatePresence } from "framer-motion"
-import { MapPin, Navigation, Clock, CreditCard, Star, Search, Car } from "lucide-react"
+import { MapPin, Navigation, CreditCard, Star, Search, Car, Phone, MessageSquare, CheckCircle2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import TacticalMap from "@/components/dashboard/TacticalMap"
-import { useUser, useFirestore, useCollection, useMemoFirebase } from "@/firebase"
-import { collection, query, where, addDoc, serverTimestamp } from "firebase/firestore"
+import { useUser, useFirestore, useCollection, useMemoFirebase, useDoc, updateDocumentNonBlocking } from "@/firebase"
+import { collection, query, where, addDoc, serverTimestamp, doc } from "firebase/firestore"
 import { useToast } from "@/hooks/use-toast"
 
 export default function PassengerApp() {
   const { user } = useUser()
   const db = useFirestore()
   const { toast } = useToast()
-  const [step, setStep] = useState<'idle' | 'searching' | 'matched'>('idle')
   const [pickup, setPickup] = useState("")
   const [dropoff, setDropoff] = useState("")
 
   const activeRidesQuery = useMemoFirebase(() => {
-    if (!user) return null
-    return query(collection(db, "rides"), where("passengerId", "==", user.uid), where("status", "in", ["Requested", "Accepted", "Arrived", "InProgress"]))
+    if (!user || !db) return null
+    return query(collection(db, "rides"), where("passengerId", "==", user.uid), where("status", "in", ["Requested", "Accepted", "Arrived", "InProgress", "Completed"]))
   }, [user, db])
 
   const { data: activeRides } = useCollection(activeRidesQuery)
+  const currentRide = activeRides?.[0]
+
+  const driverProfileRef = useMemoFirebase(() => {
+    if (!currentRide?.driverId || !db) return null
+    return doc(db, "userProfiles", currentRide.driverId)
+  }, [currentRide?.driverId, db])
+
+  const { data: driverProfile } = useDoc(driverProfileRef)
 
   const handleBookRide = async () => {
-    if (!user) return
-    setStep('searching')
+    if (!user || !db) return
     try {
       await addDoc(collection(db, "rides"), {
         passengerId: user.uid,
@@ -41,11 +47,19 @@ export default function PassengerApp() {
       })
       toast({ title: "Ride Requested", description: "Locating the nearest captain..." })
     } catch (e) {
-      setStep('idle')
+      console.error(e)
     }
   }
 
-  const currentRide = activeRides?.[0]
+  const handleProcessPayment = (rideId: string, method: string) => {
+    if (!db) return
+    const rideRef = doc(db, "rides", rideId)
+    updateDocumentNonBlocking(rideRef, { 
+      status: "Paid", 
+      paymentMethod: method 
+    })
+    toast({ title: "Payment Successful", description: `Processed via ${method}. Protocol complete.` })
+  }
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-full">
@@ -61,70 +75,86 @@ export default function PassengerApp() {
       <div className="space-y-6">
         <Card className="glass-panel border-t-4 border-orange">
           <CardHeader>
-            <CardTitle className="text-xl font-black uppercase tracking-tighter">Where to?</CardTitle>
+            <CardTitle className="text-xl font-black uppercase tracking-tighter">
+              {currentRide?.status === "Completed" ? "Mission Complete" : "Where to?"}
+            </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="space-y-3 relative">
-              <div className="absolute left-4 top-1/2 -translate-y-1/2 w-0.5 h-10 bg-orange/20" />
-              <div className="relative">
-                <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-active" />
-                <Input 
-                  placeholder="Pickup Location" 
-                  value={pickup}
-                  onChange={(e) => setPickup(e.target.value)}
-                  className="pl-10 bg-navy/20 border-navy" 
-                />
-              </div>
-              <div className="relative">
-                <Navigation className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-emergency" />
-                <Input 
-                  placeholder="Dropoff Location" 
-                  value={dropoff}
-                  onChange={(e) => setDropoff(e.target.value)}
-                  className="pl-10 bg-navy/20 border-navy" 
-                />
-              </div>
-            </div>
-
-            <AnimatePresence mode="wait">
-              {!currentRide ? (
-                <motion.div
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -10 }}
-                >
-                  <div className="bg-navy/10 p-4 rounded-lg border border-white/5 mb-4">
-                     <div className="flex justify-between items-center mb-2">
-                        <span className="text-xs font-bold uppercase text-muted-foreground">Estimated Fare</span>
-                        <span className="text-lg font-black text-orange">₹154.00</span>
-                     </div>
-                     <p className="text-[10px] text-muted-foreground uppercase font-bold">Standard Bike • 12 mins est.</p>
+            {!currentRide ? (
+              <>
+                <div className="space-y-3 relative">
+                  <div className="absolute left-4 top-1/2 -translate-y-1/2 w-0.5 h-10 bg-orange/20" />
+                  <div className="relative">
+                    <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-active" />
+                    <Input 
+                      placeholder="Pickup Location" 
+                      value={pickup}
+                      onChange={(e) => setPickup(e.target.value)}
+                      className="pl-10 bg-navy/20 border-navy" 
+                    />
                   </div>
-                  <Button 
-                    onClick={handleBookRide}
-                    className="w-full bg-orange hover:bg-orange/90 h-14 font-black uppercase tracking-widest text-lg"
-                  >
-                    Request Ride
-                  </Button>
-                </motion.div>
-              ) : (
-                <motion.div
-                  initial={{ opacity: 0, scale: 0.95 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  className="p-6 bg-orange/10 rounded-xl border border-orange/20 text-center"
+                  <div className="relative">
+                    <Navigation className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-emergency" />
+                    <Input 
+                      placeholder="Dropoff Location" 
+                      value={dropoff}
+                      onChange={(e) => setDropoff(e.target.value)}
+                      className="pl-10 bg-navy/20 border-navy" 
+                    />
+                  </div>
+                </div>
+                <div className="bg-navy/10 p-4 rounded-lg border border-white/5 mb-4">
+                   <div className="flex justify-between items-center mb-2">
+                      <span className="text-xs font-bold uppercase text-muted-foreground">Estimated Fare</span>
+                      <span className="text-lg font-black text-orange">₹154.00</span>
+                   </div>
+                   <p className="text-[10px] text-muted-foreground uppercase font-bold">Standard Bike • 12 mins est.</p>
+                </div>
+                <Button 
+                  onClick={handleBookRide}
+                  className="w-full bg-orange hover:bg-orange/90 h-14 font-black uppercase tracking-widest text-lg"
                 >
-                  <div className="w-16 h-16 bg-orange rounded-full flex items-center justify-center mx-auto mb-4 animate-bounce">
+                  Request Ride
+                </Button>
+              </>
+            ) : currentRide.status === "Completed" ? (
+              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6">
+                <div className="text-center p-4 bg-active/10 rounded-xl border border-active/20">
+                  <CheckCircle2 className="w-12 h-12 text-active mx-auto mb-2" />
+                  <h3 className="font-black uppercase">Final Fare: ₹{currentRide.fare}</h3>
+                  <p className="text-[10px] text-muted-foreground uppercase font-bold">Select Payment Protocol</p>
+                </div>
+                <div className="grid grid-cols-1 gap-3">
+                  <Button onClick={() => handleProcessPayment(currentRide.id, 'Wallet')} variant="outline" className="h-14 border-navy justify-start px-6"><CreditCard className="w-5 h-5 mr-3 text-orange" /> Pay with Nexus Wallet</Button>
+                  <Button onClick={() => handleProcessPayment(currentRide.id, 'UPI')} variant="outline" className="h-14 border-navy justify-start px-6"><Navigation className="w-5 h-5 mr-3 text-active" /> UPI Terminal</Button>
+                  <Button onClick={() => handleProcessPayment(currentRide.id, 'Cash')} variant="outline" className="h-14 border-navy justify-start px-6"><Car className="w-5 h-5 mr-3 text-muted-foreground" /> Cash Transaction</Button>
+                </div>
+              </motion.div>
+            ) : (
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                className="p-6 bg-orange/10 rounded-xl border border-orange/20"
+              >
+                <div className="text-center mb-6">
+                  <div className="w-16 h-16 bg-orange rounded-full flex items-center justify-center mx-auto mb-4 animate-bounce shadow-[0_0_20px_rgba(255,128,0,0.4)]">
                     <Car className="w-8 h-8 text-white" />
                   </div>
                   <h3 className="text-lg font-black uppercase tracking-tighter mb-1">Ride {currentRide.status}</h3>
-                  <p className="text-xs text-muted-foreground uppercase font-bold mb-4">Captain arriving in 4 mins</p>
-                  <div className="flex gap-2">
-                    <Button variant="outline" className="flex-1 border-navy font-bold uppercase text-xs">Chat</Button>
-                    <Button variant="destructive" className="flex-1 font-bold uppercase text-xs">Cancel</Button>
-                  </div>
-                </motion.div>
-              )}
-            </AnimatePresence>
+                  {driverProfile && (
+                    <p className="text-xs text-orange font-black uppercase tracking-[0.2em] mb-4">
+                      Captain: {driverProfile.name} • ID: {driverProfile.id.substring(0, 6)}
+                    </p>
+                  )}
+                </div>
+                
+                <div className="flex gap-2">
+                  <Button variant="outline" className="flex-1 border-navy font-bold uppercase text-xs" onClick={() => toast({ title: "Secure Line", description: `Calling Captain ${driverProfile?.name || '...'}` })}><Phone className="w-4 h-4 mr-2" /> Call</Button>
+                  <Button variant="outline" className="flex-1 border-navy font-bold uppercase text-xs" onClick={() => toast({ title: "Messaging Subsystem", description: "Opening encrypted chat..." })}><MessageSquare className="w-4 h-4 mr-2" /> Chat</Button>
+                </div>
+                <Button variant="destructive" className="w-full mt-4 font-bold uppercase text-xs opacity-50">Cancel Mission</Button>
+              </motion.div>
+            )}
           </CardContent>
         </Card>
 

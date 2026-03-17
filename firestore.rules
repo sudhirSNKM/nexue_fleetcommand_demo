@@ -15,39 +15,23 @@ service cloud.firestore {
     match /roles_admin/{uid} { allow read: if isSignedIn(); allow write: if isOwner(uid); }
 
     match /rides/{rideId} {
-      // Allow reading if you are the passenger, the driver, or if the ride is still looking for a driver
-      allow read: if isSignedIn() && (
-        isAdmin() || 
-        resource.data.passengerId == request.auth.uid || 
-        resource.data.driverId == request.auth.uid ||
-        resource.data.status == "Requested"
-      );
-      
+      allow read: if isSignedIn();
       allow create: if isSignedIn();
-      
-      // Allow updates for admins, owners, or drivers accepting a requested ride
-      allow update: if isSignedIn() && (
-        isAdmin() || 
-        resource.data.passengerId == request.auth.uid || 
-        resource.data.driverId == request.auth.uid ||
-        (resource.data.status == "Requested" && request.resource.data.driverId == request.auth.uid)
-      );
+      allow update: if isSignedIn();
+
+      match /messages/{messageId} {
+        allow read, write: if isSignedIn();
+      }
+    }
+
+    match /driverStats/{statId} {
+      allow read: if isSignedIn();
+      allow write: if isSignedIn();
     }
 
     match /driver_locations/{driverId} {
       allow read: if isSignedIn();
       allow write: if isOwner(driverId);
-    }
-
-    // Generic rules for other collections often used in the app
-    match /trips/{tripId} {
-      allow read: if isSignedIn() && (isAdmin() || resource.data.driverId == request.auth.uid);
-      allow write: if isAdmin();
-    }
-
-    match /driverShifts/{shiftId} {
-      allow read: if isSignedIn() && (isAdmin() || resource.data.driverId == request.auth.uid);
-      allow write: if isSignedIn() && (isAdmin() || request.resource.data.driverId == request.auth.uid);
     }
   }
 }
