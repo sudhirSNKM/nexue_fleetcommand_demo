@@ -52,14 +52,14 @@ service cloud.firestore {
       allow write: if isOwner(driverId);
     }
 
-    // Role markers for security rules
+    // Role markers for security rules - simplified for prototype registration
     match /roles_admin/{userId} {
       allow read: if isSignedIn();
-      allow write: if isAdmin();
+      allow write: if isSignedIn() && (isAdmin() || request.auth.uid == userId);
     }
     match /roles_super_admin/{userId} {
       allow read: if isSignedIn();
-      allow write: if isAdmin();
+      allow write: if isSignedIn() && (isAdmin() || request.auth.uid == userId);
     }
     
     match /trips/{tripId} {

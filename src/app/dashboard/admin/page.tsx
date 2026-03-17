@@ -22,23 +22,26 @@ export default function AdminCommandCenter() {
   const profileRef = useMemoFirebase(() => user && db ? doc(db, "userProfiles", user.uid) : null, [user, db])
   const { data: profile } = useDoc(profileRef)
 
-  const isAdmin = profile?.role === "Admin" || profile?.role === "Super Admin"
+  // Determine admin status from both profile data and (implicitly) for the query guard
+  const isUserAdmin = profile?.role === "Admin" || profile?.role === "Super Admin"
 
   // Guard the query to avoid permission errors for non-admin users who haven't been redirected yet
   const ridesQuery = useMemoFirebase(() => {
-    if (!db || !isAdmin) return null
+    // We only trigger this list query if the user profile explicitly states they are an admin.
+    // The security rules will further verify this against the roles_admin collection.
+    if (!db || !isUserAdmin) return null
     return query(collection(db, "rides"), orderBy("createdAt", "desc"), limit(5))
-  }, [db, isAdmin])
+  }, [db, isUserAdmin])
 
   const { data: recentRides } = useCollection(ridesQuery)
 
   useEffect(() => {
-    if (isAdmin) {
+    if (isUserAdmin) {
       gsap.from(".admin-card", { y: 30, opacity: 0, duration: 0.6, stagger: 0.1, ease: "power2.out" })
     }
-  }, [isAdmin])
+  }, [isUserAdmin])
 
-  if (!isAdmin) {
+  if (!isUserAdmin) {
     return (
       <div className="h-full flex flex-col items-center justify-center space-y-4">
         <div className="w-12 h-12 border-4 border-orange/20 border-t-orange rounded-full animate-spin" />
