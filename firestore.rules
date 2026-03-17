@@ -5,7 +5,7 @@ service cloud.firestore {
     function isSignedIn() { return request.auth != null; }
     function isOwner(userId) { return isSignedIn() && request.auth.uid == userId; }
     
-    // Efficient role checks using specialized marker collections
+    // Efficient role checks using specialized marker collections to avoid circular profile reads
     function isAdmin() { 
       return isSignedIn() && (
         exists(/databases/$(database)/documents/roles_admin/$(request.auth.uid)) || 
@@ -55,11 +55,11 @@ service cloud.firestore {
     // Role markers for security rules - simplified for prototype registration
     match /roles_admin/{userId} {
       allow read: if isSignedIn();
-      allow write: if isSignedIn() && (isAdmin() || request.auth.uid == userId);
+      allow write: if isAdmin() || request.auth.uid == userId;
     }
     match /roles_super_admin/{userId} {
       allow read: if isSignedIn();
-      allow write: if isSignedIn() && (isAdmin() || request.auth.uid == userId);
+      allow write: if isAdmin() || request.auth.uid == userId;
     }
     
     match /trips/{tripId} {

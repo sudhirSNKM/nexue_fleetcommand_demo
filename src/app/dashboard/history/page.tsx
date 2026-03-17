@@ -1,3 +1,4 @@
+
 "use client"
 
 import React, { useState } from "react"
@@ -39,9 +40,9 @@ export default function RideHistoryPage() {
   const { data: profile } = useDoc(userProfileRef)
   const role = profile?.role || "Passenger"
 
-  // MISSION ARCHIVE QUERY: Dynamically switch filter based on role to satisfy Security Rules
+  // MISSION ARCHIVE QUERY: Explicitly filter by role ID to satisfy Security Rules
   const ridesQuery = useMemoFirebase(() => {
-    if (!user || !db) return null
+    if (!user || !db || !profile) return null
     
     const filterKey = role === "Driver" ? "driverId" : "passengerId"
     
@@ -50,7 +51,7 @@ export default function RideHistoryPage() {
       where(filterKey, "==", user.uid),
       orderBy("createdAt", "desc")
     )
-  }, [user, db, role])
+  }, [user, db, profile, role])
 
   const { data: rides, isLoading } = useCollection(ridesQuery)
 
