@@ -2,124 +2,27 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-
-    // --- Helper Functions ---
-
-    function isSignedIn() {
-      return request.auth != null;
-    }
-
-    function isOwner(userId) {
-      return isSignedIn() && request.auth.uid == userId;
-    }
-
-    function isSuperAdmin() {
-      return isSignedIn() && exists(/databases/$(database)/documents/roles_super_admin/$(request.auth.uid));
-    }
-
-    function isAdmin() {
-      return isSignedIn() && exists(/databases/$(database)/documents/roles_admin/$(request.auth.uid));
-    }
-
-    function isStaff() {
-      return isSuperAdmin() || isAdmin();
-    }
-
-    // --- Collection Rules ---
+    function isSignedIn() { return request.auth != null; }
+    function isOwner(userId) { return isSignedIn() && request.auth.uid == userId; }
+    function isAdmin() { return isSignedIn() && (exists(/databases/$(database)/documents/roles_admin/$(request.auth.uid)) || exists(/databases/$(database)/documents/roles_super_admin/$(request.auth.uid))); }
 
     match /userProfiles/{userId} {
-      allow get: if isOwner(userId) || isStaff();
-      allow list: if isStaff();
-      allow create: if isOwner(userId);
-      allow update: if isOwner(userId) || isStaff();
-      allow delete: if isStaff();
-    }
-
-    match /roles_super_admin/{uid} {
-      allow get, list: if isSignedIn();
-      allow create: if isOwner(uid);
-      allow update, delete: if isSuperAdmin();
-    }
-    
-    match /roles_admin/{uid} {
-      allow get, list: if isSignedIn();
-      allow create: if isOwner(uid);
-      allow update, delete: if isSuperAdmin();
-    }
-
-    match /vehicles/{vehicleId} {
       allow read: if isSignedIn();
-      allow create, delete: if isStaff();
-      allow update: if isStaff() || (isSignedIn() && resource.data.driverId == request.auth.uid);
+      allow write: if isOwner(userId) || isAdmin();
     }
 
-    match /trips/{tripId} {
-      // Allow single document reads for assigned driver or staff
-      allow get: if isSignedIn() && (isStaff() || resource.data.driverId == request.auth.uid);
-      // Allow filtered list queries where driverId matches the authenticated user
-      allow list: if isSignedIn() && (isStaff() || resource.data.driverId == request.auth.uid);
-      
-      allow create: if isStaff();
-      allow update: if isStaff() || (isSignedIn() && resource.data.driverId == request.auth.uid);
-      allow delete: if isStaff();
+    match /roles_super_admin/{uid} { allow read: if isSignedIn(); allow write: if isOwner(uid); }
+    match /roles_admin/{uid} { allow read: if isSignedIn(); allow write: if isOwner(uid); }
+
+    match /rides/{rideId} {
+      allow read: if isSignedIn() && (isAdmin() || resource.data.passengerId == request.auth.uid || resource.data.driverId == request.auth.uid);
+      allow create: if isSignedIn();
+      allow update: if isSignedIn() && (isAdmin() || resource.data.passengerId == request.auth.uid || resource.data.driverId == request.auth.uid || request.resource.data.driverId == request.auth.uid);
     }
 
-    match /driverShifts/{shiftId} {
-      allow get: if isSignedIn() && (isStaff() || resource.data.driverId == request.auth.uid);
-      allow list: if isSignedIn() && (isStaff() || resource.data.driverId == request.auth.uid);
-      
-      allow create: if isSignedIn() && request.resource.data.driverId == request.auth.uid;
-      allow update: if isStaff() || (isSignedIn() && resource.data.driverId == request.auth.uid);
-      allow delete: if isStaff();
-
-      match /driverBreaks/{breakId} {
-        allow read, write: if isStaff() || (isSignedIn() && get(/databases/$(database)/documents/driverShifts/$(shiftId)).data.driverId == request.auth.uid);
-      }
-    }
-
-    match /fuelLogs/{logId} {
-      allow get: if isSignedIn() && (isStaff() || resource.data.driverId == request.auth.uid);
-      allow list: if isSignedIn() && (isStaff() || resource.data.driverId == request.auth.uid);
-      
-      allow create: if isSignedIn() && request.resource.data.driverId == request.auth.uid;
-      allow update: if isStaff() || (isSignedIn() && resource.data.driverId == request.auth.uid);
-      allow delete: if isStaff();
-    }
-
-    match /expenseLogs/{logId} {
-      allow get: if isSignedIn() && (isStaff() || resource.data.driverId == request.auth.uid);
-      allow list: if isSignedIn() && (isStaff() || resource.data.driverId == request.auth.uid);
-      
-      allow create: if isSignedIn() && request.resource.data.driverId == request.auth.uid;
-      allow update: if isStaff() || (isSignedIn() && resource.data.driverId == request.auth.uid);
-      allow delete: if isStaff();
-    }
-
-    match /maintenanceRecords/{recordId} {
+    match /driver_locations/{driverId} {
       allow read: if isSignedIn();
-      allow create, update, delete: if isStaff();
-    }
-
-    match /documents/{documentId} {
-      allow read: if isStaff() || (isSignedIn() && (resource.data.uploadedBy == request.auth.uid || resource.data.associatedEntityId == request.auth.uid));
-      allow create: if isStaff() || (isSignedIn() && request.resource.data.uploadedBy == request.auth.uid);
-      allow update: if isStaff() || (isSignedIn() && resource.data.uploadedBy == request.auth.uid);
-      allow delete: if isStaff();
-    }
-
-    match /zones/{zoneId} {
-      allow read: if isSignedIn();
-      allow create, update, delete: if isSuperAdmin();
-    }
-
-    match /systemSettings/{settingId} {
-      allow read: if isSignedIn();
-      allow create, update, delete: if isSuperAdmin();
-    }
-
-    match /auditLogs/{logId} {
-      allow read: if isStaff();
-      allow create, update, delete: if false; 
+      allow write: if isOwner(driverId);
     }
   }
 }
