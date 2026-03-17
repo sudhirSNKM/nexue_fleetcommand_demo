@@ -35,13 +35,15 @@ export default function RegisterPage() {
       const userCredential = await createUserWithEmailAndPassword(auth, email, password)
       const user = userCredential.user
 
-      // Create User Profile
+      // Create User Profile with initial Wallet and Rating
       await setDoc(doc(db, "userProfiles", user.uid), {
         id: user.uid,
         name,
         email,
         role,
         status: role === "Driver" ? "Offline" : "Active",
+        walletBalance: role === "Passenger" ? 500 : 0, // Bonus for new passengers
+        rating: 5.0, // Start with clean rating
         createdAt: serverTimestamp(),
       })
 
