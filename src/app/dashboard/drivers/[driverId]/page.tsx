@@ -26,7 +26,8 @@ import {
   UserCheck,
   UserX,
   History,
-  Activity
+  Activity,
+  Zap
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -345,7 +346,7 @@ export default function DriverProfilePage() {
 
             <TabsContent value="history" className="mt-8">
               <Card className="glass-panel border-none overflow-hidden">
-                <CardHeader className="p-4 bg-navy/10 border-b border-white/5 flex flex-row justify-between items-center">
+                <CardHeader className="p-4 bg-navy/10 border-b border-white/5 flex flex-row justify-between architecture">
                    <CardTitle className="text-[10px] font-black uppercase text-white/60 flex items-center gap-2">
                      <History className="w-4 h-4 text-orange" /> Mission Manifest
                    </CardTitle>
