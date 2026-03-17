@@ -60,22 +60,20 @@ export default function PassengerApp() {
   }, [user, db])
 
   const { data: activeRides } = useCollection(activeRidesQuery)
-  // We want the most recent active ride that isn't fully archived (Paid/Cancelled)
   const currentRide = activeRides?.find(r => ["Requested", "Accepted", "Arrived", "InProgress", "Completed", "Rejected"].includes(r.status))
 
   useEffect(() => {
     if (currentRide?.status === "Rejected") {
       toast({ 
         title: "Operator Busy", 
-        description: "Bumping fare for priority. Re-scanning sector...",
+        description: "Bumping credits for priority. Re-scanning sector...",
         variant: "destructive" 
       })
       
       const rideRef = doc(db!, "rides", currentRide.id)
-      // Automated Re-search Logic: Increment fare and reset status
       updateDocumentNonBlocking(rideRef, {
         status: "Requested",
-        fare: increment(20), // Extra money for pickup incentive
+        fare: increment(20),
         lastRejectedAt: serverTimestamp()
       })
     }
@@ -228,19 +226,19 @@ export default function PassengerApp() {
                      <div className="w-40 h-40 bg-white mx-auto rounded-2xl flex items-center justify-center p-3 shadow-xl border-4 border-slate-900">
                         <QrCode className="w-full h-full text-slate-900" />
                      </div>
-                     <p className="text-xs font-bold text-slate-500 uppercase">Scan & Pay Driver</p>
+                     <p className="text-xs font-bold text-slate-500 uppercase tracking-widest">Scan & Pay Operator</p>
                      <Button onClick={() => setPayingOnline(false)} variant="ghost" className="text-[10px] font-black uppercase">Switch to Cash</Button>
                   </div>
                 ) : (
                   <div className="space-y-3">
-                    <Button onClick={() => setPayingOnline(true)} className="w-full bg-orange hover:bg-orange/90 h-14 font-black uppercase flex items-center justify-center gap-3 text-white">
+                    <Button onClick={() => setPayingOnline(true)} className="w-full bg-orange hover:bg-orange/90 h-14 font-black uppercase flex items-center justify-center gap-3 text-white shadow-lg">
                       <QrCode className="w-6 h-6" /> Pay Online / UPI
                     </Button>
-                    <div className="p-4 bg-slate-50 rounded-xl border border-slate-200 flex items-center gap-3">
+                    <div className="p-4 bg-slate-50 rounded-xl border border-slate-200 flex items-center gap-3 shadow-sm">
                       <Banknote className="w-6 h-6 text-slate-400" />
                       <div>
                         <p className="text-[10px] font-black uppercase text-slate-900">Paying with Cash?</p>
-                        <p className="text-[9px] font-bold text-slate-400">Hand ₹{currentRide.fare} to driver</p>
+                        <p className="text-[9px] font-bold text-slate-400">Hand ₹{currentRide.fare} to operator</p>
                       </div>
                     </div>
                   </div>
@@ -271,16 +269,16 @@ export default function PassengerApp() {
                    ) : (
                      <div className="py-8 space-y-4">
                         <div className="w-12 h-12 border-4 border-orange/10 border-t-orange rounded-full animate-spin mx-auto" />
-                        <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Searching Sector...</p>
+                        <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Searching Sector for units...</p>
                      </div>
                    )}
                 </div>
                 <div className="grid grid-cols-2 gap-3">
                   <Button className="bg-slate-900 hover:bg-slate-800 text-white text-[10px] uppercase font-black h-12 shadow-md">
-                    <Phone className="w-4 h-4 mr-2 text-orange" /> Comms
+                    <Phone className="w-4 h-4 mr-2 text-orange" /> Comms Link
                   </Button>
                   <Button className="bg-red-600 hover:bg-red-700 text-white text-[10px] uppercase font-black h-12 shadow-md">
-                    <ShieldAlert className="w-4 h-4 mr-2" /> SOS
+                    <ShieldAlert className="w-4 h-4 mr-2" /> SOS Signal
                   </Button>
                 </div>
                 {(currentRide.status === "Requested" || currentRide.status === "Accepted") && (
