@@ -38,7 +38,9 @@ export default function AdminOperationsCenter() {
   const profileRef = useMemoFirebase(() => user && db ? doc(db, "userProfiles", user.uid) : null, [user, db])
   const { data: profile } = useDoc(profileRef)
 
-  const isUserAdmin = profile?.role === "admin" || profile?.role === "super-admin"
+  // Normalize role string for check
+  const role = (profile?.role || "").toLowerCase().replace(/\s+/g, '-')
+  const isUserAdmin = role === "admin" || role === "super-admin"
 
   // LIVE DATA SUBSCRIPTIONS (Operational Focus)
   const ridesQuery = useMemoFirebase(() => db ? query(collection(db, "rides"), orderBy("createdAt", "desc"), limit(20)) : null, [db])

@@ -41,7 +41,9 @@ export default function SuperAdminDashboard() {
   const profileRef = useMemoFirebase(() => user && db ? doc(db, "userProfiles", user.uid) : null, [user, db])
   const { data: profile } = useDoc(profileRef)
 
-  const isSuperAdmin = profile?.role === "super-admin"
+  // Normalize role string
+  const role = (profile?.role || "").toLowerCase().replace(/\s+/g, '-')
+  const isSuperAdmin = role === "super-admin"
 
   // Platform Metrics Queries (Live Listeners)
   const driversQuery = useMemoFirebase(() => db ? query(collection(db, "userProfiles"), where("role", "==", "driver")) : null, [db])

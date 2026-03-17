@@ -60,7 +60,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     router.push("/login")
   }
 
-  const role = profile?.role || "passenger"
+  // Normalize role string to handle potential capitalized or space-separated versions from DB
+  const role = (profile?.role || "passenger").toLowerCase().replace(/\s+/g, '-')
   const isMobilityUser = role === "passenger" || role === "driver"
 
   const navItems = React.useMemo(() => {
@@ -101,7 +102,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       )
     }
 
-    items.push({ icon: Settings, label: "Account", href: role === "admin" ? "/dashboard/account" : "/dashboard/settings" })
+    items.push({ icon: Settings, label: "Account", href: (role === "admin" || role === "super-admin") ? "/dashboard/account" : "/dashboard/settings" })
     return items
   }, [role])
 
