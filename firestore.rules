@@ -11,16 +11,21 @@ service cloud.firestore {
       return get(/databases/$(database)/documents/userProfiles/$(request.auth.uid));
     }
 
-    function role() {
+    function hasProfile() {
+      return exists(/databases/$(database)/documents/userProfiles/$(request.auth.uid));
+    }
+
+    function getRole() {
       return getProfile().data.role;
     }
 
     function isSuperAdmin() {
-      return signedIn() && exists(/databases/$(database)/documents/userProfiles/$(request.auth.uid)) && role() == "super-admin";
+      return signedIn() && hasProfile() && getRole() == "super-admin";
     }
 
     function isAdmin() {
-      return signedIn() && exists(/databases/$(database)/documents/userProfiles/$(request.auth.uid)) && (role() == "admin" || role() == "super-admin");
+      return signedIn() && hasProfile() &&
+             (getRole() == "admin" || getRole() == "super-admin");
     }
 
     // USER PROFILES
@@ -31,9 +36,20 @@ service cloud.firestore {
 
     // DRIVER SHIFTS
     match /driverShifts/{shiftId} {
-      // DEBUG: Temporarily allow all authenticated users to read/write shifts
-      // This is to unblock the 'list' error while validating roles
-      allow read, write: if request.auth != null;
+      // Admins and Super Admins can read all shifts for tactical auditing
+      allow read: if isAdmin();
+      
+      // Drivers can read only their own shifts
+      allow read: if signedIn() && 
+                  exists(resource) && 
+                  request.auth.uid == resource.data.driverId;
+
+      // Admins manage the fleet's shifts globally
+      allow create, update, delete: if isAdmin();
+
+      // Drivers can create and update their own shift status
+      allow create: if signedIn() && request.resource.data.driverId == request.auth.uid;
+      allow update: if signedIn() && resource.data.driverId == request.auth.uid;
     }
 
     // DRIVER LOCATIONS
