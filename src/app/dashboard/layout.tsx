@@ -2,19 +2,16 @@
 
 import * as React from "react"
 import { 
-  LayoutDashboard, 
-  Map as MapIcon, 
-  BarChart3, 
   Settings, 
   LogOut,
   Bell,
-  Search,
   Navigation,
   ShieldCheck,
-  User,
   Zap,
   Menu,
-  History
+  History,
+  Map as MapIcon,
+  BarChart3
 } from "lucide-react"
 import { motion, AnimatePresence } from "framer-motion"
 import Link from "next/link"
@@ -53,6 +50,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   }
 
   const role = profile?.role || "Passenger"
+  const isMobilityUser = role === "Passenger" || role === "Driver"
 
   const navItems = React.useMemo(() => {
     const items = []
@@ -60,22 +58,21 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     if (role === "Passenger") {
       items.push(
         { icon: Zap, label: "Book Ride", href: "/dashboard/passenger" },
-        { icon: History, label: "Ride History", href: "/dashboard/history" }
+        { icon: History, label: "History", href: "/dashboard/history" }
       )
     }
 
     if (role === "Driver") {
       items.push(
         { icon: Navigation, label: "Duty Console", href: "/dashboard/driver" },
-        { icon: History, label: "Ride History", href: "/dashboard/history" },
-        { icon: ShieldCheck, label: "Safety Score", href: "/dashboard/safety" }
+        { icon: History, label: "History", href: "/dashboard/history" }
       )
     }
 
     if (role === "Admin" || role === "Super Admin") {
       items.push(
-        { icon: MapIcon, label: "Global Tracker", href: "/dashboard/admin" },
-        { icon: BarChart3, label: "Revenue Matrix", href: "/dashboard/analytics" }
+        { icon: MapIcon, label: "Command Center", href: "/dashboard/admin" },
+        { icon: BarChart3, label: "Analytics", href: "/dashboard/analytics" }
       )
     }
 
@@ -90,13 +87,13 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   )
 
   const SidebarContent = () => (
-    <div className="h-full flex flex-col bg-card/30 backdrop-blur-xl">
+    <div className={cn("h-full flex flex-col", isMobilityUser ? "bg-white border-r" : "bg-card/30 backdrop-blur-xl")}>
       <div className="p-6">
         <Link href="/dashboard" className="flex items-center gap-2 group">
-          <div className="w-8 h-8 bg-orange rounded flex items-center justify-center shadow-[0_0_15px_rgba(255,128,0,0.5)]">
+          <div className="w-8 h-8 bg-orange rounded flex items-center justify-center shadow-lg">
             <Zap className="w-5 h-5 text-white" />
           </div>
-          <span className="font-black text-xl tracking-tighter text-white group-hover:text-orange transition-all">
+          <span className={cn("font-black text-xl tracking-tighter", isMobilityUser ? "text-slate-900" : "text-white")}>
             RAPIDO <span className="text-orange">OS</span>
           </span>
         </Link>
@@ -113,7 +110,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                   "flex items-center gap-3 px-3 py-2.5 rounded-md transition-all group",
                   isActive 
                     ? "bg-orange/10 text-orange border-l-2 border-orange" 
-                    : "text-muted-foreground hover:bg-navy/20 hover:text-foreground"
+                    : isMobilityUser ? "text-slate-500 hover:bg-slate-100 hover:text-slate-900" : "text-muted-foreground hover:bg-navy/20 hover:text-foreground"
                 )}
               >
                 <item.icon className={cn("w-5 h-5", isActive ? "text-orange" : "group-hover:text-orange transition-colors")} />
@@ -124,11 +121,11 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         })}
       </nav>
 
-      <div className="p-4 border-t border-navy/20">
+      <div className={cn("p-4 border-t", isMobilityUser ? "border-slate-100" : "border-navy/20")}>
         <Button 
           variant="ghost" 
           onClick={handleSignOut}
-          className="w-full justify-start text-muted-foreground hover:text-emergency hover:bg-emergency/10"
+          className={cn("w-full justify-start", isMobilityUser ? "text-slate-500 hover:text-red-600 hover:bg-red-50" : "text-muted-foreground hover:text-emergency hover:bg-emergency/10")}
         >
           <LogOut className="w-5 h-5 mr-3" />
           Abort Session
@@ -138,42 +135,41 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   )
 
   return (
-    <div className="flex h-screen overflow-hidden bg-charcoal">
+    <div className={cn("flex h-screen overflow-hidden", isMobilityUser ? "bg-slate-50" : "bg-charcoal")}>
       {/* Desktop Sidebar */}
-      <aside className="hidden lg:flex w-64 border-r border-navy/20 flex-col shrink-0">
+      <aside className="hidden lg:flex w-64 flex-col shrink-0">
         <SidebarContent />
       </aside>
 
       <main className="flex-1 flex flex-col overflow-hidden relative">
-        <header className="h-16 border-b border-navy/20 bg-card/20 backdrop-blur-md flex items-center justify-between px-4 lg:px-8 z-10">
+        <header className={cn("h-16 border-b z-10 flex items-center justify-between px-4 lg:px-8", isMobilityUser ? "bg-white border-slate-100" : "bg-card/20 backdrop-blur-md border-navy/20")}>
           <div className="flex items-center gap-4">
-            {/* Mobile Menu Toggle */}
             <Sheet>
               <SheetTrigger asChild>
-                <Button variant="ghost" size="icon" className="lg:hidden text-white">
+                <Button variant="ghost" size="icon" className={cn("lg:hidden", isMobilityUser ? "text-slate-900" : "text-white")}>
                   <Menu className="w-6 h-6" />
                 </Button>
               </SheetTrigger>
-              <SheetContent side="left" className="p-0 w-64 border-r border-navy/20 bg-charcoal">
+              <SheetContent side="left" className={cn("p-0 w-64 border-r", isMobilityUser ? "bg-white" : "bg-charcoal border-navy/20")}>
                 <SidebarContent />
               </SheetContent>
             </Sheet>
 
             <div className="flex items-center gap-2">
               <span className="flex h-2 w-2 rounded-full bg-active animate-pulse" />
-              <span className="text-[10px] font-black text-active uppercase tracking-widest hidden sm:inline">Network Operational</span>
+              <span className={cn("text-[10px] font-black uppercase tracking-widest hidden sm:inline", isMobilityUser ? "text-slate-500" : "text-active")}>Network Operational</span>
             </div>
           </div>
 
           <div className="flex items-center gap-4 lg:gap-6">
-            <button className="relative text-muted-foreground hover:text-white transition-colors">
+            <button className={cn("relative transition-colors", isMobilityUser ? "text-slate-400 hover:text-slate-900" : "text-muted-foreground hover:text-white")}>
               <Bell className="w-5 h-5" />
               <span className="absolute -top-1 -right-1 w-2 h-2 bg-emergency rounded-full" />
             </button>
 
-            <div className="flex items-center gap-3 border-l border-navy/20 pl-4 lg:pl-6">
+            <div className={cn("flex items-center gap-3 border-l pl-4 lg:pl-6", isMobilityUser ? "border-slate-100" : "border-navy/20")}>
               <div className="text-right hidden sm:block">
-                <p className="text-xs font-black uppercase tracking-tighter">{profile?.name || "Capturing..."}</p>
+                <p className={cn("text-xs font-black uppercase tracking-tighter", isMobilityUser ? "text-slate-900" : "text-white")}>{profile?.name || "Capturing..."}</p>
                 <p className="text-[9px] text-orange uppercase font-bold tracking-widest">{role}</p>
               </div>
               <Avatar className="h-8 w-8 ring-2 ring-orange/20">

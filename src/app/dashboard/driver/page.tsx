@@ -1,10 +1,8 @@
-
 "use client"
 
 import React, { useEffect } from "react"
 import { motion, AnimatePresence } from "framer-motion"
-import gsap from "gsap"
-import { Navigation, Power, AlertCircle, Phone, MessageSquare, Star, Truck, BarChart3, TrendingUp } from "lucide-react"
+import { Navigation, Power, AlertCircle, Phone, Star, TrendingUp } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -35,10 +33,6 @@ export default function DriverApp() {
   const activeQuery = useMemoFirebase(() => user && db ? query(collection(db, "rides"), where("driverId", "==", user.uid), where("status", "in", ["Accepted", "Arrived", "InProgress"])) : null, [user, db])
   const { data: activeRides } = useCollection(activeQuery)
 
-  useEffect(() => {
-    gsap.from(".driver-widget", { scale: 0.9, opacity: 0, duration: 0.5, stagger: 0.1, ease: "back.out(1.7)" })
-  }, [])
-
   const handleToggleOnline = () => {
     if (!profileRef) return
     updateDocumentNonBlocking(profileRef, { status: isOnline ? "Offline" : "Online" })
@@ -47,7 +41,7 @@ export default function DriverApp() {
   const handleAcceptRide = (rideId: string) => {
     if (!user || !db) return
     updateDocumentNonBlocking(doc(db, "rides", rideId), { driverId: user.uid, status: "Accepted", acceptedAt: serverTimestamp() })
-    toast({ title: "Mission Accepted", description: "Tactical route generated. Proceed to pickup." })
+    toast({ title: "Mission Accepted", description: "Proceed to pickup point." })
   }
 
   const handleUpdateStatus = (rideId: string, nextStatus: string, fare?: number) => {
@@ -56,7 +50,7 @@ export default function DriverApp() {
     if (nextStatus === "Completed") {
       updateDocumentNonBlocking(rideRef, { status: "Completed", endTime: serverTimestamp() })
       if (statsRef) setDocumentNonBlocking(statsRef, { driverId: user.uid, date: todayDate, earnings: increment(fare || 0), rideCount: increment(1) }, { merge: true })
-      toast({ title: "Mission Finalized", description: `Credits logged: ₹${fare}` })
+      toast({ title: "Mission Complete", description: `Earnings logged: ₹${fare}` })
     } else {
       updateDocumentNonBlocking(rideRef, { status: nextStatus })
     }
@@ -69,8 +63,8 @@ export default function DriverApp() {
   ]
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 h-full p-2">
-      <div className="lg:col-span-3 relative h-[400px] lg:h-full rounded-2xl overflow-hidden border border-navy shadow-2xl">
+    <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 h-full">
+      <div className="lg:col-span-3 relative h-[400px] lg:h-full rounded-2xl overflow-hidden border border-slate-200 bg-white">
         <TacticalMap markers={activeRide ? [
           { id: 'p', lat: activeRide.pickup.lat, lng: activeRide.pickup.lng, label: 'Pickup', type: 'pickup' },
           { id: 'd', lat: activeRide.dropoff.lat, lng: activeRide.dropoff.lng, label: 'Dropoff', type: 'dropoff' }
@@ -78,65 +72,67 @@ export default function DriverApp() {
       </div>
 
       <div className="space-y-6">
-        <Card className="glass-panel driver-widget border-b-4 border-orange">
-          <CardHeader className="p-4 bg-navy/20 flex flex-row items-center justify-between">
-            <CardTitle className="text-sm font-black uppercase tracking-widest text-white">Operator Terminal</CardTitle>
-            <Button onClick={handleToggleOnline} size="sm" className={isOnline ? "bg-active text-black hover:bg-active/90" : "bg-muted text-white"}>
-              <Power className="w-4 h-4 mr-2" /> {isOnline ? "ONLINE" : "OFFLINE"}
+        <Card className="border-none shadow-xl bg-white/95 backdrop-blur-md">
+          <CardHeader className="p-4 bg-slate-50 flex flex-row items-center justify-between rounded-t-2xl border-b border-slate-100">
+            <CardTitle className="text-xs font-black uppercase tracking-widest text-slate-900">Operator Terminal</CardTitle>
+            <Button onClick={handleToggleOnline} size="sm" className={isOnline ? "bg-green-500 text-white hover:bg-green-600" : "bg-slate-200 text-slate-600"}>
+              <Power className="w-3 h-3 mr-2" /> {isOnline ? "ONLINE" : "OFFLINE"}
             </Button>
           </CardHeader>
-          <CardContent className="p-4">
+          <CardContent className="p-6">
             <AnimatePresence mode="wait">
               {activeRide ? (
-                <motion.div initial={{ x: 50, opacity: 0 }} animate={{ x: 0, opacity: 1 }} className="space-y-4">
+                <motion.div initial={{ x: 20, opacity: 0 }} animate={{ x: 0, opacity: 1 }} className="space-y-4">
                   <div className="flex justify-between items-start">
                     <div>
-                      <Badge className="bg-orange/20 text-orange mb-1 uppercase text-[8px] font-black">{activeRide.serviceType} MODE</Badge>
-                      <h3 className="text-sm font-black uppercase truncate max-w-[150px] text-white">{activeRide.pickup.address}</h3>
+                      <Badge className="bg-orange/10 text-orange mb-1 uppercase text-[8px] font-black">{activeRide.serviceType} PROTOCOL</Badge>
+                      <h3 className="text-sm font-black text-slate-900 uppercase truncate max-w-[150px]">{activeRide.pickup.address}</h3>
                     </div>
-                    <p className="text-lg font-black text-active">₹{activeRide.fare}</p>
+                    <p className="text-lg font-black text-slate-900">₹{activeRide.fare}</p>
                   </div>
                   {activeRide.status === "Accepted" && <Button onClick={() => handleUpdateStatus(activeRide.id, "Arrived")} className="w-full bg-orange text-white h-12 font-black uppercase text-xs">Arrived at Origin</Button>}
-                  {activeRide.status === "Arrived" && <Button onClick={() => handleUpdateStatus(activeRide.id, "InProgress")} className="w-full bg-active text-black h-12 font-black uppercase text-xs">Initialize Mission</Button>}
-                  {activeRide.status === "InProgress" && <Button onClick={() => handleUpdateStatus(activeRide.id, "Completed", activeRide.fare)} className="w-full bg-emergency text-white h-12 font-black uppercase text-xs">Finalize Mission</Button>}
+                  {activeRide.status === "Arrived" && <Button onClick={() => handleUpdateStatus(activeRide.id, "InProgress")} className="w-full bg-slate-900 text-white h-12 font-black uppercase text-xs">Start Trip</Button>}
+                  {activeRide.status === "InProgress" && <Button onClick={() => handleUpdateStatus(activeRide.id, "Completed", activeRide.fare)} className="w-full bg-red-600 text-white h-12 font-black uppercase text-xs">End Trip</Button>}
                 </motion.div>
               ) : isOnline ? (
-                <div className="text-center py-8 space-y-4">
-                  <div className="w-12 h-12 rounded-full border-2 border-active/30 border-t-active animate-spin mx-auto" />
-                  <p className="text-[10px] font-black uppercase text-active">Scanning Sector...</p>
-                  {pendingRides?.map(ride => (
-                    <Card key={ride.id} className="bg-navy/20 border-orange/20 p-3 text-left">
-                      <div className="flex justify-between items-center mb-2">
-                        <span className="text-[8px] font-black text-orange uppercase">{ride.vehicleType}</span>
-                        <span className="text-xs font-black text-white">₹{ride.fare}</span>
-                      </div>
-                      <Button onClick={() => handleAcceptRide(ride.id)} className="w-full bg-orange text-white h-8 text-[10px] font-black uppercase">Accept</Button>
-                    </Card>
-                  ))}
+                <div className="text-center py-6 space-y-4">
+                  <div className="w-10 h-10 rounded-full border-4 border-orange/10 border-t-orange animate-spin mx-auto" />
+                  <p className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Scanning sector...</p>
+                  <div className="space-y-3">
+                    {pendingRides?.slice(0, 3).map(ride => (
+                      <Card key={ride.id} className="bg-slate-50 border-slate-100 p-3 text-left">
+                        <div className="flex justify-between items-center mb-2">
+                          <span className="text-[8px] font-black text-slate-500 uppercase">{ride.vehicleType}</span>
+                          <span className="text-xs font-black text-slate-900">₹{ride.fare}</span>
+                        </div>
+                        <Button onClick={() => handleAcceptRide(ride.id)} className="w-full bg-slate-900 text-white h-10 text-[10px] font-black uppercase">Accept mission</Button>
+                      </Card>
+                    ))}
+                  </div>
                 </div>
               ) : (
-                <div className="text-center py-8 opacity-40">
-                  <AlertCircle className="w-10 h-10 mx-auto mb-2 text-white" />
-                  <p className="text-[10px] font-black uppercase text-white">Go online to receive missions</p>
+                <div className="text-center py-12 opacity-40">
+                  <AlertCircle className="w-10 h-10 mx-auto mb-4 text-slate-400" />
+                  <p className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Connect for missions</p>
                 </div>
               )}
             </AnimatePresence>
           </CardContent>
         </Card>
 
-        <Card className="glass-panel driver-widget">
-          <CardHeader className="p-3 border-b border-navy/20">
-            <CardTitle className="text-[10px] font-black uppercase flex items-center gap-2 text-white/70">
-              <TrendingUp className="w-3 h-3 text-active" /> Activity Telemetry
+        <Card className="border-none shadow-md bg-white overflow-hidden">
+          <CardHeader className="p-4 bg-slate-50 border-b border-slate-100">
+            <CardTitle className="text-[10px] font-black uppercase flex items-center gap-2 text-slate-500">
+              <TrendingUp className="w-3 h-3 text-green-500" /> Performance
             </CardTitle>
           </CardHeader>
-          <CardContent className="p-0 h-[150px]">
+          <CardContent className="p-0 h-[140px]">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={mockChartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                <XAxis dataKey="hour" axisLine={false} tickLine={false} fontSize={8} stroke="#ffffff" opacity={0.5} />
-                <Tooltip contentStyle={{ background: '#131518', border: 'none', fontSize: '10px', color: '#fff' }} />
+                <XAxis dataKey="hour" axisLine={false} tickLine={false} fontSize={8} stroke="#94a3b8" />
+                <Tooltip cursor={{fill: '#f8fafc'}} contentStyle={{ background: '#fff', border: '1px solid #e2e8f0', fontSize: '10px' }} />
                 <Bar dataKey="val" radius={[2, 2, 0, 0]}>
-                  {mockChartData.map((e, i) => <Cell key={i} fill={e.val > 500 ? '#00CC00' : '#FF8000'} />)}
+                  {mockChartData.map((e, i) => <Cell key={i} fill={e.val > 500 ? '#22c55e' : '#f97316'} />)}
                 </Bar>
               </BarChart>
             </ResponsiveContainer>
@@ -144,13 +140,13 @@ export default function DriverApp() {
         </Card>
 
         <div className="grid grid-cols-2 gap-4">
-          <Card className="glass-panel driver-widget p-4">
-            <p className="text-[8px] font-black uppercase text-muted-foreground mb-1">Total Earnings</p>
-            <h4 className="text-xl font-black text-white">₹{dailyStats?.earnings || 0}</h4>
+          <Card className="p-4 text-center border-none shadow-md bg-white">
+            <p className="text-[9px] uppercase font-black text-slate-400 mb-1">Total ₹</p>
+            <h4 className="text-xl font-black text-slate-900">₹{dailyStats?.earnings || 0}</h4>
           </Card>
-          <Card className="glass-panel driver-widget p-4">
-            <p className="text-[8px] font-black uppercase text-muted-foreground mb-1">Missions</p>
-            <h4 className="text-xl font-black text-white">{dailyStats?.rideCount || 0}</h4>
+          <Card className="p-4 text-center border-none shadow-md bg-white">
+            <p className="text-[9px] uppercase font-black text-slate-400 mb-1">Rides</p>
+            <h4 className="text-xl font-black text-slate-900">{dailyStats?.rideCount || 0}</h4>
           </Card>
         </div>
       </div>

@@ -30,9 +30,8 @@ export default function RideHistoryPage() {
   const userProfileRef = useMemoFirebase(() => user && db ? doc(db, "userProfiles", user.uid) : null, [user, db])
   const { data: profile } = useDoc(userProfileRef)
   const role = profile?.role || "Passenger"
+  const isMobilityUser = role === "Passenger" || role === "Driver"
 
-  // Strictly filtered query to match security rules
-  // Removed orderBy to bypass potential indexing issues during confirmed debug phase
   const ridesQuery = useMemoFirebase(() => {
     if (!user || !db || !profile) return null
     const filterKey = role === "Driver" ? "driverId" : "passengerId"
@@ -67,21 +66,21 @@ export default function RideHistoryPage() {
     <div className="space-y-8 max-w-7xl mx-auto">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div>
-          <h1 className="text-3xl font-black uppercase tracking-tighter flex items-center gap-3 text-white">
+          <h1 className={cn("text-3xl font-black uppercase tracking-tighter flex items-center gap-3", isMobilityUser ? "text-slate-900" : "text-white")}>
             <HistoryIcon className="w-10 h-10 text-orange" />
             Mission Archives
           </h1>
-          <p className="text-sm text-white/70 font-bold uppercase tracking-widest mt-1">Operational History Audit</p>
+          <p className={cn("text-sm font-bold uppercase tracking-widest mt-1", isMobilityUser ? "text-slate-500" : "text-white/70")}>Operational Log</p>
         </div>
         
         <div className="flex gap-4">
-          <Card className="glass-panel px-6 py-3 border-l-4 border-orange bg-navy/40">
-            <p className="text-[10px] text-white/50 uppercase font-black tracking-widest mb-1">Total Deployments</p>
-            <p className="text-2xl font-mono font-black text-white leading-none">{rides?.length || 0}</p>
+          <Card className={cn("px-6 py-3 border-l-4 border-orange", isMobilityUser ? "bg-white shadow-sm" : "glass-panel bg-navy/40")}>
+            <p className={cn("text-[10px] uppercase font-black tracking-widest mb-1", isMobilityUser ? "text-slate-400" : "text-white/50")}>Deployments</p>
+            <p className={cn("text-2xl font-mono font-black", isMobilityUser ? "text-slate-900" : "text-white")}>{rides?.length || 0}</p>
           </Card>
-          <Card className="glass-panel px-6 py-3 border-l-4 border-active bg-navy/40">
-            <p className="text-[10px] text-white/50 uppercase font-black tracking-widest mb-1">Total Credits</p>
-            <p className="text-2xl font-mono font-black text-active leading-none">₹{totalEarnings}</p>
+          <Card className={cn("px-6 py-3 border-l-4 border-active", isMobilityUser ? "bg-white shadow-sm" : "glass-panel bg-navy/40")}>
+            <p className={cn("text-[10px] uppercase font-black tracking-widest mb-1", isMobilityUser ? "text-slate-400" : "text-white/50")}>Credits</p>
+            <p className={cn("text-2xl font-mono font-black", isMobilityUser ? "text-slate-900" : "text-active")}>₹{totalEarnings}</p>
           </Card>
         </div>
       </div>
@@ -89,24 +88,24 @@ export default function RideHistoryPage() {
       <div className="grid grid-cols-1 xl:grid-cols-4 gap-8">
         <div className="xl:col-span-3 space-y-4">
           {isLoading ? (
-            [1, 2, 3].map(i => <Skeleton key={i} className="h-32 w-full bg-navy/20" />)
+            [1, 2, 3].map(i => <Skeleton key={i} className={cn("h-32 w-full", isMobilityUser ? "bg-slate-200" : "bg-navy/20")} />)
           ) : rides && rides.length > 0 ? (
             rides.map((ride) => (
-              <Card key={ride.id} className="glass-panel border-white/10 bg-card/80 hover:border-orange/30 transition-all">
+              <Card key={ride.id} className={cn("border-none shadow-sm hover:shadow-md transition-all", isMobilityUser ? "bg-white" : "glass-panel bg-card/80")}>
                 <CardContent className="p-6">
                   <div className="flex justify-between items-center mb-6">
                     <div className="flex items-center gap-4">
-                      <div className="w-10 h-10 rounded bg-navy/40 flex items-center justify-center text-orange">
+                      <div className={cn("w-10 h-10 rounded flex items-center justify-center text-orange", isMobilityUser ? "bg-slate-100" : "bg-navy/40")}>
                         <Zap className="w-5 h-5" />
                       </div>
                       <div>
                         <p className="text-[10px] font-black uppercase text-orange">{ride.vehicleType} PROTOCOL</p>
-                        <p className="text-xs font-bold text-white/80">ID: {ride.id.substring(0, 8).toUpperCase()}</p>
+                        <p className={cn("text-xs font-bold", isMobilityUser ? "text-slate-500" : "text-white/80")}>ID: {ride.id.substring(0, 8).toUpperCase()}</p>
                       </div>
                     </div>
                     <div className="text-right">
-                       <p className="text-2xl font-black text-white">₹{ride.fare}</p>
-                       <Badge className={cn("text-[9px] font-black uppercase", ride.status === 'Completed' ? 'bg-active/20 text-active' : 'bg-orange/20 text-orange')}>
+                       <p className={cn("text-2xl font-black", isMobilityUser ? "text-slate-900" : "text-white")}>₹{ride.fare}</p>
+                       <Badge className={cn("text-[9px] font-black uppercase", ride.status === 'Completed' ? 'bg-green-500/10 text-green-600' : 'bg-orange/10 text-orange')}>
                          {ride.status}
                        </Badge>
                     </div>
@@ -114,30 +113,30 @@ export default function RideHistoryPage() {
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                     <div className="flex gap-3">
-                      <MapPin className="w-4 h-4 text-active shrink-0 mt-0.5" />
+                      <MapPin className="w-4 h-4 text-green-500 shrink-0 mt-0.5" />
                       <div>
-                        <p className="text-[9px] font-black text-white/40 uppercase">Origin</p>
-                        <p className="text-xs font-bold text-white/90">{ride.pickup?.address}</p>
+                        <p className={cn("text-[9px] font-black uppercase", isMobilityUser ? "text-slate-400" : "text-white/40")}>Origin</p>
+                        <p className={cn("text-xs font-bold", isMobilityUser ? "text-slate-900" : "text-white/90")}>{ride.pickup?.address}</p>
                       </div>
                     </div>
                     <div className="flex gap-3">
-                      <Navigation className="w-4 h-4 text-emergency shrink-0 mt-0.5" />
+                      <Navigation className="w-4 h-4 text-red-500 shrink-0 mt-0.5" />
                       <div>
-                        <p className="text-[9px] font-black text-white/40 uppercase">Target</p>
-                        <p className="text-xs font-bold text-white/90">{ride.dropoff?.address}</p>
+                        <p className={cn("text-[9px] font-black uppercase", isMobilityUser ? "text-slate-400" : "text-white/40")}>Target</p>
+                        <p className={cn("text-xs font-bold", isMobilityUser ? "text-slate-900" : "text-white/90")}>{ride.dropoff?.address}</p>
                       </div>
                     </div>
                   </div>
 
-                  <div className="pt-4 border-t border-white/5">
+                  <div className={cn("pt-4 border-t", isMobilityUser ? "border-slate-100" : "border-white/5")}>
                     {aiAnalysis[ride.id] ? (
-                      <div className="bg-navy/20 p-4 rounded-lg border border-orange/10">
+                      <div className={cn("p-4 rounded-lg border", isMobilityUser ? "bg-slate-50 border-slate-100" : "bg-navy/20 border-orange/10")}>
                         <p className="text-[10px] font-black uppercase text-orange mb-2 flex items-center gap-2">
-                          <BrainCircuit className="w-3 h-3" /> Tactical Briefing
+                          <BrainCircuit className="w-3 h-3" /> Tactical Brief
                         </p>
-                        <p className="text-xs text-white/70 italic leading-relaxed">"{aiAnalysis[ride.id].strategy}"</p>
+                        <p className={cn("text-xs italic leading-relaxed", isMobilityUser ? "text-slate-600" : "text-white/70")}>"{aiAnalysis[ride.id].strategy}"</p>
                         <div className="mt-2 flex items-center gap-4 text-[9px] font-black uppercase">
-                           <span className="text-active flex items-center gap-1">
+                           <span className="text-green-600 flex items-center gap-1">
                              <ShieldCheck className="w-3 h-3" /> Efficiency: {aiAnalysis[ride.id].efficiencyScore}%
                            </span>
                         </div>
@@ -147,10 +146,10 @@ export default function RideHistoryPage() {
                         variant="ghost" 
                         size="sm"
                         onClick={() => handleRunAiAnalysis(ride)}
-                        className="text-[10px] font-black uppercase text-white/40 hover:text-orange hover:bg-orange/10"
+                        className={cn("text-[10px] font-black uppercase hover:bg-orange/5", isMobilityUser ? "text-slate-400 hover:text-orange" : "text-white/40 hover:text-orange")}
                       >
                         {analyzingRideId === ride.id ? <Zap className="w-3 h-3 animate-spin mr-2" /> : <BrainCircuit className="w-3 h-3 mr-2" />}
-                        {analyzingRideId === ride.id ? "Analyzing..." : "Run Analysis"}
+                        {analyzingRideId === ride.id ? "Analyzing..." : "Tactical Analysis"}
                       </Button>
                     )}
                   </div>
@@ -158,33 +157,33 @@ export default function RideHistoryPage() {
               </Card>
             ))
           ) : (
-            <Card className="glass-panel p-20 text-center border-dashed border-white/10">
-              <HistoryIcon className="w-12 h-12 mx-auto text-white/10 mb-4" />
-              <p className="text-xs font-bold text-white/40 uppercase tracking-widest">No previous deployments archived</p>
+            <Card className={cn("p-20 text-center border-dashed", isMobilityUser ? "bg-white border-slate-200" : "glass-panel border-white/10")}>
+              <HistoryIcon className={cn("w-12 h-12 mx-auto mb-4", isMobilityUser ? "text-slate-200" : "text-white/10")} />
+              <p className={cn("text-xs font-bold uppercase tracking-widest", isMobilityUser ? "text-slate-400" : "text-white/40")}>No missions logged</p>
             </Card>
           )}
         </div>
 
         <aside className="space-y-6">
-          <Card className="glass-panel bg-navy/40 border-t-4 border-active">
+          <Card className={cn("border-t-4 border-green-500", isMobilityUser ? "bg-white shadow-sm" : "glass-panel bg-navy/40")}>
              <CardHeader className="p-6">
-               <CardTitle className="text-xs font-black uppercase tracking-widest flex items-center gap-2">
-                 <TrendingUp className="w-4 h-4 text-active" /> Performance
+               <CardTitle className={cn("text-xs font-black uppercase tracking-widest flex items-center gap-2", isMobilityUser ? "text-slate-900" : "text-white")}>
+                 <TrendingUp className="w-4 h-4 text-green-500" /> Stats
                </CardTitle>
              </CardHeader>
              <CardContent className="p-6">
                 <div className="space-y-4">
                    <div>
                       <div className="flex justify-between text-[10px] font-black uppercase mb-1">
-                        <span className="text-white/60">Success Rate</span>
-                        <span className="text-active">100%</span>
+                        <span className={isMobilityUser ? "text-slate-400" : "text-white/60"}>Success Rate</span>
+                        <span className="text-green-600">100%</span>
                       </div>
-                      <div className="h-1 w-full bg-navy/60 rounded-full overflow-hidden">
-                        <div className="h-full bg-active" style={{ width: "100%" }} />
+                      <div className={cn("h-1 w-full rounded-full overflow-hidden", isMobilityUser ? "bg-slate-100" : "bg-navy/60")}>
+                        <div className="h-full bg-green-500" style={{ width: "100%" }} />
                       </div>
                    </div>
-                   <p className="text-[10px] font-bold text-white/40 uppercase leading-relaxed">
-                     Tactical performance is within optimal parameters.
+                   <p className={cn("text-[10px] font-bold uppercase leading-relaxed", isMobilityUser ? "text-slate-400" : "text-white/40")}>
+                     Operational parameters optimal.
                    </p>
                 </div>
              </CardContent>

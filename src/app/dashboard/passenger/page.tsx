@@ -1,11 +1,9 @@
 "use client"
 
-import React, { useState, useMemo, useEffect } from "react"
+import React, { useState, useMemo } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { 
-  MapPin, Navigation, CreditCard, Star, Search, Car, Phone, 
-  MessageSquare, CheckCircle2, XCircle, Bike, Zap, 
-  ArrowUpCircle, Timer, LocateFixed, Package, Truck, ShieldAlert 
+  MapPin, Navigation, Car, Bike, Zap, Package, Truck, ShieldAlert, Star, Phone
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -50,7 +48,6 @@ export default function PassengerApp() {
   const userProfileRef = useMemoFirebase(() => user && db ? doc(db, "userProfiles", user.uid) : null, [user, db])
   const { data: profile } = useDoc(userProfileRef)
 
-  // Strictly filtered query to match security rules
   const activeRidesQuery = useMemoFirebase(() => {
     if (!user || !db) return null
     return query(
@@ -87,18 +84,18 @@ export default function PassengerApp() {
       fare: currentFare,
       createdAt: serverTimestamp()
     })
-    toast({ title: `${activeService} Broadcasted`, description: "Scanning sector for nearest available units." })
+    toast({ title: `${activeService} Broadcasted`, description: "Scanning sector for units." })
   }
 
   const handleCancelRide = (rideId: string) => {
     if (!db) return
     updateDocumentNonBlocking(doc(db, "rides", rideId), { status: "Cancelled", cancelledAt: serverTimestamp() })
-    toast({ variant: "destructive", title: "Operation Terminated", description: "Request purged from dispatch queue." })
+    toast({ variant: "destructive", title: "Mission Aborted", description: "Request purged." })
   }
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-full p-2">
-      <div className="lg:col-span-2 relative h-[500px] lg:h-full rounded-2xl overflow-hidden border border-navy shadow-2xl">
+    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-full">
+      <div className="lg:col-span-2 relative h-[400px] lg:h-full rounded-2xl overflow-hidden border border-slate-200 shadow-sm bg-white">
         <TacticalMap 
           markers={currentRide || hasLocations ? [
             { id: 'p', lat: 12.9716, lng: 77.5946, label: 'Origin', type: 'pickup' },
@@ -108,19 +105,19 @@ export default function PassengerApp() {
       </div>
 
       <div className="space-y-6 relative z-10">
-        <Card className="glass-panel passenger-card border-t-4 border-orange bg-card/95 shadow-[0_0_40px_rgba(0,0,0,0.5)]">
+        <Card className="border-none shadow-xl bg-white/95 backdrop-blur-md">
           <CardHeader className="pb-2">
             {!currentRide && (
               <Tabs value={activeService} onValueChange={setActiveService} className="w-full">
-                <TabsList className="grid grid-cols-3 bg-navy border-2 border-white/20 p-1 h-24">
+                <TabsList className="grid grid-cols-3 bg-slate-100 p-1 h-20 rounded-xl">
                   {SERVICES.map(s => (
                     <TabsTrigger 
                       key={s.id} 
                       value={s.id} 
-                      className="text-white/60 font-black uppercase text-sm data-[state=active]:text-white data-[state=active]:bg-orange data-[state=active]:shadow-[0_0_25px_rgba(255,128,0,0.7)] transition-all flex flex-col items-center justify-center gap-2 py-4 h-full hover:text-white hover:bg-white/5"
+                      className="data-[state=active]:bg-white data-[state=active]:text-orange data-[state=active]:shadow-md transition-all flex flex-col items-center justify-center gap-1 py-2 h-full"
                     >
-                      <s.icon className="w-8 h-8" /> 
-                      <span className="truncate font-black tracking-tighter">
+                      <s.icon className="w-5 h-5" /> 
+                      <span className="text-[10px] font-black uppercase tracking-tighter">
                         {s.name}
                       </span>
                     </TabsTrigger>
@@ -128,35 +125,35 @@ export default function PassengerApp() {
                 </TabsList>
               </Tabs>
             )}
-            <CardTitle className="text-2xl font-black uppercase tracking-tighter mt-6 text-white text-center">
-              {currentRide ? `${currentRide.serviceType} Protocol` : "Initialize Mission"}
+            <CardTitle className="text-xl font-black uppercase tracking-tighter mt-6 text-slate-900 text-center">
+              {currentRide ? `${currentRide.serviceType} Terminal` : "Start Mission"}
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4 pt-4">
             {!currentRide ? (
               <>
-                <div className="space-y-4 relative">
+                <div className="space-y-4">
                   <div>
-                    <label className="text-sm font-black text-white uppercase ml-1 mb-2 block tracking-widest">Origin Point</label>
+                    <label className="text-[10px] font-black text-slate-500 uppercase ml-1 mb-1 block tracking-widest">Origin</label>
                     <div className="relative">
-                      <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-active" />
+                      <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-orange" />
                       <Input 
-                        placeholder="Pickup Location" 
+                        placeholder="Pickup Point" 
                         value={pickup} 
                         onChange={e => setPickup(e.target.value)} 
-                        className="pl-10 bg-navy/50 border-2 border-white/40 text-white placeholder:text-white/30 font-bold h-12 text-sm focus:border-orange/60" 
+                        className="pl-10 bg-slate-50 border-slate-200 text-slate-900 font-bold h-12 text-sm" 
                       />
                     </div>
                   </div>
                   <div>
-                    <label className="text-sm font-black text-white uppercase ml-1 mb-2 block tracking-widest">Target Destination</label>
+                    <label className="text-[10px] font-black text-slate-500 uppercase ml-1 mb-1 block tracking-widest">Target</label>
                     <div className="relative">
-                      <Navigation className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-emergency" />
+                      <Navigation className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-orange" />
                       <Input 
-                        placeholder="Dropoff Destination" 
+                        placeholder="Dropoff Target" 
                         value={dropoff} 
                         onChange={e => setDropoff(e.target.value)} 
-                        className="pl-10 bg-navy/50 border-2 border-white/40 text-white placeholder:text-white/30 font-bold h-12 text-sm focus:border-orange/60" 
+                        className="pl-10 bg-slate-50 border-slate-200 text-slate-900 font-bold h-12 text-sm" 
                       />
                     </div>
                   </div>
@@ -164,7 +161,7 @@ export default function PassengerApp() {
 
                 <AnimatePresence>
                   {hasLocations && (
-                    <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} className="space-y-4 pt-4">
+                    <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-4 pt-4">
                       <div className="grid grid-cols-3 gap-2">
                         {SERVICES.find(s => s.id === activeService)?.vehicles.map(v => (
                           <button
@@ -172,22 +169,22 @@ export default function PassengerApp() {
                             onClick={() => setSelectedVehicle(v.id)}
                             className={cn(
                               "flex flex-col items-center justify-center p-3 rounded-xl border-2 transition-all",
-                              selectedVehicle === v.id ? "bg-orange/30 border-orange text-white shadow-[0_0_15px_rgba(255,128,0,0.4)]" : "bg-navy/80 border-white/10 text-white/50 hover:text-white hover:bg-navy/90"
+                              selectedVehicle === v.id ? "bg-orange/5 border-orange text-orange shadow-sm" : "bg-white border-slate-100 text-slate-400 hover:border-slate-200"
                             )}
                           >
-                            <v.icon className="w-6 h-6 mb-1" />
-                            <span className="text-[10px] font-black uppercase">{v.name}</span>
+                            <v.icon className="w-5 h-5 mb-1" />
+                            <span className="text-[8px] font-black uppercase">{v.name}</span>
                           </button>
                         ))}
                       </div>
-                      <div className="bg-navy p-5 rounded-xl border-2 border-white/20 flex justify-between items-center mt-2 shadow-inner">
+                      <div className="bg-slate-900 p-6 rounded-2xl flex justify-between items-center mt-2 shadow-2xl">
                         <div>
-                          <p className="text-[11px] font-black text-white uppercase tracking-widest mb-1">Estimated credits</p>
-                          <p className="text-3xl font-black text-orange">₹{currentFare}</p>
+                          <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Est. Fare</p>
+                          <p className="text-2xl font-black text-white">₹{currentFare}</p>
                         </div>
                         <Button 
                           onClick={handleBookRide} 
-                          className="bg-orange hover:bg-orange/90 font-black uppercase text-xs h-14 px-8 text-white shadow-[0_0_20px_rgba(255,128,0,0.5)] border-2 border-white/10"
+                          className="bg-orange hover:bg-orange/90 font-black uppercase text-xs h-12 px-6"
                         >
                           Deploy Unit
                         </Button>
@@ -198,37 +195,37 @@ export default function PassengerApp() {
               </>
             ) : (
               <div className="space-y-6 pt-4">
-                <div className="text-center p-8 bg-orange/10 rounded-2xl border-2 border-orange/40 relative overflow-hidden">
-                   <div className="absolute top-0 left-0 w-full h-2 bg-orange/20">
-                     <motion.div animate={{ x: ["-100%", "100%"] }} transition={{ duration: 1.5, repeat: Infinity }} className="w-1/3 h-full bg-orange shadow-[0_0_15px_#FF8000]" />
+                <div className="text-center p-8 bg-slate-50 rounded-2xl border-2 border-slate-100 relative overflow-hidden">
+                   <div className="absolute top-0 left-0 w-full h-1 bg-slate-200">
+                     <motion.div animate={{ x: ["-100%", "100%"] }} transition={{ duration: 1.5, repeat: Infinity }} className="w-1/3 h-full bg-orange" />
                    </div>
-                   <p className="text-sm font-black text-orange uppercase tracking-[0.3em] mb-4 drop-shadow-[0_0_8px_rgba(255,128,0,0.5)]">{currentRide.status}</p>
+                   <p className="text-[10px] font-black text-orange uppercase tracking-[0.2em] mb-4">{currentRide.status}</p>
                    {driverProfile ? (
                      <div className="space-y-4">
-                       <div className="w-24 h-24 rounded-full bg-navy/80 mx-auto ring-4 ring-orange/40 flex items-center justify-center overflow-hidden shadow-2xl">
+                       <div className="w-20 h-20 rounded-full bg-white mx-auto ring-4 ring-slate-100 flex items-center justify-center overflow-hidden shadow-lg">
                           <img src={`https://picsum.photos/seed/${driverProfile.id}/200/200`} alt="Driver" className="w-full h-full object-cover" />
                        </div>
                        <div>
-                         <p className="text-xl font-black uppercase text-white tracking-tight">{driverProfile.name}</p>
+                         <p className="text-lg font-black uppercase text-slate-900">{driverProfile.name}</p>
                          <div className="flex items-center justify-center gap-1 mt-1">
-                           <Star className="w-4 h-4 text-orange fill-orange" />
-                           <span className="text-xs text-white uppercase font-black">{driverProfile.rating || '5.0'} • Sector 4 Dispatch</span>
+                           <Star className="w-3 h-3 text-orange fill-orange" />
+                           <span className="text-[10px] text-slate-500 uppercase font-black">{driverProfile.rating || '5.0'} Rating</span>
                          </div>
                        </div>
                      </div>
                    ) : (
                      <div className="py-8 space-y-4">
-                        <div className="w-16 h-16 border-4 border-orange/20 border-t-orange rounded-full animate-spin mx-auto shadow-[0_0_20px_rgba(255,128,0,0.2)]" />
-                        <p className="text-xs font-black uppercase tracking-widest text-white animate-pulse">Scanning for nearest unit...</p>
+                        <div className="w-12 h-12 border-4 border-orange/10 border-t-orange rounded-full animate-spin mx-auto" />
+                        <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Searching Sector...</p>
                      </div>
                    )}
                 </div>
                 <div className="grid grid-cols-2 gap-3">
-                  <Button variant="outline" className="border-navy text-[10px] uppercase font-black h-14 text-white hover:bg-navy/60 bg-navy/40"><Phone className="w-4 h-4 mr-2" /> Voice Comms</Button>
-                  <Button variant="outline" className="border-navy text-[10px] uppercase font-black h-14 text-white hover:bg-navy/60 bg-navy/40"><ShieldAlert className="w-4 h-4 mr-2 text-emergency" /> SOS Signal</Button>
+                  <Button variant="outline" className="border-slate-200 text-[10px] uppercase font-black h-12 text-slate-900 hover:bg-slate-50"><Phone className="w-4 h-4 mr-2" /> Comms</Button>
+                  <Button variant="outline" className="border-slate-200 text-[10px] uppercase font-black h-12 text-slate-900 hover:bg-slate-50"><ShieldAlert className="w-4 h-4 mr-2 text-red-500" /> SOS</Button>
                 </div>
                 {(currentRide.status === "Requested" || currentRide.status === "Accepted") && (
-                  <Button onClick={() => handleCancelRide(currentRide.id)} variant="ghost" className="w-full text-[10px] font-black uppercase h-12 text-white/70 hover:text-emergency transition-all">Abort Mission</Button>
+                  <Button onClick={() => handleCancelRide(currentRide.id)} variant="ghost" className="w-full text-[10px] font-black uppercase h-10 text-slate-400 hover:text-red-500 transition-all">Abort Mission</Button>
                 )}
               </div>
             )}
@@ -236,13 +233,13 @@ export default function PassengerApp() {
         </Card>
 
         <div className="grid grid-cols-2 gap-4">
-          <Card className="glass-panel p-5 text-center border-2 border-white/20 bg-navy/80">
-            <p className="text-xs uppercase font-black text-white/80 mb-1 tracking-widest">Operator Rep</p>
-            <p className="text-3xl font-black text-white">{profile?.rating ? profile.rating.toFixed(1) : '5.0'}</p>
+          <Card className="p-4 text-center border-none shadow-md bg-white">
+            <p className="text-[9px] uppercase font-black text-slate-400 mb-1">Reputation</p>
+            <p className="text-2xl font-black text-slate-900">{profile?.rating ? profile.rating.toFixed(1) : '5.0'}</p>
           </Card>
-          <Card className="glass-panel p-5 text-center border-2 border-white/20 bg-navy/80">
-            <p className="text-xs uppercase font-black text-white/80 mb-1 tracking-widest">Nexus Credits</p>
-            <p className="text-3xl font-black text-active">₹{profile?.walletBalance || 0}</p>
+          <Card className="p-4 text-center border-none shadow-md bg-white">
+            <p className="text-[9px] uppercase font-black text-slate-400 mb-1">Credits</p>
+            <p className="text-2xl font-black text-orange">₹{profile?.walletBalance || 0}</p>
           </Card>
         </div>
       </div>
