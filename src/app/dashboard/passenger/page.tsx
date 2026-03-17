@@ -1,3 +1,4 @@
+
 "use client"
 
 import React, { useState, useMemo, useEffect } from "react"
@@ -55,7 +56,7 @@ export default function PassengerApp() {
     return query(
       collection(db, "rides"), 
       where("passengerId", "==", user.uid),
-      limit(5) // Fetch more to find the truly active one manually
+      limit(10)
     )
   }, [user, db])
 
@@ -63,7 +64,6 @@ export default function PassengerApp() {
   
   const currentRide = useMemo(() => {
     if (!activeRides) return null
-    // Filter for truly live missions only
     const liveStatuses = ["Requested", "Accepted", "Arrived", "InProgress", "Completed", "Rejected"]
     const sorted = [...activeRides].sort((a, b) => {
       const aTime = a.createdAt?.toMillis?.() || 0
@@ -83,11 +83,13 @@ export default function PassengerApp() {
           if (prev !== null && prev <= 1) {
             clearInterval(interval)
             handleCancelRide(currentRide.id)
-            toast({ 
-              title: "Mission Timeout", 
-              description: "No units responded within the tactical window.",
-              variant: "destructive"
-            })
+            setTimeout(() => {
+              toast({ 
+                title: "Mission Timeout", 
+                description: "No units responded within the tactical window.",
+                variant: "destructive"
+              })
+            }, 0)
             return 0
           }
           return prev !== null ? prev - 1 : null
@@ -102,11 +104,13 @@ export default function PassengerApp() {
   // Surge Logic on Rejection
   useEffect(() => {
     if (currentRide?.status === "Rejected" && db) {
-      toast({ 
-        title: "Operator Busy", 
-        description: "Applying ₹20 surge for priority re-broadcast...",
-        variant: "destructive" 
-      })
+      setTimeout(() => {
+        toast({ 
+          title: "Operator Busy", 
+          description: "Applying ₹20 surge for priority re-broadcast...",
+          variant: "destructive" 
+        })
+      }, 0)
       
       const rideRef = doc(db, "rides", currentRide.id)
       updateDocumentNonBlocking(rideRef, {
@@ -115,7 +119,7 @@ export default function PassengerApp() {
         lastRejectedAt: serverTimestamp()
       })
     }
-  }, [currentRide?.status, currentRide?.id, db, toast])
+  }, [currentRide?.status, currentRide?.id, db])
 
   const driverProfileRef = useMemoFirebase(() => currentRide?.driverId && db ? doc(db, "userProfiles", currentRide.driverId) : null, [currentRide?.driverId, db])
   const { data: driverProfile } = useDoc(driverProfileRef)
@@ -140,7 +144,9 @@ export default function PassengerApp() {
       fare: currentFare,
       createdAt: serverTimestamp()
     })
-    toast({ title: "Broadcast Initiated", description: "Scanning sector for available units." })
+    setTimeout(() => {
+      toast({ title: "Broadcast Initiated", description: "Scanning sector for available units." })
+    }, 0)
   }
 
   const handleCancelRide = (rideId: string) => {
@@ -184,7 +190,7 @@ export default function PassengerApp() {
               {currentRide ? (currentRide.status === "Completed" ? "Mission Settlement" : `${currentRide.serviceType} Terminal`) : "Initialize Mission"}
             </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-4 pt-4 min-h-[300px]">
+          <CardContent className="space-y-4 pt-4">
             {!currentRide ? (
               <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-4">
                 <div className="space-y-4">
@@ -216,7 +222,7 @@ export default function PassengerApp() {
 
                 <AnimatePresence>
                   {hasLocations && (
-                    <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-4 pt-4">
+                    <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-4 pt-2">
                       <div className="grid grid-cols-3 gap-2">
                         {SERVICES.find(s => s.id === activeService)?.vehicles.map(v => (
                           <button
