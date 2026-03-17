@@ -120,16 +120,20 @@ export default function PassengerApp() {
           <CardHeader className="pb-2">
             {!currentRide && (
               <Tabs value={activeService} onValueChange={setActiveService} className="w-full">
-                <TabsList className="grid grid-cols-3 bg-charcoal/50">
+                <TabsList className="grid grid-cols-3 bg-navy/40 border border-white/5">
                   {SERVICES.map(s => (
-                    <TabsTrigger key={s.id} value={s.id} className="text-[10px] font-black uppercase">
+                    <TabsTrigger 
+                      key={s.id} 
+                      value={s.id} 
+                      className="text-[10px] font-black uppercase text-white/50 data-[state=active]:text-white data-[state=active]:bg-orange"
+                    >
                       <s.icon className="w-3 h-3 mr-1" /> {s.name}
                     </TabsTrigger>
                   ))}
                 </TabsList>
               </Tabs>
             )}
-            <CardTitle className="text-lg font-black uppercase tracking-tighter mt-4">
+            <CardTitle className="text-xl font-black uppercase tracking-tighter mt-4 text-white">
               {currentRide ? `${currentRide.serviceType} In Progress` : "Deploy Unit"}
             </CardTitle>
           </CardHeader>
@@ -139,11 +143,21 @@ export default function PassengerApp() {
                 <div className="space-y-2 relative">
                   <div className="relative">
                     <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-active" />
-                    <Input placeholder="Pickup Origin" value={pickup} onChange={e => setPickup(e.target.value)} className="pl-10 bg-navy/20 border-navy text-xs" />
+                    <Input 
+                      placeholder="Pickup Origin" 
+                      value={pickup} 
+                      onChange={e => setPickup(e.target.value)} 
+                      className="pl-10 bg-navy/30 border-navy text-xs text-white placeholder:text-white/30" 
+                    />
                   </div>
                   <div className="relative">
                     <Navigation className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-emergency" />
-                    <Input placeholder="Dropoff Destination" value={dropoff} onChange={e => setDropoff(e.target.value)} className="pl-10 bg-navy/20 border-navy text-xs" />
+                    <Input 
+                      placeholder="Dropoff Destination" 
+                      value={dropoff} 
+                      onChange={e => setDropoff(e.target.value)} 
+                      className="pl-10 bg-navy/30 border-navy text-xs text-white placeholder:text-white/30" 
+                    />
                   </div>
                 </div>
 
@@ -157,7 +171,7 @@ export default function PassengerApp() {
                             onClick={() => setSelectedVehicle(v.id)}
                             className={cn(
                               "flex flex-col items-center justify-center p-2 rounded-xl border transition-all",
-                              selectedVehicle === v.id ? "bg-orange/20 border-orange text-orange" : "bg-navy/20 border-navy text-muted-foreground"
+                              selectedVehicle === v.id ? "bg-orange/20 border-orange text-orange" : "bg-navy/20 border-navy text-white/40 hover:text-white"
                             )}
                           >
                             <v.icon className="w-5 h-5 mb-1" />
@@ -168,9 +182,9 @@ export default function PassengerApp() {
                       <div className="bg-navy/10 p-4 rounded-lg border border-white/5 flex justify-between items-center">
                         <div>
                           <p className="text-[8px] font-black text-muted-foreground uppercase">Estimated Fare</p>
-                          <p className="text-xl font-black text-orange">₹{currentFare}</p>
+                          <p className="text-2xl font-black text-orange">₹{currentFare}</p>
                         </div>
-                        <Button onClick={handleBookRide} className="bg-orange hover:bg-orange/90 font-black uppercase text-xs h-10 px-6">Book Now</Button>
+                        <Button onClick={handleBookRide} className="bg-orange hover:bg-orange/90 font-black uppercase text-xs h-10 px-6 text-white shadow-lg">Book Now</Button>
                       </div>
                     </motion.div>
                   )}
@@ -179,12 +193,12 @@ export default function PassengerApp() {
             ) : currentRide.status === "Completed" ? (
               <div className="space-y-4 text-center">
                 <CheckCircle2 className="w-12 h-12 text-active mx-auto animate-bounce" />
-                <h3 className="font-black uppercase">Final Fare: ₹{currentRide.fare}</h3>
+                <h3 className="font-black uppercase text-white">Final Fare: ₹{currentRide.fare}</h3>
                 <div className="grid gap-2">
-                  <Button onClick={() => handleProcessPayment(currentRide.id, 'Wallet', currentRide.fare)} variant="outline" className="border-navy h-12 justify-between">
+                  <Button onClick={() => handleProcessPayment(currentRide.id, 'Wallet', currentRide.fare)} variant="outline" className="border-navy h-12 justify-between text-white">
                     <span>Nexus Credits</span> <span className="text-active">₹{profile?.walletBalance || 0}</span>
                   </Button>
-                  <Button onClick={() => handleProcessPayment(currentRide.id, 'Cash', currentRide.fare)} variant="outline" className="border-navy h-12">Hard Currency (Cash)</Button>
+                  <Button onClick={() => handleProcessPayment(currentRide.id, 'Cash', currentRide.fare)} variant="outline" className="border-navy h-12 text-white">Hard Currency (Cash)</Button>
                 </div>
               </div>
             ) : (
@@ -196,19 +210,19 @@ export default function PassengerApp() {
                    <p className="text-[10px] font-black text-orange uppercase tracking-[0.2em] mb-4">{currentRide.status}</p>
                    {driverProfile ? (
                      <div className="space-y-2">
-                       <p className="text-sm font-black uppercase">{driverProfile.name}</p>
+                       <p className="text-sm font-black uppercase text-white">{driverProfile.name}</p>
                        <p className="text-[9px] text-muted-foreground uppercase">Rating: {driverProfile.rating || '5.0'} • Sector 4 Dispatch</p>
                      </div>
                    ) : (
-                     <p className="text-xs font-bold animate-pulse">Assigning nearest captain...</p>
+                     <p className="text-xs font-bold animate-pulse text-white">Assigning nearest captain...</p>
                    )}
                 </div>
                 <div className="flex gap-2">
-                  <Button variant="outline" className="flex-1 border-navy text-[10px] uppercase font-black h-12"><Phone className="w-3 h-3 mr-2" /> Call</Button>
-                  <Button variant="outline" className="flex-1 border-navy text-[10px] uppercase font-black h-12"><ShieldAlert className="w-3 h-3 mr-2 text-emergency" /> SOS</Button>
+                  <Button variant="outline" className="flex-1 border-navy text-[10px] uppercase font-black h-12 text-white"><Phone className="w-3 h-3 mr-2" /> Call</Button>
+                  <Button variant="outline" className="flex-1 border-navy text-[10px] uppercase font-black h-12 text-white"><ShieldAlert className="w-3 h-3 mr-2 text-emergency" /> SOS</Button>
                 </div>
                 {(currentRide.status === "Requested" || currentRide.status === "Accepted") && (
-                  <Button onClick={() => handleCancelRide(currentRide.id)} variant="destructive" className="w-full text-[10px] font-black uppercase h-10 opacity-50 hover:opacity-100">Cancel Mission</Button>
+                  <Button onClick={() => handleCancelRide(currentRide.id)} variant="destructive" className="w-full text-[10px] font-black uppercase h-10 opacity-50 hover:opacity-100 text-white">Cancel Mission</Button>
                 )}
               </div>
             )}
@@ -218,11 +232,11 @@ export default function PassengerApp() {
         <div className="grid grid-cols-2 gap-4">
           <Card className="glass-panel passenger-card p-4 text-center">
             <p className="text-[10px] uppercase font-black text-muted-foreground mb-1">Reputation</p>
-            <p className="text-xl font-black">{profile?.rating ? profile.rating.toFixed(1) : '5.0'}</p>
+            <p className="text-2xl font-black text-white">{profile?.rating ? profile.rating.toFixed(1) : '5.0'}</p>
           </Card>
           <Card className="glass-panel passenger-card p-4 text-center">
             <p className="text-[10px] uppercase font-black text-muted-foreground mb-1">Credits</p>
-            <p className="text-xl font-black text-active">₹{profile?.walletBalance || 0}</p>
+            <p className="text-2xl font-black text-active">₹{profile?.walletBalance || 0}</p>
           </Card>
         </div>
       </div>

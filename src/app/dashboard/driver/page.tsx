@@ -80,7 +80,7 @@ export default function DriverApp() {
       <div className="space-y-6">
         <Card className="glass-panel driver-widget border-b-4 border-orange">
           <CardHeader className="p-4 bg-navy/20 flex flex-row items-center justify-between">
-            <CardTitle className="text-sm font-black uppercase tracking-widest">Operator Terminal</CardTitle>
+            <CardTitle className="text-sm font-black uppercase tracking-widest text-white">Operator Terminal</CardTitle>
             <Button onClick={handleToggleOnline} size="sm" className={isOnline ? "bg-active text-black hover:bg-active/90" : "bg-muted text-white"}>
               <Power className="w-4 h-4 mr-2" /> {isOnline ? "ONLINE" : "OFFLINE"}
             </Button>
@@ -91,14 +91,14 @@ export default function DriverApp() {
                 <motion.div initial={{ x: 50, opacity: 0 }} animate={{ x: 0, opacity: 1 }} className="space-y-4">
                   <div className="flex justify-between items-start">
                     <div>
-                      <Badge className="bg-orange/20 text-orange mb-1 uppercase text-[8px]">{activeRide.serviceType} MODE</Badge>
-                      <h3 className="text-sm font-black uppercase truncate max-w-[150px]">{activeRide.pickup.address}</h3>
+                      <Badge className="bg-orange/20 text-orange mb-1 uppercase text-[8px] font-black">{activeRide.serviceType} MODE</Badge>
+                      <h3 className="text-sm font-black uppercase truncate max-w-[150px] text-white">{activeRide.pickup.address}</h3>
                     </div>
                     <p className="text-lg font-black text-active">₹{activeRide.fare}</p>
                   </div>
-                  {activeRide.status === "Accepted" && <Button onClick={() => handleUpdateStatus(activeRide.id, "Arrived")} className="w-full bg-orange h-12 font-black uppercase text-xs">Arrived at Origin</Button>}
+                  {activeRide.status === "Accepted" && <Button onClick={() => handleUpdateStatus(activeRide.id, "Arrived")} className="w-full bg-orange text-white h-12 font-black uppercase text-xs">Arrived at Origin</Button>}
                   {activeRide.status === "Arrived" && <Button onClick={() => handleUpdateStatus(activeRide.id, "InProgress")} className="w-full bg-active text-black h-12 font-black uppercase text-xs">Initialize Mission</Button>}
-                  {activeRide.status === "InProgress" && <Button onClick={() => handleUpdateStatus(activeRide.id, "Completed", activeRide.fare)} className="w-full bg-emergency h-12 font-black uppercase text-xs">Finalize Mission</Button>}
+                  {activeRide.status === "InProgress" && <Button onClick={() => handleUpdateStatus(activeRide.id, "Completed", activeRide.fare)} className="w-full bg-emergency text-white h-12 font-black uppercase text-xs">Finalize Mission</Button>}
                 </motion.div>
               ) : isOnline ? (
                 <div className="text-center py-8 space-y-4">
@@ -108,16 +108,16 @@ export default function DriverApp() {
                     <Card key={ride.id} className="bg-navy/20 border-orange/20 p-3 text-left">
                       <div className="flex justify-between items-center mb-2">
                         <span className="text-[8px] font-black text-orange uppercase">{ride.vehicleType}</span>
-                        <span className="text-xs font-black">₹{ride.fare}</span>
+                        <span className="text-xs font-black text-white">₹{ride.fare}</span>
                       </div>
-                      <Button onClick={() => handleAcceptRide(ride.id)} className="w-full bg-orange h-8 text-[10px] font-black uppercase">Accept</Button>
+                      <Button onClick={() => handleAcceptRide(ride.id)} className="w-full bg-orange text-white h-8 text-[10px] font-black uppercase">Accept</Button>
                     </Card>
                   ))}
                 </div>
               ) : (
                 <div className="text-center py-8 opacity-40">
-                  <AlertCircle className="w-10 h-10 mx-auto mb-2" />
-                  <p className="text-[10px] font-black uppercase">Go online to receive missions</p>
+                  <AlertCircle className="w-10 h-10 mx-auto mb-2 text-white" />
+                  <p className="text-[10px] font-black uppercase text-white">Go online to receive missions</p>
                 </div>
               )}
             </AnimatePresence>
@@ -126,15 +126,15 @@ export default function DriverApp() {
 
         <Card className="glass-panel driver-widget">
           <CardHeader className="p-3 border-b border-navy/20">
-            <CardTitle className="text-[10px] font-black uppercase flex items-center gap-2">
+            <CardTitle className="text-[10px] font-black uppercase flex items-center gap-2 text-white/70">
               <TrendingUp className="w-3 h-3 text-active" /> Activity Telemetry
             </CardTitle>
           </CardHeader>
           <CardContent className="p-0 h-[150px]">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={mockChartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                <XAxis dataKey="hour" axisLine={false} tickLine={false} fontSize={8} />
-                <Tooltip contentStyle={{ background: '#131518', border: 'none', fontSize: '10px' }} />
+                <XAxis dataKey="hour" axisLine={false} tickLine={false} fontSize={8} stroke="#ffffff" opacity={0.5} />
+                <Tooltip contentStyle={{ background: '#131518', border: 'none', fontSize: '10px', color: '#fff' }} />
                 <Bar dataKey="val" radius={[2, 2, 0, 0]}>
                   {mockChartData.map((e, i) => <Cell key={i} fill={e.val > 500 ? '#00CC00' : '#FF8000'} />)}
                 </Bar>
@@ -146,11 +146,11 @@ export default function DriverApp() {
         <div className="grid grid-cols-2 gap-4">
           <Card className="glass-panel driver-widget p-4">
             <p className="text-[8px] font-black uppercase text-muted-foreground mb-1">Total Earnings</p>
-            <h4 className="text-xl font-black">₹{dailyStats?.earnings || 0}</h4>
+            <h4 className="text-xl font-black text-white">₹{dailyStats?.earnings || 0}</h4>
           </Card>
           <Card className="glass-panel driver-widget p-4">
             <p className="text-[8px] font-black uppercase text-muted-foreground mb-1">Missions</p>
-            <h4 className="text-xl font-black">{dailyStats?.rideCount || 0}</h4>
+            <h4 className="text-xl font-black text-white">{dailyStats?.rideCount || 0}</h4>
           </Card>
         </div>
       </div>
