@@ -122,15 +122,15 @@ export default function PassengerApp() {
           <CardHeader className="pb-2">
             {!currentRide && (
               <Tabs value={activeService} onValueChange={setActiveService} className="w-full">
-                <TabsList className="grid grid-cols-3 bg-navy border border-white/20 p-1 h-16">
+                <TabsList className="grid grid-cols-3 bg-navy border-2 border-white/20 p-1 h-20">
                   {SERVICES.map(s => (
                     <TabsTrigger 
                       key={s.id} 
                       value={s.id} 
-                      className="text-sm font-black uppercase text-white data-[state=active]:text-white data-[state=active]:bg-orange transition-all flex items-center justify-center gap-2"
+                      className="text-[12px] font-black uppercase text-white data-[state=active]:text-white data-[state=active]:bg-orange data-[state=active]:shadow-[0_0_15px_rgba(255,128,0,0.5)] transition-all flex flex-col items-center justify-center gap-1"
                     >
                       <s.icon className="w-5 h-5" /> 
-                      <span className="hidden sm:inline">{s.name}</span>
+                      <span className="truncate">{s.name}</span>
                     </TabsTrigger>
                   ))}
                 </TabsList>
@@ -145,22 +145,28 @@ export default function PassengerApp() {
               <>
                 <div className="space-y-3 relative">
                   <div className="relative">
-                    <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-active" />
-                    <Input 
-                      placeholder="Pickup Origin" 
-                      value={pickup} 
-                      onChange={e => setPickup(e.target.value)} 
-                      className="pl-10 bg-navy/60 border-navy text-sm text-white placeholder:text-white/80 font-bold h-12" 
-                    />
+                    <Label className="text-[10px] font-black text-white uppercase ml-1 mb-1 block">Origin</Label>
+                    <div className="relative">
+                      <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-active" />
+                      <Input 
+                        placeholder="Pickup Location" 
+                        value={pickup} 
+                        onChange={e => setPickup(e.target.value)} 
+                        className="pl-10 bg-navy/80 border-navy text-sm text-white placeholder:text-white/50 font-black h-12" 
+                      />
+                    </div>
                   </div>
                   <div className="relative">
-                    <Navigation className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-emergency" />
-                    <Input 
-                      placeholder="Dropoff Destination" 
-                      value={dropoff} 
-                      onChange={e => setDropoff(e.target.value)} 
-                      className="pl-10 bg-navy/60 border-navy text-sm text-white placeholder:text-white/80 font-bold h-12" 
-                    />
+                    <Label className="text-[10px] font-black text-white uppercase ml-1 mb-1 block">Target</Label>
+                    <div className="relative">
+                      <Navigation className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-emergency" />
+                      <Input 
+                        placeholder="Dropoff Destination" 
+                        value={dropoff} 
+                        onChange={e => setDropoff(e.target.value)} 
+                        className="pl-10 bg-navy/80 border-navy text-sm text-white placeholder:text-white/50 font-black h-12" 
+                      />
+                    </div>
                   </div>
                 </div>
 
@@ -173,8 +179,8 @@ export default function PassengerApp() {
                             key={v.id}
                             onClick={() => setSelectedVehicle(v.id)}
                             className={cn(
-                              "flex flex-col items-center justify-center p-3 rounded-xl border transition-all",
-                              selectedVehicle === v.id ? "bg-orange/20 border-orange text-orange shadow-[0_0_10px_rgba(255,128,0,0.2)]" : "bg-navy/40 border-navy text-white hover:text-white hover:bg-navy/60"
+                              "flex flex-col items-center justify-center p-3 rounded-xl border-2 transition-all",
+                              selectedVehicle === v.id ? "bg-orange/20 border-orange text-orange shadow-[0_0_10px_rgba(255,128,0,0.4)]" : "bg-navy/60 border-navy text-white hover:text-white hover:bg-navy/80"
                             )}
                           >
                             <v.icon className="w-6 h-6 mb-1" />
@@ -182,16 +188,16 @@ export default function PassengerApp() {
                           </button>
                         ))}
                       </div>
-                      <div className="bg-navy/50 p-5 rounded-xl border border-white/10 flex justify-between items-center mt-2">
+                      <div className="bg-navy/80 p-5 rounded-xl border-2 border-white/10 flex justify-between items-center mt-2 shadow-inner">
                         <div>
-                          <p className="text-[10px] font-black text-white uppercase tracking-widest mb-1">Est. Credits</p>
+                          <p className="text-[10px] font-black text-white uppercase tracking-widest mb-1">Estimated Credits</p>
                           <p className="text-3xl font-black text-orange">₹{currentFare}</p>
                         </div>
                         <Button 
                           onClick={handleBookRide} 
-                          className="bg-orange hover:bg-orange/90 font-black uppercase text-xs h-12 px-8 text-white shadow-[0_0_20px_rgba(255,128,0,0.3)]"
+                          className="bg-orange hover:bg-orange/90 font-black uppercase text-xs h-14 px-8 text-white shadow-[0_0_20px_rgba(255,128,0,0.5)] border-2 border-white/10"
                         >
-                          Deploy
+                          Deploy Unit
                         </Button>
                       </div>
                     </motion.div>
@@ -204,27 +210,27 @@ export default function PassengerApp() {
                 <h3 className="text-lg font-black uppercase text-white">Mission Finalized</h3>
                 <p className="text-4xl font-black text-active">₹{currentRide.fare}</p>
                 <div className="grid gap-3 pt-4">
-                  <Button onClick={() => handleProcessPayment(currentRide.id, 'Wallet', currentRide.fare)} variant="outline" className="border-navy h-14 justify-between text-white hover:bg-navy/40 px-6">
-                    <span className="font-bold uppercase text-xs">Nexus Wallet</span> 
+                  <Button onClick={() => handleProcessPayment(currentRide.id, 'Wallet', currentRide.fare)} variant="outline" className="border-navy h-14 justify-between text-white hover:bg-navy/40 px-6 bg-navy/20">
+                    <span className="font-black uppercase text-xs">Nexus Wallet</span> 
                     <span className="text-active font-black">₹{profile?.walletBalance || 0}</span>
                   </Button>
-                  <Button onClick={() => handleProcessPayment(currentRide.id, 'Cash', currentRide.fare)} variant="outline" className="border-navy h-14 text-white hover:bg-navy/40 font-bold uppercase text-xs">Settlement via Cash</Button>
+                  <Button onClick={() => handleProcessPayment(currentRide.id, 'Cash', currentRide.fare)} variant="outline" className="border-navy h-14 text-white hover:bg-navy/40 font-black uppercase text-xs bg-navy/20">Settlement via Cash</Button>
                 </div>
               </div>
             ) : (
               <div className="space-y-6 pt-4">
-                <div className="text-center p-8 bg-orange/10 rounded-2xl border border-orange/20 relative overflow-hidden">
-                   <div className="absolute top-0 left-0 w-full h-1.5 bg-orange/20">
-                     <motion.div animate={{ x: ["-100%", "100%"] }} transition={{ duration: 2, repeat: Infinity }} className="w-1/3 h-full bg-orange" />
+                <div className="text-center p-8 bg-orange/10 rounded-2xl border-2 border-orange/40 relative overflow-hidden">
+                   <div className="absolute top-0 left-0 w-full h-2 bg-orange/20">
+                     <motion.div animate={{ x: ["-100%", "100%"] }} transition={{ duration: 1.5, repeat: Infinity }} className="w-1/3 h-full bg-orange shadow-[0_0_10px_#FF8000]" />
                    </div>
-                   <p className="text-xs font-black text-orange uppercase tracking-[0.3em] mb-4">{currentRide.status}</p>
+                   <p className="text-xs font-black text-orange uppercase tracking-[0.3em] mb-4 drop-shadow-[0_0_5px_rgba(255,128,0,0.5)]">{currentRide.status}</p>
                    {driverProfile ? (
-                     <div className="space-y-3">
-                       <div className="w-20 h-20 rounded-full bg-navy/60 mx-auto ring-4 ring-orange/20 flex items-center justify-center overflow-hidden">
-                          <img src={`https://picsum.photos/seed/${driverProfile.id}/100/100`} alt="Driver" />
+                     <div className="space-y-4">
+                       <div className="w-24 h-24 rounded-full bg-navy/80 mx-auto ring-4 ring-orange/40 flex items-center justify-center overflow-hidden shadow-2xl">
+                          <img src={`https://picsum.photos/seed/${driverProfile.id}/200/200`} alt="Driver" className="w-full h-full object-cover" />
                        </div>
                        <div>
-                         <p className="text-lg font-black uppercase text-white">{driverProfile.name}</p>
+                         <p className="text-xl font-black uppercase text-white tracking-tight">{driverProfile.name}</p>
                          <div className="flex items-center justify-center gap-1 mt-1">
                            <Star className="w-4 h-4 text-orange fill-orange" />
                            <span className="text-xs text-white uppercase font-black">{driverProfile.rating || '5.0'} • Sector 4 Dispatch</span>
@@ -232,18 +238,18 @@ export default function PassengerApp() {
                        </div>
                      </div>
                    ) : (
-                     <div className="py-4 space-y-4">
-                        <div className="w-12 h-12 border-4 border-orange/20 border-t-orange rounded-full animate-spin mx-auto" />
-                        <p className="text-xs font-black uppercase tracking-widest text-white">Scanning for nearest unit...</p>
+                     <div className="py-8 space-y-4">
+                        <div className="w-16 h-16 border-4 border-orange/20 border-t-orange rounded-full animate-spin mx-auto shadow-[0_0_20px_rgba(255,128,0,0.2)]" />
+                        <p className="text-xs font-black uppercase tracking-widest text-white animate-pulse">Scanning for nearest unit...</p>
                      </div>
                    )}
                 </div>
-                <div className="flex gap-3">
-                  <Button variant="outline" className="flex-1 border-navy text-[10px] uppercase font-black h-14 text-white hover:bg-navy/40"><Phone className="w-4 h-4 mr-2" /> Voice Comms</Button>
-                  <Button variant="outline" className="flex-1 border-navy text-[10px] uppercase font-black h-14 text-white hover:bg-navy/40"><ShieldAlert className="w-4 h-4 mr-2 text-emergency" /> SOS Signal</Button>
+                <div className="grid grid-cols-2 gap-3">
+                  <Button variant="outline" className="border-navy text-[10px] uppercase font-black h-14 text-white hover:bg-navy/60 bg-navy/40"><Phone className="w-4 h-4 mr-2" /> Voice Comms</Button>
+                  <Button variant="outline" className="border-navy text-[10px] uppercase font-black h-14 text-white hover:bg-navy/60 bg-navy/40"><ShieldAlert className="w-4 h-4 mr-2 text-emergency" /> SOS Signal</Button>
                 </div>
                 {(currentRide.status === "Requested" || currentRide.status === "Accepted") && (
-                  <Button onClick={() => handleCancelRide(currentRide.id)} variant="ghost" className="w-full text-[10px] font-black uppercase h-10 text-white hover:text-emergency transition-colors">Abort Mission</Button>
+                  <Button onClick={() => handleCancelRide(currentRide.id)} variant="ghost" className="w-full text-[10px] font-black uppercase h-12 text-white/70 hover:text-emergency transition-all">Abort Mission</Button>
                 )}
               </div>
             )}
@@ -251,16 +257,20 @@ export default function PassengerApp() {
         </Card>
 
         <div className="grid grid-cols-2 gap-4">
-          <Card className="glass-panel passenger-card p-5 text-center border-white/10 bg-navy/30">
-            <p className="text-[10px] uppercase font-black text-white mb-1 tracking-widest">Operator Rep</p>
+          <Card className="glass-panel passenger-card p-5 text-center border-2 border-white/10 bg-navy/40">
+            <p className="text-[10px] uppercase font-black text-white/80 mb-1 tracking-widest">Operator Rep</p>
             <p className="text-3xl font-black text-white">{profile?.rating ? profile.rating.toFixed(1) : '5.0'}</p>
           </Card>
-          <Card className="glass-panel passenger-card p-5 text-center border-white/10 bg-navy/30">
-            <p className="text-[10px] uppercase font-black text-white mb-1 tracking-widest">Nexus Credits</p>
+          <Card className="glass-panel passenger-card p-5 text-center border-2 border-white/10 bg-navy/40">
+            <p className="text-[10px] uppercase font-black text-white/80 mb-1 tracking-widest">Nexus Credits</p>
             <p className="text-3xl font-black text-active">₹{profile?.walletBalance || 0}</p>
           </Card>
         </div>
       </div>
     </div>
   )
+}
+
+function Label({ className, children }: { className?: string, children: React.ReactNode }) {
+  return <label className={cn("text-sm font-medium leading-none", className)}>{children}</label>
 }
