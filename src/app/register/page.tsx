@@ -66,7 +66,7 @@ export default function RegisterPage() {
     } catch (error: any) {
       toast({
         variant: "destructive",
-        title: "Provisioning Failed",
+        title: "Provision Failed",
         description: error.message || "Could not initialize terminal link.",
       })
     } finally {

@@ -34,7 +34,7 @@ service cloud.firestore {
       allow write: if signedIn() && (request.auth.uid == userId || isSuperAdmin());
     }
 
-    // DRIVER SHIFTS (HIERARCHICAL RULE)
+    // DRIVER SHIFTS (HIERARCHICAL COMMAND)
     match /driverShifts/{shiftId} {
       allow read: if isAdmin() ||
                   (signedIn() && resource.data.driverId == request.auth.uid);

@@ -63,8 +63,6 @@ export default function AdminManagementPage() {
     e.preventDefault()
     setIsSubmitting(true)
     try {
-      // NOTE: In a real app, you would create an Auth user here via Cloud Functions.
-      // For this prototype, we provision the profile record.
       const adminId = `admin_${Date.now()}`
       const adminRef = doc(db, "userProfiles", adminId)
       
@@ -79,15 +77,15 @@ export default function AdminManagementPage() {
       })
 
       toast({ 
-        title: "Provisioning Successful", 
-        description: `${newAdmin.name} has been added to the administrative registry.` 
+        title: "Provision Successful", 
+        description: `${newAdmin.name} added to administrative registry.` 
       })
       setIsDialogOpen(false)
       setNewAdmin({ name: '', email: '', zone: '' })
     } catch (error: any) {
       toast({ 
         variant: "destructive", 
-        title: "Provisioning Failed", 
+        title: "Provision Failed", 
         description: error.message 
       })
     } finally {
@@ -152,7 +150,7 @@ export default function AdminManagementPage() {
                     <div className="relative">
                       <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/20" />
                       <Input 
-                        placeholder="e.g. Sector 4 / Downtown" 
+                        placeholder="Sector ID" 
                         value={newAdmin.zone}
                         onChange={e => setNewAdmin({...newAdmin, zone: e.target.value})}
                         required
@@ -167,7 +165,7 @@ export default function AdminManagementPage() {
                     disabled={isSubmitting}
                     className="w-full bg-orange hover:bg-orange/90 text-white font-black uppercase text-xs h-12 shadow-lg"
                   >
-                    {isSubmitting ? "Processing Authorization..." : "Authorize Personnel"}
+                    {isSubmitting ? "Processing..." : "Authorize Personnel"}
                   </Button>
                 </DialogFooter>
               </form>
