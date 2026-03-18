@@ -9,7 +9,7 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Users, Star, Clock, ShieldCheck, Timer, ChevronRight, Search, Loader2 } from "lucide-react"
 import { useUser, useFirestore, useCollection, useMemoFirebase, useDoc } from "@/firebase"
-import { collection, query, orderBy, where, doc } from "firebase/firestore"
+import { collection, query, orderBy, where, doc, limit } from "firebase/firestore"
 import { cn } from "@/lib/utils"
 
 export default function DriversPage() {
