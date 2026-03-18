@@ -17,9 +17,9 @@ import {
   Loader2
 } from "lucide-react"
 import { useUser, useFirestore, useCollection, useMemoFirebase, useDoc } from "@/firebase"
-import { collection, query, orderBy, doc, updateDoc, serverTimestamp, getDoc } from "firebase/firestore"
+import { collection, query, orderBy, doc, updateDoc, serverTimestamp } from "firebase/firestore"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { useToast } from "@/hooks/use-toast"
 import { 
@@ -37,27 +37,39 @@ export default function ProfileRequestsPage() {
   const { toast } = useToast()
   
   const userProfileRef = useMemoFirebase(() => user && db ? doc(db, "userProfiles", user.uid) : null, [user, db])
-  const { data: profile } = useDoc(userProfileRef)
-  const isUserAdmin = profile?.role === "admin" || profile?.role === "super-admin"
+  const { data: profile, isLoading: isProfileLoading } = useDoc(userProfileRef)
+  
+  const role = (profile?.role || "").toLowerCase().replace(/\s+/g, '-')
+  const isUserAdmin = role === "admin" || role === "super-admin"
 
   const requestsQuery = useMemoFirebase(() => 
     (db && isUserAdmin) ? query(collection(db, "profileUpdateRequests"), orderBy("requestedAt", "desc")) : null, 
   [db, isUserAdmin])
   
-  const { data: requests, isLoading } = useCollection(requestsQuery)
+  const { data: requests, isLoading: isRequestsLoading } = useCollection(requestsQuery)
 
-  const [selectedRequest, setSelectedRequest] = useState<any>(null)
-  const [isReviewing, setIsReviewing] = useState(false)
-  const [isProcessing, setIsProcessing] = useState(false)
-
-  if (!isUserAdmin) {
+  if (isProfileLoading) {
     return (
-      <div className="h-full flex flex-col items-center justify-center space-y-4 bg-charcoal text-white">
-        <div className="w-10 h-10 border-4 border-orange/20 border-t-orange rounded-full animate-spin" />
-        <p className="text-[10px] uppercase font-black tracking-widest">Validating Clearance...</p>
+      <div className="h-full flex flex-col items-center justify-center space-y-4 bg-charcoal text-white min-h-[400px]">
+        <Loader2 className="w-10 h-10 text-orange animate-spin" />
+        <p className="text-[10px] uppercase font-black tracking-widest">Syncing Identity...</p>
       </div>
     )
   }
+
+  if (!isUserAdmin) {
+    return (
+      <div className="h-full flex flex-col items-center justify-center space-y-4 bg-charcoal text-white min-h-[400px]">
+        <ShieldAlert className="w-12 h-12 text-emergency mb-2" />
+        <h2 className="text-xl font-black uppercase text-white">Access Restricted</h2>
+        <p className="text-[10px] uppercase font-black tracking-widest text-white/40">Administrative Clearance Level Required</p>
+      </div>
+    )
+  }
+  
+  const [selectedRequest, setSelectedRequest] = useState<any>(null)
+  const [isReviewing, setIsReviewing] = useState(false)
+  const [isProcessing, setIsProcessing] = useState(false)
 
   const handleGrantAccess = async (requestId: string) => {
     if (!db) return
@@ -87,7 +99,6 @@ export default function ProfileRequestsPage() {
     if (!db || !selectedRequest) return
     setIsProcessing(true)
     try {
-      // 1. Update User Profile
       const profileRef = doc(db, "userProfiles", selectedRequest.userId)
       const updatedData = {
         ...selectedRequest.requestedChanges,
@@ -97,15 +108,11 @@ export default function ProfileRequestsPage() {
       }
       await updateDoc(profileRef, updatedData)
 
-      // 2. Update Request Status
       await updateDoc(doc(db, "profileUpdateRequests", selectedRequest.id), {
         status: "approved",
         approvedAt: serverTimestamp(),
         committedBy: profile?.name || user?.uid
       })
-
-      // 3. Optional: Create Audit Log
-      // (Implementation depends on if auditLogs collection exists and its schema)
 
       toast({
         title: "Changes Committed",
@@ -159,7 +166,7 @@ export default function ProfileRequestsPage() {
             </CardTitle>
           </CardHeader>
           <CardContent className="p-0">
-            {isLoading ? (
+            {isRequestsLoading ? (
               <div className="p-12 flex flex-col items-center justify-center space-y-4">
                 <Loader2 className="w-8 h-8 text-orange animate-spin" />
                 <p className="text-[10px] text-white/40 uppercase font-black tracking-widest">Scanning Network...</p>
@@ -229,7 +236,6 @@ export default function ProfileRequestsPage() {
         </Card>
       </div>
 
-      {/* Review Dialog */}
       <Dialog open={isReviewing} onOpenChange={setIsReviewing}>
         <DialogContent className="bg-charcoal border-white/10 text-white max-w-2xl">
           <DialogHeader>
@@ -270,7 +276,7 @@ export default function ProfileRequestsPage() {
               <div className="p-4 bg-orange/5 border border-orange/10 rounded-xl flex items-start gap-3">
                 <AlertCircle className="w-5 h-5 text-orange shrink-0 mt-0.5" />
                 <p className="text-[10px] text-white/60 font-medium leading-relaxed uppercase">
-                  Careful: Committing these changes will immediately update the live Operator Profile in the database. This action is irreversible without a new request cycle.
+                  Careful: Committing these changes will immediately update the live Operator Profile in the database. This action is irreversible.
                 </p>
               </div>
             </div>
