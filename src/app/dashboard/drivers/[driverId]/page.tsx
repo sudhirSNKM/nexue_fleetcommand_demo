@@ -1,7 +1,7 @@
 
 "use client"
 
-import React, { useState, useMemo } from "react"
+import React, { useState, useMemo, use } from "react"
 import { useRouter } from "next/navigation"
 import { motion, AnimatePresence } from "framer-motion"
 import { 
@@ -64,11 +64,11 @@ import { useToast } from "@/hooks/use-toast"
 
 interface PageProps {
   params: Promise<{ driverId: string }>
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>
 }
 
 export default function DriverProfilePage(props: PageProps) {
-  const unwrappedParams = React.use(props.params)
-  const driverId = unwrappedParams.driverId
+  const { driverId } = use(props.params)
   const router = useRouter()
   const { toast } = useToast()
   const db = useFirestore()
