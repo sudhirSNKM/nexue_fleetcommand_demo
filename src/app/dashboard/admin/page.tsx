@@ -41,11 +41,10 @@ export default function AdminOperationsCenter() {
   const profileRef = useMemoFirebase(() => user && db ? doc(db, "userProfiles", user.uid) : null, [user, db])
   const { data: profile } = useDoc(profileRef)
 
-  // Normalize role string for check
   const role = (profile?.role || "").toLowerCase().replace(/\s+/g, '-')
   const isUserAdmin = role === "admin" || role === "super-admin"
 
-  // LIVE DATA SUBSCRIPTIONS (Operational Focus) - ONLY IF ADMIN
+  // LIVE DATA SUBSCRIPTIONS
   const ridesQuery = useMemoFirebase(() => (db && isUserAdmin) ? query(collection(db, "rides"), orderBy("createdAt", "desc"), limit(20)) : null, [db, isUserAdmin])
   const { data: recentRides } = useCollection(ridesQuery)
 
@@ -73,22 +72,13 @@ export default function AdminOperationsCenter() {
   const statsSummary = useMemo(() => {
     const onlineDrivers = allDrivers?.filter(d => d.status === "Online").length || 0
     const activeTrips = activeMissions?.length || 0
-    const revenue = recentRides?.filter(r => r.status === "Paid").reduce((acc, r) => acc + (Number(r.fare) || 0), 0) || 0
-    
-    // Derived Safety Score
     const ratedDrivers = allDrivers?.filter(d => (d.rating || 0) > 0) || []
     const avgRating = ratedDrivers.length > 0 
       ? (ratedDrivers.reduce((acc, d) => acc + d.rating, 0) / ratedDrivers.length).toFixed(2)
       : "NEW"
 
-    return {
-      onlineDrivers,
-      activeTrips,
-      revenue,
-      avgRating,
-      fleetSize: allDrivers?.length || 0
-    }
-  }, [allDrivers, activeMissions, recentRides])
+    return { onlineDrivers, activeTrips, avgRating, fleetSize: allDrivers?.length || 0 }
+  }, [allDrivers, activeMissions])
 
   if (!isUserAdmin) {
     return (
@@ -101,22 +91,17 @@ export default function AdminOperationsCenter() {
     )
   }
 
+  const criticalAlerts = recentRides?.filter(r => r.status === "Cancelled" || r.status === "Rejected") || []
+
   return (
     <div className="space-y-6 pb-20">
-      {/* OPERATIONS HEADER */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h1 className="text-3xl font-black uppercase tracking-tighter flex items-center gap-3 text-white">
             Operations Command Node
             <Shield className="w-6 h-6 text-orange animate-pulse" />
           </h1>
-          <div className="flex items-center gap-4 mt-1">
-            <p className="text-[10px] text-white/60 uppercase font-bold tracking-[0.3em]">Sector Monitoring Active</p>
-            <div className="flex items-center gap-2">
-              <span className="h-1.5 w-1.5 rounded-full bg-active animate-pulse" />
-              <span className="text-[10px] font-black text-active uppercase">Live Stream</span>
-            </div>
-          </div>
+          <p className="text-[10px] text-white/60 uppercase font-bold tracking-[0.3em] mt-1">Sector Monitoring Active</p>
         </div>
         <div className="flex gap-4">
           <div className="text-right border-l border-white/10 pl-4">
@@ -126,7 +111,6 @@ export default function AdminOperationsCenter() {
         </div>
       </div>
 
-      {/* METRICS ROW */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         {[
           { label: "Active Deployments", value: statsSummary.activeTrips.toString(), trend: "Live", icon: Zap, color: "text-active" },
@@ -144,46 +128,41 @@ export default function AdminOperationsCenter() {
       </div>
 
       <div className="grid grid-cols-1 xl:grid-cols-4 gap-6">
-        {/* TACTICAL MAP CONTAINER */}
-        <div className="xl:col-span-3 min-h-[600px] border border-white/5 rounded-2xl overflow-hidden shadow-2xl relative bg-card/20">
-          <LiveMap 
-            locations={liveLocations} 
-            activeRides={activeMissions} 
-          />
-          <div className="absolute top-4 left-4 z-[1000] flex gap-2">
-            <button 
-              className="px-4 py-2 text-[10px] font-black uppercase rounded-lg border bg-orange border-orange text-white transition-all backdrop-blur-md"
-            >
+        <div className="xl:col-span-3 h-[450px] border border-white/5 rounded-2xl overflow-hidden shadow-2xl relative bg-card/20">
+          <LiveMap locations={liveLocations} activeRides={activeMissions} />
+          <div className="absolute top-4 left-4 z-[1000]">
+            <button className="px-3 py-1.5 text-[9px] font-black uppercase rounded-lg border bg-orange border-orange text-white backdrop-blur-md">
               <Signal className="w-3 h-3 mr-2 inline" /> Live Tactical Feed
             </button>
           </div>
         </div>
 
-        {/* SIDE PANELS (Operations Focus) */}
         <div className="space-y-6">
-          <Card className="glass-panel admin-card border-l-4 border-emergency">
-            <CardHeader className="p-4 bg-emergency/5 border-b border-white/5">
-              <div className="flex items-center gap-2">
-                <AlertTriangle className="w-4 h-4 text-emergency animate-pulse" />
-                <CardTitle className="text-[10px] font-black uppercase text-emergency">Critical Exceptions</CardTitle>
-              </div>
-            </CardHeader>
-            <CardContent className="p-4 space-y-3 max-h-[300px] overflow-y-auto scrollbar-hide">
-              <AnimatePresence>
-                {recentRides?.filter(r => r.status === "Cancelled" || r.status === "Rejected").slice(0, 5).map(alert => (
-                  <motion.div 
-                    initial={{ opacity: 0, x: 20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    key={alert.id} 
-                    className="p-3 bg-emergency/10 rounded border border-emergency/20"
-                  >
-                    <p className="text-[10px] font-bold uppercase text-white">Status Breach: {alert.id.substring(0,6)}</p>
-                    <p className="text-[8px] text-white/60 mt-1 uppercase">Unit Rejected Broadcast at Sector {Math.floor(Math.random() * 20)}</p>
-                  </motion.div>
-                ))}
-              </AnimatePresence>
-            </CardContent>
-          </Card>
+          {criticalAlerts.length > 0 && (
+            <Card className="glass-panel admin-card border-l-4 border-emergency">
+              <CardHeader className="p-4 bg-emergency/5 border-b border-white/5">
+                <div className="flex items-center gap-2">
+                  <AlertTriangle className="w-4 h-4 text-emergency animate-pulse" />
+                  <CardTitle className="text-[10px] font-black uppercase text-emergency">Critical Exceptions</CardTitle>
+                </div>
+              </CardHeader>
+              <CardContent className="p-4 space-y-3 max-h-[250px] overflow-y-auto scrollbar-hide">
+                <AnimatePresence>
+                  {criticalAlerts.slice(0, 5).map(alert => (
+                    <motion.div 
+                      initial={{ opacity: 0, x: 20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      key={alert.id} 
+                      className="p-3 bg-emergency/10 rounded border border-emergency/20"
+                    >
+                      <p className="text-[10px] font-bold uppercase text-white">Status Breach: {alert.id.substring(0,6)}</p>
+                      <p className="text-[8px] text-white/60 mt-1 uppercase">Unit {alert.status} at {alert.pickup?.address || 'Unknown Sector'}</p>
+                    </motion.div>
+                  ))}
+                </AnimatePresence>
+              </CardContent>
+            </Card>
+          )}
 
           <Card className="glass-panel admin-card border-l-4 border-orange">
             <CardHeader className="p-4 bg-orange/5 border-b border-white/5 flex items-center justify-between">
@@ -221,7 +200,7 @@ export default function AdminOperationsCenter() {
                 <CardTitle className="text-[10px] font-black uppercase text-white">Live Shift Pulse</CardTitle>
               </div>
             </CardHeader>
-            <CardContent className="p-0 max-h-[400px] overflow-y-auto scrollbar-hide">
+            <CardContent className="p-0 max-h-[300px] overflow-y-auto scrollbar-hide">
               <div className="divide-y divide-white/5">
                 {recentShifts?.map(shift => (
                   <div key={shift.id} className="p-4 hover:bg-white/5 transition-colors flex items-center justify-between group">

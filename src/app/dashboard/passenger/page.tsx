@@ -1,4 +1,3 @@
-
 "use client"
 
 import React, { useState, useMemo, useEffect } from "react"
@@ -362,6 +361,12 @@ export default function PassengerApp() {
                              {(driverProfile.rating || 0) > 0 ? driverProfile.rating.toFixed(1) : 'NEW'} Rating
                            </span>
                          </div>
+                         {/* Revealed Comms Link */}
+                         {["Accepted", "Arrived", "InProgress"].includes(currentRide.status) && (
+                           <div className="mt-2 text-[10px] font-bold text-orange uppercase tracking-widest">
+                             Contact: {driverProfile.phone}
+                           </div>
+                         )}
                        </div>
                      </div>
                    ) : (
@@ -374,8 +379,10 @@ export default function PassengerApp() {
                    )}
                 </div>
                 <div className="grid grid-cols-2 gap-3">
-                  <Button className="bg-slate-900 hover:bg-slate-800 text-white text-[10px] uppercase font-black h-11 shadow-md border-none">
-                    <Phone className="w-4 h-4 mr-2 text-orange" /> Comms Link
+                  <Button asChild className="bg-slate-900 hover:bg-slate-800 text-white text-[10px] uppercase font-black h-11 shadow-md border-none">
+                    <a href={driverProfile?.phone ? `tel:${driverProfile.phone}` : '#'}>
+                      <Phone className="w-4 h-4 mr-2 text-orange" /> Comms Link
+                    </a>
                   </Button>
                   <Button className="bg-red-600 hover:bg-red-700 text-white text-[10px] uppercase font-black h-11 shadow-md border-none">
                     <ShieldAlert className="w-4 h-4 mr-2" /> SOS Signal

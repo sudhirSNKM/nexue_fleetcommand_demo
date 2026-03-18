@@ -31,14 +31,12 @@ export default function DutyManagementPage() {
   const { data: profile } = useDoc(userProfileRef)
   const isAdmin = profile?.role === "admin" || profile?.role === "super-admin"
 
-  // ADMIN VIEW: ALL ACTIVE SHIFTS
   const adminShiftsQuery = useMemoFirebase(() => {
     if (!isAdmin) return null
     return query(collection(db, "driverShifts"), orderBy("punchInTime", "desc"), limit(50))
   }, [db, isAdmin])
   const { data: allShifts, isLoading: shiftsLoading } = useCollection(adminShiftsQuery)
 
-  // DRIVER VIEW: OWN ACTIVE SHIFT
   const driverShiftsQuery = useMemoFirebase(() => {
     if (isAdmin || !user) return null
     return query(collection(db, "driverShifts"), where("driverId", "==", user.uid), where("status", "==", "Active"))
@@ -47,9 +45,7 @@ export default function DutyManagementPage() {
 
   const activeShift = driverShifts?.[0]
 
-  // MIDNIGHT REFRESH & AUTO-SHIFT LOGIC
   useEffect(() => {
-    // 1. Automatic 12:00 AM Page Reload
     const now = new Date()
     const midnight = new Date()
     midnight.setHours(24, 0, 0, 0)
@@ -59,7 +55,6 @@ export default function DutyManagementPage() {
       window.location.reload()
     }, timeToMidnight)
 
-    // 2. Automatic Shift Activation for Online Drivers
     if (!isAdmin && user && db && !activeShift && profile?.status === "Online") {
       const todayDate = new Date().toISOString().split('T')[0]
       const initializeAutoShift = async () => {
@@ -97,14 +92,9 @@ export default function DutyManagementPage() {
           <div className="flex gap-4">
             <div className="relative group">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40 group-focus-within:text-orange transition-colors" />
-              <input 
-                placeholder="Search Operator ID..." 
-                className="bg-navy/40 border border-white/10 rounded-xl pl-10 pr-4 py-2.5 text-xs text-white focus:outline-none focus:ring-1 focus:ring-orange/50 transition-all w-64"
-              />
+              <input placeholder="Search Operator ID..." className="bg-navy/40 border border-white/10 rounded-xl pl-10 pr-4 py-2.5 text-xs text-white focus:outline-none focus:ring-1 focus:ring-orange/50 transition-all w-64" />
             </div>
-            <Button variant="outline" className="border-white/10 text-white font-black uppercase text-[10px] h-11 px-6 hover:bg-white/5">
-              <Filter className="w-4 h-4 mr-2" /> Filter Active
-            </Button>
+            <Button variant="outline" className="border-white/10 text-white font-black uppercase text-[10px] h-11 px-6 hover:bg-white/5"><Filter className="w-4 h-4 mr-2" /> Filter Active</Button>
           </div>
         </div>
 
@@ -125,50 +115,15 @@ export default function DutyManagementPage() {
         <Card className="glass-panel border-none shadow-2xl overflow-hidden">
           <CardContent className="p-0 overflow-x-auto">
             <table className="w-full text-left">
-              <thead>
-                <tr className="bg-navy/30 text-white/40 uppercase font-black tracking-widest text-[10px]">
-                  <th className="p-4 border-r border-white/5">Operator ID</th>
-                  <th className="p-4 border-r border-white/5">Shift Start</th>
-                  <th className="p-4 border-r border-white/5">Shift End</th>
-                  <th className="p-4 border-r border-white/5">Status</th>
-                  <th className="p-4">Actions</th>
-                </tr>
-              </thead>
+              <thead><tr className="bg-navy/30 text-white/40 uppercase font-black tracking-widest text-[10px]"><th className="p-4 border-r border-white/5">Operator ID</th><th className="p-4 border-r border-white/5">Shift Start</th><th className="p-4 border-r border-white/5">Shift End</th><th className="p-4 border-r border-white/5">Status</th><th className="p-4">Actions</th></tr></thead>
               <tbody className="divide-y divide-white/5 text-white font-bold uppercase text-[10px]">
-                {shiftsLoading ? (
-                  [1, 2, 3, 4, 5].map(i => (
-                    <tr key={i} className="animate-pulse">
-                      <td colSpan={5} className="p-4"><div className="h-4 bg-white/5 rounded w-full" /></td>
-                    </tr>
-                  ))
-                ) : allShifts?.map((shift) => (
+                {allShifts?.map((shift) => (
                   <tr key={shift.id} className="hover:bg-white/5 transition-colors">
                     <td className="p-4 font-mono text-orange">{shift.driverId.substring(0, 12)}...</td>
-                    <td className="p-4 font-mono text-white/60">
-                      {shift.punchInTime?.toDate?.()?.toLocaleString() || "N/A"}
-                    </td>
-                    <td className="p-4 font-mono text-white/60">
-                      {shift.punchOutTime?.toDate?.()?.toLocaleString() || "PENDING"}
-                    </td>
-                    <td className="p-4">
-                      <Badge className={cn(
-                        "text-[8px] font-black uppercase px-2 py-0.5",
-                        shift.status === 'Active' ? "bg-active/10 text-active border-active/20" : "bg-white/5 text-white/40"
-                      )}>
-                        {shift.status}
-                      </Badge>
-                    </td>
-                    <td className="p-4">
-                      {shift.status === 'Active' && (
-                        <Button 
-                          size="sm" 
-                          onClick={() => handleEndShift(shift.id)}
-                          className="bg-emergency/10 border border-emergency/20 text-emergency font-black uppercase text-[8px] h-7 hover:bg-emergency hover:text-white"
-                        >
-                          Manual End
-                        </Button>
-                      )}
-                    </td>
+                    <td className="p-4 font-mono text-white/60">{shift.punchInTime?.toDate?.()?.toLocaleString() || "N/A"}</td>
+                    <td className="p-4 font-mono text-white/60">{shift.punchOutTime?.toDate?.()?.toLocaleString() || "PENDING"}</td>
+                    <td className="p-4"><Badge className={cn("text-[8px] font-black uppercase px-2 py-0.5", shift.status === 'Active' ? "bg-active/10 text-active border-active/20" : "bg-white/5 text-white/40")}>{shift.status}</Badge></td>
+                    <td className="p-4">{shift.status === 'Active' && <Button size="sm" onClick={() => handleEndShift(shift.id)} className="bg-emergency/10 border border-emergency/20 text-emergency font-black uppercase text-[8px] h-7 hover:bg-emergency hover:text-white">Manual End</Button>}</td>
                   </tr>
                 ))}
               </tbody>
@@ -182,37 +137,15 @@ export default function DutyManagementPage() {
   return (
     <div className="space-y-6 max-w-2xl mx-auto">
       <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-black uppercase tracking-tighter">Duty Terminal</h1>
-          <p className="text-xs text-muted-foreground font-bold uppercase tracking-widest">Active Operator Protocol</p>
-        </div>
-        {activeShift && (
-          <Badge className="bg-active/20 text-active border-active animate-pulse">ON-DUTY</Badge>
-        )}
+        <div><h1 className="text-2xl font-black uppercase tracking-tighter">Duty Terminal</h1><p className="text-xs text-muted-foreground font-bold uppercase tracking-widest">Active Operator Protocol</p></div>
+        {activeShift && <Badge className="bg-active/20 text-active border-active animate-pulse">ON-DUTY</Badge>}
       </div>
-
       {!activeShift ? (
         <Card className="glass-panel border-dashed border-navy/50 p-12 text-center">
-          <div className="w-20 h-20 bg-navy/20 rounded-full flex items-center justify-center mx-auto mb-6">
-            <Play className="w-10 h-10 text-orange" />
-          </div>
+          <div className="w-20 h-20 bg-navy/20 rounded-full flex items-center justify-center mx-auto mb-6"><Play className="w-10 h-10 text-orange" /></div>
           <h2 className="text-xl font-black uppercase mb-2">Initialize Shift</h2>
           <p className="text-sm text-muted-foreground mb-8">System standby. Ready to begin tactical operations.</p>
-          <Button 
-            onClick={() => {
-              if (!user) return
-              const newShift = {
-                driverId: user.uid,
-                punchInTime: serverTimestamp(),
-                status: "Active",
-                shiftDate: new Date().toISOString().split('T')[0]
-              }
-              addDoc(collection(db, "driverShifts"), newShift)
-            }}
-            className="w-full bg-orange hover:bg-orange/90 h-14 font-black uppercase tracking-widest"
-          >
-            Punch In to Duty
-          </Button>
+          <Button onClick={() => addDoc(collection(db, "driverShifts"), { driverId: user?.uid, punchInTime: serverTimestamp(), status: "Active", shiftDate: new Date().toISOString().split('T')[0] })} className="w-full bg-orange hover:bg-orange/90 h-14 font-black uppercase tracking-widest">Punch In to Duty</Button>
         </Card>
       ) : (
         <div className="space-y-6">
@@ -220,13 +153,7 @@ export default function DutyManagementPage() {
              <Timer className="w-12 h-12 text-orange mx-auto mb-4 animate-pulse" />
              <h2 className="text-xl font-black uppercase">Shift Operational</h2>
              <p className="text-sm text-muted-foreground mb-8">Operator tracking active. Scanning for missions.</p>
-             <Button 
-               onClick={() => handleEndShift(activeShift.id)}
-               variant="destructive" 
-               className="w-full h-14 font-black uppercase"
-             >
-               End Full Shift
-             </Button>
+             <Button onClick={() => handleEndShift(activeShift.id)} variant="destructive" className="w-full h-14 font-black uppercase">End Full Shift</Button>
           </Card>
         </div>
       )}
