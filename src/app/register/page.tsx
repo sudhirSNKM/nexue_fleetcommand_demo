@@ -43,7 +43,7 @@ export default function RegisterPage() {
         role, 
         status: role === "driver" ? "pending" : "Active",
         walletBalance: role === "passenger" ? 500 : 0,
-        rating: 0, // Initialize with 0 to trigger "NEW" status instead of default 5
+        rating: 0, // Initialize with 0 to trigger "NEW" status
         createdAt: serverTimestamp(),
       }
 
