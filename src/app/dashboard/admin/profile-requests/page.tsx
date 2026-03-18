@@ -19,7 +19,7 @@ import {
   FileSearch
 } from "lucide-react"
 import { useUser, useFirestore, useCollection, useMemoFirebase, useDoc } from "@/firebase"
-import { collection, query, orderBy, doc, updateDoc, serverTimestamp } from "firebase/firestore"
+import { collection, query, orderBy, doc, updateDoc, serverTimestamp, where } from "firebase/firestore"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -38,7 +38,6 @@ export default function ProfileRequestsPage() {
   const { user } = useUser()
   const { toast } = useToast()
   
-  // Hooks must always be at the top level
   const [selectedRequest, setSelectedRequest] = useState<any>(null)
   const [isReviewing, setIsReviewing] = useState(false)
   const [isProcessing, setIsProcessing] = useState(false)
