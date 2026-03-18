@@ -2,7 +2,7 @@
 
 import React, { useState } from "react"
 import { motion, AnimatePresence, useMotionValue, useTransform } from "framer-motion"
-import { Navigation, Power, AlertCircle, Phone, Star, TrendingUp, QrCode, Banknote, CheckCircle2, ArrowRight, X } from "lucide-react"
+import { Navigation, Power, AlertCircle, Phone, Star, TrendingUp, QrCode, Banknote, CheckCircle2, ArrowRight, X, User } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -34,6 +34,12 @@ export default function DriverApp() {
 
   const activeQuery = useMemoFirebase(() => user && db ? query(collection(db, "rides"), where("driverId", "==", user.uid), where("status", "in", ["Accepted", "Arrived", "InProgress", "Completed"])) : null, [user, db])
   const { data: activeRides } = useCollection(activeQuery)
+
+  const activeRide = activeRides?.[0]
+
+  // Fetch Passenger Profile for Active Ride
+  const passengerRef = useMemoFirebase(() => activeRide?.passengerId && db ? doc(db, "userProfiles", activeRide.passengerId) : null, [activeRide?.passengerId, db])
+  const { data: passengerProfile } = useDoc(passengerRef)
 
   const handleToggleOnline = () => {
     if (!profileRef) return
@@ -87,7 +93,6 @@ export default function DriverApp() {
     })
   }
 
-  const activeRide = activeRides?.[0]
   const mockChartData = [
     { hour: '08:00', val: 120 }, { hour: '10:00', val: 450 }, { hour: '12:00', val: 320 }, 
     { hour: '14:00', val: 680 }, { hour: '16:00', val: 150 }, { hour: '18:00', val: 540 }
@@ -121,6 +126,26 @@ export default function DriverApp() {
                     </div>
                     <p className="text-lg font-black text-slate-900">₹{activeRide.fare}</p>
                   </div>
+
+                  {/* Passenger Comms Link */}
+                  {passengerProfile && (activeRide.status === "Accepted" || activeRide.status === "Arrived" || activeRide.status === "InProgress") && (
+                    <div className="p-4 bg-slate-50 rounded-xl border border-slate-100 flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-full bg-navy/10 flex items-center justify-center">
+                          <User className="w-5 h-5 text-navy" />
+                        </div>
+                        <div>
+                          <p className="text-[10px] font-black uppercase text-slate-400">Client Contact</p>
+                          <p className="text-xs font-black text-slate-900 uppercase">{passengerProfile.name}</p>
+                        </div>
+                      </div>
+                      <Button asChild size="icon" className="rounded-full bg-active hover:bg-active/90 shadow-lg border-none">
+                        <a href={`tel:${passengerProfile.phone}`}>
+                          <Phone className="w-4 h-4 text-white" />
+                        </a>
+                      </Button>
+                    </div>
+                  )}
 
                   {activeRide.status === "Accepted" && (
                     <Button onClick={() => handleUpdateStatus(activeRide.id, "Arrived")} className="w-full bg-orange text-white h-12 font-black uppercase text-xs shadow-lg border-none">Arrived at Origin</Button>
