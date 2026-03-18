@@ -34,6 +34,7 @@ import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { 
+  useUser,
   useFirestore, 
   useDoc, 
   useCollection, 
@@ -65,27 +66,31 @@ export default function DriverProfilePage() {
   const driverId = params.driverId as string
 
   const [activeTimeframe, setActiveTimeframe] = useState("today")
+  const { user: currentUser } = useUser()
+  const currentUserRef = useMemoFirebase(() => currentUser && db ? doc(db, "userProfiles", currentUser.uid) : null, [currentUser, db])
+  const { data: currentProfile } = useDoc(currentUserRef)
+  const isUserAdmin = currentProfile?.role === "admin" || currentProfile?.role === "super-admin"
 
   // FETCH DRIVER PROFILE
-  const profileRef = useMemoFirebase(() => db ? doc(db, "userProfiles", driverId) : null, [db, driverId])
+  const profileRef = useMemoFirebase(() => (db && isUserAdmin) ? doc(db, "userProfiles", driverId) : null, [db, driverId, isUserAdmin])
   const { data: driver, isLoading: isProfileLoading } = useDoc(profileRef)
 
   // FETCH RIDE HISTORY
-  const ridesQuery = useMemoFirebase(() => db ? query(
+  const ridesQuery = useMemoFirebase(() => (db && isUserAdmin) ? query(
     collection(db, "rides"), 
     where("driverId", "==", driverId),
     orderBy("createdAt", "desc"),
     limit(50)
-  ) : null, [db, driverId])
+  ) : null, [db, driverId, isUserAdmin])
   const { data: rides } = useCollection(ridesQuery)
 
   // FETCH SHIFT LOGS
-  const shiftsQuery = useMemoFirebase(() => db ? query(
+  const shiftsQuery = useMemoFirebase(() => (db && isUserAdmin) ? query(
     collection(db, "driverShifts"),
     where("driverId", "==", driverId),
     orderBy("punchInTime", "desc"),
     limit(10)
-  ) : null, [db, driverId])
+  ) : null, [db, driverId, isUserAdmin])
   const { data: shifts } = useCollection(shiftsQuery)
 
   // MOCK CHART DATA
@@ -128,9 +133,10 @@ export default function DriverProfilePage() {
     }
   }
 
-  if (isProfileLoading) return (
-    <div className="h-screen w-screen flex items-center justify-center bg-charcoal">
+  if (!isUserAdmin || isProfileLoading) return (
+    <div className="h-screen w-screen flex items-center justify-center bg-charcoal text-white">
       <div className="w-10 h-10 border-4 border-orange/20 border-t-orange rounded-full animate-spin" />
+      {!isUserAdmin && <p className="ml-4 text-[10px] uppercase font-black tracking-widest">Validating clearance...</p>}
     </div>
   )
 

@@ -1,3 +1,4 @@
+
 rules_version = '2';
 
 service cloud.firestore {
@@ -16,6 +17,7 @@ service cloud.firestore {
     }
 
     function getRole() {
+      // Safely fetch role, defaulting to passenger if profile missing
       return hasProfile() ? getProfile().data.role : "passenger";
     }
 
@@ -24,6 +26,7 @@ service cloud.firestore {
     }
 
     function isAdmin() {
+      // Match both admin and super-admin for hierarchical access
       return signedIn() && (getRole() == "admin" || getRole() == "super-admin");
     }
 
@@ -33,17 +36,17 @@ service cloud.firestore {
       allow write: if signedIn() && (request.auth.uid == userId || isSuperAdmin());
     }
 
-    // DRIVER SHIFTS (HIERARCHICAL COMMAND)
+    // DRIVER SHIFTS
     match /driverShifts/{shiftId} {
-      allow read: if isAdmin() ||
-                  (signedIn() && resource.data.driverId == request.auth.uid);
+      allow read: if isAdmin() || (signedIn() && (!resource || resource.data.driverId == request.auth.uid));
+      allow write: if isAdmin() || (signedIn() && (!resource || resource.data.driverId == request.auth.uid));
+    }
 
-      allow create: if isAdmin() ||
-                    (signedIn() && request.resource.data.driverId == request.auth.uid);
-
-      allow update: if isAdmin() ||
-                    (signedIn() && resource.data.driverId == request.auth.uid);
-
+    // PROFILE UPDATE REQUESTS
+    match /profileUpdateRequests/{requestId} {
+      allow read: if isAdmin() || (signedIn() && (!resource || resource.data.userId == request.auth.uid));
+      allow create: if signedIn() && request.resource.data.userId == request.auth.uid;
+      allow update: if isAdmin() || (signedIn() && resource.data.userId == request.auth.uid && request.resource.data.status != 'approved');
       allow delete: if isAdmin();
     }
 
@@ -74,6 +77,7 @@ service cloud.firestore {
 
     // DRIVER STATS
     match /driverStats/{statsId} {
+      // statsId is structured as {driverId}_{date}
       allow read: if isAdmin() || (signedIn() && statsId.split('_')[0] == request.auth.uid);
       allow write: if isAdmin() || (signedIn() && statsId.split('_')[0] == request.auth.uid);
     }

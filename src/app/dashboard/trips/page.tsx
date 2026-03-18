@@ -18,20 +18,34 @@ import {
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { useFirestore, useCollection, useMemoFirebase } from "@/firebase"
-import { collection, query, orderBy, limit } from "firebase/firestore"
+import { useUser, useFirestore, useCollection, useMemoFirebase, useDoc } from "@/firebase"
+import { collection, query, orderBy, limit, doc } from "firebase/firestore"
 import { cn } from "@/lib/utils"
 
 export default function TripsManagementPage() {
+  const { user } = useUser()
   const db = useFirestore()
   
-  const ridesQuery = useMemoFirebase(() => query(
+  const userProfileRef = useMemoFirebase(() => user && db ? doc(db, "userProfiles", user.uid) : null, [user, db])
+  const { data: profile } = useDoc(userProfileRef)
+  const isUserAdmin = profile?.role === "admin" || profile?.role === "super-admin"
+
+  const ridesQuery = useMemoFirebase(() => (db && isUserAdmin) ? query(
     collection(db, "rides"), 
     orderBy("createdAt", "desc"),
     limit(50)
-  ), [db])
+  ) : null, [db, isUserAdmin])
 
   const { data: rides, isLoading } = useCollection(ridesQuery)
+
+  if (!isUserAdmin) {
+    return (
+      <div className="h-full flex flex-col items-center justify-center space-y-4 bg-charcoal text-white">
+        <div className="w-10 h-10 border-4 border-orange/20 border-t-orange rounded-full animate-spin" />
+        <p className="text-[10px] uppercase font-black tracking-widest">Validating Clearance...</p>
+      </div>
+    )
+  }
 
   const getStatusIcon = (status: string) => {
     switch (status) {

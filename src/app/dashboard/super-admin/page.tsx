@@ -45,17 +45,17 @@ export default function SuperAdminDashboard() {
   const role = (profile?.role || "").toLowerCase().replace(/\s+/g, '-')
   const isSuperAdmin = role === "super-admin"
 
-  // Platform Metrics Queries (Live Listeners)
-  const driversQuery = useMemoFirebase(() => db ? query(collection(db, "userProfiles"), where("role", "==", "driver")) : null, [db])
+  // Platform Metrics Queries (Live Listeners) - RESTRICTED TO SUPER ADMIN
+  const driversQuery = useMemoFirebase(() => (db && isSuperAdmin) ? query(collection(db, "userProfiles"), where("role", "==", "driver")) : null, [db, isSuperAdmin])
   const { data: allDrivers } = useCollection(driversQuery)
 
-  const ridesQuery = useMemoFirebase(() => db ? query(collection(db, "rides"), orderBy("createdAt", "desc"), limit(50)) : null, [db])
+  const ridesQuery = useMemoFirebase(() => (db && isSuperAdmin) ? query(collection(db, "rides"), orderBy("createdAt", "desc"), limit(50)) : null, [db, isSuperAdmin])
   const { data: rides } = useCollection(ridesQuery)
 
-  const activeRidesQuery = useMemoFirebase(() => db ? query(collection(db, "rides"), where("status", "in", ["Requested", "Accepted", "Arrived", "InProgress"])) : null, [db])
+  const activeRidesQuery = useMemoFirebase(() => (db && isSuperAdmin) ? query(collection(db, "rides"), where("status", "in", ["Requested", "Accepted", "Arrived", "InProgress"])) : null, [db, isSuperAdmin])
   const { data: activeMissions } = useCollection(activeRidesQuery)
 
-  const locationsQuery = useMemoFirebase(() => db ? collection(db, "driverLocations") : null, [db])
+  const locationsQuery = useMemoFirebase(() => (db && isSuperAdmin) ? collection(db, "driverLocations") : null, [db, isSuperAdmin])
   const { data: liveLocations } = useCollection(locationsQuery)
 
   const stats = useMemo(() => {

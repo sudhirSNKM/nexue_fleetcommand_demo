@@ -20,22 +20,36 @@ import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { useFirestore, useCollection, useMemoFirebase, updateDocumentNonBlocking } from "@/firebase"
+import { useUser, useFirestore, useCollection, useMemoFirebase, updateDocumentNonBlocking, useDoc } from "@/firebase"
 import { collection, query, where, doc, limit } from "firebase/firestore"
 import { cn } from "@/lib/utils"
 import { useToast } from "@/hooks/use-toast"
 
 export default function PassengersListPage() {
+  const { user } = useUser()
   const db = useFirestore()
   const { toast } = useToast()
   
-  const passengersQuery = useMemoFirebase(() => query(
+  const userProfileRef = useMemoFirebase(() => user && db ? doc(db, "userProfiles", user.uid) : null, [user, db])
+  const { data: profile } = useDoc(userProfileRef)
+  const isUserAdmin = profile?.role === "admin" || profile?.role === "super-admin"
+
+  const passengersQuery = useMemoFirebase(() => (db && isUserAdmin) ? query(
     collection(db, "userProfiles"), 
     where("role", "==", "passenger"),
     limit(50)
-  ), [db])
+  ) : null, [db, isUserAdmin])
 
   const { data: passengers, isLoading } = useCollection(passengersQuery)
+
+  if (!isUserAdmin) {
+    return (
+      <div className="h-full flex flex-col items-center justify-center space-y-4 bg-charcoal text-white">
+        <div className="w-10 h-10 border-4 border-orange/20 border-t-orange rounded-full animate-spin" />
+        <p className="text-[10px] uppercase font-black tracking-widest">Validating Clearance...</p>
+      </div>
+    )
+  }
 
   const handleStatusToggle = (passengerId: string, currentStatus: string) => {
     const newStatus = currentStatus === 'Active' ? 'Suspended' : 'Active'
