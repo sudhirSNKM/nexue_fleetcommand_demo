@@ -17,11 +17,25 @@ service cloud.firestore {
     }
 
     function getRole() {
+<<<<<<< HEAD
+      return get(/databases/$(database)/documents/userProfiles/$(request.auth.uid)).data.role;
+    }
+
+    function isAdmin() {
+      // Direct role validation from centralized identity document
+      return signedIn() && (
+        getRole() == "admin" || 
+        getRole() == "super-admin" || 
+        getRole() == "Admin" || 
+        getRole() == "Super Admin"
+      );
+=======
       return hasProfile() ? getProfile().data.role : "passenger";
     }
 
     function isAdmin() {
       return signedIn() && (getRole() == "admin" || getRole() == "super-admin");
+>>>>>>> 8d91e898ebbe712e1716a0f7cc35b84fa1454ac6
     }
 
     // USER PROFILES
