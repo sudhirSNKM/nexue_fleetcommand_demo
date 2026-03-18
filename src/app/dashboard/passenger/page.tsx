@@ -48,6 +48,8 @@ export default function PassengerApp() {
   const [feedback, setFeedback] = useState("")
   const [reviewedRideId, setReviewedRideId] = useState<string | null>(null)
   const [isSubmittingReview, setIsSubmittingReview] = useState(false)
+  const [pickupPhone, setPickupPhone] = useState("")
+  const [dropoffPhone, setDropoffPhone] = useState("")
   
   const hasLocations = pickup.trim().length > 2 && dropoff.trim().length > 2
   const mockDistance = useMemo(() => hasLocations ? Math.floor(Math.random() * 8) + 2 : 0, [hasLocations, pickup, dropoff])
@@ -143,7 +145,7 @@ export default function PassengerApp() {
 
   const handleBookRide = async () => {
     if (!user || !db) return
-    addDoc(collection(db, "rides"), {
+    const ridePayload: any = {
       passengerId: user.uid,
       serviceType: activeService,
       vehicleType: selectedVehicle,
@@ -153,7 +155,14 @@ export default function PassengerApp() {
       distance: mockDistance,
       fare: currentFare,
       createdAt: serverTimestamp()
-    })
+    }
+
+    if (activeService === 'Parcel') {
+      ridePayload.pickupPhone = pickupPhone
+      ridePayload.dropoffPhone = dropoffPhone
+    }
+
+    addDoc(collection(db, "rides"), ridePayload)
     setReviewedRideId(null)
     setRating(0)
     setFeedback("")
@@ -216,9 +225,11 @@ export default function PassengerApp() {
   }
 
   const handleResetTerminal = (rideId?: string) => {
-    if (rideId) setReviewedRideId(rideId)
+    setReviewedRideId(rideId)
     setPickup("")
     setDropoff("")
+    setPickupPhone("")
+    setDropoffPhone("")
     setRating(0)
     setFeedback("")
     setActiveService('Ride')
@@ -288,6 +299,37 @@ export default function PassengerApp() {
                       />
                     </div>
                   </div>
+
+                  {activeService === 'Parcel' && (
+                    <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} className="space-y-3 pt-1">
+                      <div className="grid grid-cols-2 gap-3">
+                        <div>
+                          <label className="text-[9px] font-black text-slate-400 uppercase ml-1 mb-1 block tracking-widest">Picker Number</label>
+                          <div className="relative">
+                            <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-orange" />
+                            <Input 
+                              placeholder="Sender Contact" 
+                              value={pickupPhone} 
+                              onChange={e => setPickupPhone(e.target.value)} 
+                              className="pl-9 bg-slate-50 border-slate-200 text-slate-900 font-bold h-10 text-[11px] focus:ring-orange/50" 
+                            />
+                          </div>
+                        </div>
+                        <div>
+                          <label className="text-[9px] font-black text-slate-400 uppercase ml-1 mb-1 block tracking-widest">Drop Point</label>
+                          <div className="relative">
+                            <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-orange" />
+                            <Input 
+                              placeholder="Receiver Contact" 
+                              value={dropoffPhone} 
+                              onChange={e => setDropoffPhone(e.target.value)} 
+                              className="pl-9 bg-slate-50 border-slate-200 text-slate-900 font-bold h-10 text-[11px] focus:ring-orange/50" 
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    </motion.div>
+                  )}
                 </div>
 
                 <AnimatePresence>
