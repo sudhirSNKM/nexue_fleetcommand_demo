@@ -16,7 +16,7 @@ import {
   Eye,
   Loader2
 } from "lucide-react"
-import { useFirestore, useCollection, useMemoFirebase } from "@/firebase"
+import { useUser, useFirestore, useCollection, useMemoFirebase, useDoc } from "@/firebase"
 import { collection, query, orderBy, doc, updateDoc, serverTimestamp, getDoc } from "firebase/firestore"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
@@ -33,13 +33,27 @@ import {
 
 export default function ProfileRequestsPage() {
   const db = useFirestore()
+  const { user } = useUser()
   const { toast } = useToast()
   
+  const userProfileRef = useMemoFirebase(() => user && db ? doc(db, "userProfiles", user.uid) : null, [user, db])
+  const { data: profile } = useDoc(userProfileRef)
+  const isUserAdmin = profile?.role === "admin" || profile?.role === "super-admin"
+
   const requestsQuery = useMemoFirebase(() => 
-    db ? query(collection(db, "profileUpdateRequests"), orderBy("requestedAt", "desc")) : null, 
-  [db])
+    (db && isUserAdmin) ? query(collection(db, "profileUpdateRequests"), orderBy("requestedAt", "desc")) : null, 
+  [db, isUserAdmin])
   
   const { data: requests, isLoading } = useCollection(requestsQuery)
+
+  if (!isUserAdmin) {
+    return (
+      <div className="h-full flex flex-col items-center justify-center space-y-4 bg-charcoal text-white">
+        <div className="w-10 h-10 border-4 border-orange/20 border-t-orange rounded-full animate-spin" />
+        <p className="text-[10px] uppercase font-black tracking-widest">Validating Clearance...</p>
+      </div>
+    )
+  }
   
   const [selectedRequest, setSelectedRequest] = useState<any>(null)
   const [isReviewing, setIsReviewing] = useState(false)
