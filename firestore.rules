@@ -30,12 +30,12 @@ service cloud.firestore {
       allow write: if signedIn();
     }
 
-    // DRIVER SHIFTS - Permissive Debug Rule for Visibility
+    // DRIVER SHIFTS - Permissive Debug Rule
     match /driverShifts/{shiftId} {
       allow read, write: if signedIn();
     }
 
-    // PROFILE UPDATE REQUESTS - Permissive Debug Rule for Visibility
+    // PROFILE UPDATE REQUESTS - Permissive Debug Rule
     match /profileUpdateRequests/{requestId} {
       allow read, write: if signedIn();
     }

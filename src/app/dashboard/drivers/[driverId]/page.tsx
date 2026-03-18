@@ -168,12 +168,7 @@ export default function DriverProfilePage(props: PageProps) {
     <div className="space-y-8 pb-20">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div className="flex items-center gap-4">
-          <Button 
-            variant="ghost" 
-            size="icon" 
-            onClick={() => router.back()}
-            className="text-white hover:bg-white/5"
-          >
+          <Button variant="ghost" size="icon" onClick={() => router.back()} className="text-white hover:bg-white/5">
             <ArrowLeft className="w-6 h-6" />
           </Button>
           <div>
@@ -214,9 +209,7 @@ export default function DriverProfilePage(props: PageProps) {
               <h2 className="text-xl font-black text-white uppercase">{driver.name}</h2>
               <p className="text-[10px] text-orange font-black uppercase tracking-widest mt-1">{driver.vehicleType || 'Scout'}</p>
               
-              {isPending && (
-                <Badge className="mt-4 bg-orange text-white font-black uppercase text-[8px] animate-pulse">Awaiting Verification</Badge>
-              )}
+              {isPending && <Badge className="mt-4 bg-orange text-white font-black uppercase text-[8px] animate-pulse">Awaiting Verification</Badge>}
 
               <div className="flex justify-center gap-4 mt-6">
                 <div className="text-center">
@@ -228,60 +221,30 @@ export default function DriverProfilePage(props: PageProps) {
                 </div>
                 <div className="text-center">
                   <p className="text-[9px] font-black text-white/30 uppercase">Status</p>
-                  <Badge className={cn(
-                    "text-[8px] font-black uppercase",
-                    driver.status === 'Online' ? 'bg-active/10 text-active' : 
-                    isPending ? 'bg-orange/10 text-orange' : 'bg-white/5 text-white/40'
-                  )}>
+                  <Badge className={cn("text-[8px] font-black uppercase", driver.status === 'Online' ? 'bg-active/10 text-active' : isPending ? 'bg-orange/10 text-orange' : 'bg-white/5 text-white/40')}>
                     {driver.status || 'Offline'}
                   </Badge>
                 </div>
               </div>
 
               <div className="mt-8 space-y-4 text-left border-t border-white/5 pt-6">
-                <div className="flex items-center gap-3 text-white/60">
-                  <Phone className="w-4 h-4 text-orange" />
-                  <span className="text-xs font-bold">{driver.phone || 'Contact Unknown'}</span>
-                </div>
-                <div className="flex items-center gap-3 text-white/60">
-                  <Mail className="w-4 h-4 text-orange" />
-                  <span className="text-xs font-bold truncate">{driver.email}</span>
-                </div>
-                <div className="flex items-center gap-3 text-white/60">
-                  <MapPin className="w-4 h-4 text-orange" />
-                  <span className="text-xs font-bold">{driver.zone || 'Sector Unassigned'}</span>
-                </div>
+                <div className="flex items-center gap-3 text-white/60"><Phone className="w-4 h-4 text-orange" /><span className="text-xs font-bold">{driver.phone || 'Contact Unknown'}</span></div>
+                <div className="flex items-center gap-3 text-white/60"><Mail className="w-4 h-4 text-orange" /><span className="text-xs font-bold truncate">{driver.email}</span></div>
+                <div className="flex items-center gap-3 text-white/60"><MapPin className="w-4 h-4 text-orange" /><span className="text-xs font-bold">{driver.zone || 'Sector Unassigned'}</span></div>
               </div>
             </CardContent>
           </Card>
 
           <Card className="glass-panel border-none p-6 space-y-6">
-            <h3 className="text-[10px] font-black uppercase text-white/40 tracking-[0.2em] flex items-center gap-2">
-              <ShieldCheck className="w-4 h-4 text-active" /> Asset Manifest
-            </h3>
+            <h3 className="text-[10px] font-black uppercase text-white/40 tracking-[0.2em] flex items-center gap-2"><ShieldCheck className="w-4 h-4 text-active" /> Asset Manifest</h3>
             <div className="space-y-4">
-              <div>
-                <p className="text-[9px] font-black text-white/30 uppercase mb-1">Vehicle Model</p>
-                <p className="text-xs font-black text-white uppercase">{driver.vehicleModel || 'No Model Data'}</p>
-              </div>
-              <div>
-                <p className="text-[9px] font-black text-white/30 uppercase mb-1">Registration #</p>
-                <p className="text-xs font-black font-mono text-white/80">{driver.vehicleNumber || 'No Plate Data'}</p>
-              </div>
-              <div>
-                <p className="text-[9px] font-black text-white/30 uppercase mb-1">License ID</p>
-                <p className="text-xs font-black font-mono text-white/80">{driver.licenseNumber || 'No License Data'}</p>
-              </div>
+              <div><p className="text-[9px] font-black text-white/30 uppercase mb-1">Vehicle Model</p><p className="text-xs font-black text-white uppercase">{driver.vehicleModel || 'No Model Data'}</p></div>
+              <div><p className="text-[9px] font-black text-white/30 uppercase mb-1">Registration #</p><p className="text-xs font-black font-mono text-white/80">{driver.vehicleNumber || 'No Plate Data'}</p></div>
+              <div><p className="text-[9px] font-black text-white/30 uppercase mb-1">License ID</p><p className="text-xs font-black font-mono text-white/80">{driver.licenseNumber || 'No License Data'}</p></div>
             </div>
           </Card>
 
-          <Button 
-            onClick={handleDeleteAccount}
-            variant="destructive" 
-            className="w-full bg-emergency/10 border border-emergency/20 text-emergency font-black uppercase text-[10px] h-11 hover:bg-emergency hover:text-white transition-all"
-          >
-            <Trash2 className="w-4 h-4 mr-2" /> Purge Operator
-          </Button>
+          <Button onClick={handleDeleteAccount} variant="destructive" className="w-full bg-emergency/10 border border-emergency/20 text-emergency font-black uppercase text-[10px] h-11 hover:bg-emergency hover:text-white transition-all"><Trash2 className="w-4 h-4 mr-2" /> Purge Operator</Button>
         </div>
 
         <div className="xl:col-span-3 space-y-8">
@@ -311,20 +274,11 @@ export default function DriverProfilePage(props: PageProps) {
               {chartData.length > 0 ? (
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                   <Card className="glass-panel border-none">
-                    <CardHeader className="p-4 bg-navy/10 border-b border-white/5">
-                      <CardTitle className="text-[10px] font-black uppercase text-white/60 tracking-widest flex items-center gap-2">
-                        <TrendingUp className="w-4 h-4 text-orange" /> Earnings Pulse
-                      </CardTitle>
-                    </CardHeader>
+                    <CardHeader className="p-4 bg-navy/10 border-b border-white/5"><CardTitle className="text-[10px] font-black uppercase text-white/60 tracking-widest flex items-center gap-2"><TrendingUp className="w-4 h-4 text-orange" /> Earnings Pulse</CardTitle></CardHeader>
                     <CardContent className="p-6 h-[300px]">
                       <ResponsiveContainer width="100%" height="100%">
                         <AreaChart data={chartData}>
-                          <defs>
-                            <linearGradient id="colorE" x1="0" y1="0" x2="0" y2="1">
-                              <stop offset="5%" stopColor="#FF8000" stopOpacity={0.3}/>
-                              <stop offset="95%" stopColor="#FF8000" stopOpacity={0}/>
-                            </linearGradient>
-                          </defs>
+                          <defs><linearGradient id="colorE" x1="0" y1="0" x2="0" y2="1"><stop offset="5%" stopColor="#FF8000" stopOpacity={0.3}/><stop offset="95%" stopColor="#FF8000" stopOpacity={0}/></linearGradient></defs>
                           <CartesianGrid strokeDasharray="3 3" stroke="#ffffff05" vertical={false} />
                           <XAxis dataKey="day" stroke="#ffffff20" fontSize={10} axisLine={false} tickLine={false} />
                           <YAxis stroke="#ffffff20" fontSize={10} axisLine={false} tickLine={false} />
@@ -334,13 +288,8 @@ export default function DriverProfilePage(props: PageProps) {
                       </ResponsiveContainer>
                     </CardContent>
                   </Card>
-
                   <Card className="glass-panel border-none">
-                    <CardHeader className="p-4 bg-navy/10 border-b border-white/5">
-                      <CardTitle className="text-[10px] font-black uppercase text-white/60 tracking-widest flex items-center gap-2">
-                        <Zap className="w-4 h-4 text-active" /> Operational Activity
-                      </CardTitle>
-                    </CardHeader>
+                    <CardHeader className="p-4 bg-navy/10 border-b border-white/5"><CardTitle className="text-[10px] font-black uppercase text-white/60 tracking-widest flex items-center gap-2"><Zap className="w-4 h-4 text-active" /> Operational Activity</CardTitle></CardHeader>
                     <CardContent className="p-6 h-[300px]">
                       <ResponsiveContainer width="100%" height="100%">
                         <BarChart data={chartData}>
@@ -348,11 +297,7 @@ export default function DriverProfilePage(props: PageProps) {
                           <XAxis dataKey="day" stroke="#ffffff20" fontSize={10} axisLine={false} tickLine={false} />
                           <YAxis stroke="#ffffff20" fontSize={10} axisLine={false} tickLine={false} />
                           <Tooltip contentStyle={{ backgroundColor: '#131518', border: '1px solid #ffffff10', fontSize: '12px' }} />
-                          <Bar dataKey="trips" radius={[4, 4, 0, 0]}>
-                            {chartData.map((entry, index) => (
-                              <Cell key={index} fill={entry.trips > 5 ? '#00CC00' : '#FF8000'} />
-                            ))}
-                          </Bar>
+                          <Bar dataKey="trips" radius={[4, 4, 0, 0]}>{chartData.map((entry, index) => <Cell key={index} fill={entry.trips > 5 ? '#00CC00' : '#FF8000'} />)}</Bar>
                         </BarChart>
                       </ResponsiveContainer>
                     </CardContent>
@@ -368,61 +313,20 @@ export default function DriverProfilePage(props: PageProps) {
 
             <TabsContent value="history" className="mt-8">
               <Card className="glass-panel border-none overflow-hidden">
-                <CardHeader className="p-4 bg-navy/10 border-b border-white/5 flex flex-row justify-between">
-                   <CardTitle className="text-[10px] font-black uppercase text-white/60 flex items-center gap-2">
-                     <History className="w-4 h-4 text-orange" /> Mission Manifest
-                   </CardTitle>
-                </CardHeader>
+                <CardHeader className="p-4 bg-navy/10 border-b border-white/5 flex flex-row justify-between"><CardTitle className="text-[10px] font-black uppercase text-white/60 flex items-center gap-2"><History className="w-4 h-4 text-orange" /> Mission Manifest</CardTitle></CardHeader>
                 <CardContent className="p-0 overflow-x-auto">
                   <table className="w-full text-xs text-left">
-                    <thead>
-                      <tr className="bg-white/5 text-white/40 uppercase font-black tracking-widest text-[10px]">
-                        <th className="p-4 border-r border-white/5">Mission ID</th>
-                        <th className="p-4 border-r border-white/5">Origin/Target</th>
-                        <th className="p-4 border-r border-white/5">Fare</th>
-                        <th className="p-4 border-r border-white/5">Status</th>
-                        <th className="p-4">Timestamp</th>
-                      </tr>
-                    </thead>
+                    <thead><tr className="bg-white/5 text-white/40 uppercase font-black tracking-widest text-[10px]"><th className="p-4 border-r border-white/5">Mission ID</th><th className="p-4 border-r border-white/5">Origin/Target</th><th className="p-4 border-r border-white/5">Fare</th><th className="p-4 border-r border-white/5">Status</th><th className="p-4">Timestamp</th></tr></thead>
                     <tbody className="divide-y divide-white/5 text-white/70 font-bold uppercase text-[10px]">
                       {rides?.map((ride) => (
                         <tr key={ride.id} className="hover:bg-white/5 transition-colors group">
                           <td className="p-4 font-mono tracking-tighter">{ride.id.substring(0,8)}</td>
-                          <td className="p-4 max-w-[200px]">
-                             <p className="truncate text-white">{ride.pickup?.address}</p>
-                             <p className="truncate text-white/40 text-[8px] mt-1">{ride.dropoff?.address}</p>
-                          </td>
+                          <td className="p-4 max-w-[200px]"><p className="truncate text-white">{ride.pickup?.address}</p><p className="truncate text-white/40 text-[8px] mt-1">{ride.dropoff?.address}</p></td>
                           <td className="p-4 font-mono text-orange">₹{ride.fare}</td>
-                          <td className="p-4">
-                            <div className="flex flex-col gap-1">
-                              <Badge className={cn(
-                                "text-[8px] font-black uppercase w-fit",
-                                ride.status === 'Paid' || ride.status === 'Completed' ? 'bg-active/10 text-active' : 'bg-orange/10 text-orange'
-                              )}>
-                                {ride.status}
-                              </Badge>
-                              {ride.status === 'Paid' && ride.paymentMethod && (
-                                <span className="text-[7px] font-black uppercase text-white/40 tracking-widest">
-                                  Via {ride.paymentMethod === 'Online' ? 'UPI' : 'Cash'}
-                                </span>
-                              )}
-                            </div>
-                          </td>
+                          <td className="p-4"><div className="flex flex-col gap-1"><Badge className={cn("text-[8px] font-black uppercase w-fit", ride.status === 'Paid' || ride.status === 'Completed' ? 'bg-active/10 text-active' : 'bg-orange/10 text-orange')}>{ride.status} {ride.status === 'Paid' && ride.paymentMethod ? `• ${ride.paymentMethod.toUpperCase()}` : ''}</Badge></div></td>
                           <td className="p-4 text-white/40">{ride.createdAt?.toDate ? ride.createdAt.toDate().toLocaleString() : 'Syncing...'}</td>
                         </tr>
                       ))}
-                      {!rides?.length && !isRidesLoading && (
-                        <tr>
-                          <td colSpan={5} className="p-10 text-center text-white/20 uppercase font-black text-[10px]">No missions archived</td>
-                        </tr>
-                      )}
-                      {isRidesLoading && (
-                        <tr>
-                          <td colSpan={5} className="p-10 text-center">
-                            <Loader2 className="w-6 h-6 animate-spin mx-auto text-orange" />
-                          </td>
-                        </tr>
-                      )}
                     </tbody>
                   </table>
                 </CardContent>
@@ -437,13 +341,9 @@ export default function DriverProfilePage(props: PageProps) {
                   { label: "Asset Manifest", icon: FileText, status: driver.vehicleModel ? "Provided" : "Missing" },
                 ].map((docItem, i) => (
                   <Card key={i} className="glass-panel border-none p-6 flex flex-col items-center group relative overflow-hidden">
-                    <div className="p-4 rounded-full bg-navy/40 mb-4">
-                      <docItem.icon className={cn("w-8 h-8", docItem.status === "Provided" ? "text-active" : "text-orange")} />
-                    </div>
+                    <div className="p-4 rounded-full bg-navy/40 mb-4"><docItem.icon className={cn("w-8 h-8", docItem.status === "Provided" ? "text-active" : "text-orange")} /></div>
                     <p className="text-sm font-black text-white uppercase mb-2">{docItem.label}</p>
-                    <Badge className={cn("text-[9px] font-black uppercase", docItem.status === "Provided" ? "bg-active/10 text-active" : "bg-orange/10 text-orange")}>
-                      {docItem.status}
-                    </Badge>
+                    <Badge className={cn("text-[9px] font-black uppercase", docItem.status === "Provided" ? "bg-active/10 text-active" : "bg-orange/10 text-orange")}>{docItem.status}</Badge>
                   </Card>
                 ))}
               </div>
