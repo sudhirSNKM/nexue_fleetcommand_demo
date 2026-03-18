@@ -62,6 +62,7 @@ export default function AdminManagementPage() {
     e.preventDefault()
     setIsSubmitting(true)
     try {
+      // Logic to provision a new admin profile directly in Firestore
       const adminId = `admin_${Date.now()}`
       const adminRef = doc(db, "userProfiles", adminId)
       
