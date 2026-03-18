@@ -17,7 +17,7 @@ import { useToast } from "@/hooks/use-toast"
 import Link from "next/link"
 
 export default function RegisterPage() {
-  const [step, setStep] = useState<'info' | 'otp'>('form')
+  const [step, setStep] = useState<'form' | 'otp'>('form')
   const [email, setEmail] = useState("")
   const [phone, setPhone] = useState("")
   const [password, setPassword] = useState("")
@@ -201,7 +201,6 @@ export default function RegisterPage() {
                         <SelectItem value="passenger">Passenger</SelectItem>
                         <SelectItem value="driver">Operator (Driver)</SelectItem>
                         <SelectItem value="admin">Logistics Admin</SelectItem>
-                        <SelectItem value="super-admin">Command High Staff</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>

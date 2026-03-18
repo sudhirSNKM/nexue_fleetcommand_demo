@@ -44,7 +44,7 @@ export default function AdminManagementPage() {
 
   const adminsQuery = useMemoFirebase(() => (db && isUserAdmin) ? query(
     collection(db, "userProfiles"), 
-    where("role", "in", ["admin", "super-admin"])
+    where("role", "==", "admin")
   ) : null, [db, isUserAdmin])
 
   const { data: admins, isLoading } = useCollection(adminsQuery)
