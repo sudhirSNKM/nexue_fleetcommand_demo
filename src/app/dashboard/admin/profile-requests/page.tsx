@@ -36,6 +36,11 @@ export default function ProfileRequestsPage() {
   const { user } = useUser()
   const { toast } = useToast()
   
+  // Hooks must be at the top level
+  const [selectedRequest, setSelectedRequest] = useState<any>(null)
+  const [isReviewing, setIsReviewing] = useState(false)
+  const [isProcessing, setIsProcessing] = useState(false)
+
   const userProfileRef = useMemoFirebase(() => user && db ? doc(db, "userProfiles", user.uid) : null, [user, db])
   const { data: profile, isLoading: isProfileLoading } = useDoc(userProfileRef)
   
@@ -47,29 +52,6 @@ export default function ProfileRequestsPage() {
   [db, isUserAdmin])
   
   const { data: requests, isLoading: isRequestsLoading } = useCollection(requestsQuery)
-
-  if (isProfileLoading) {
-    return (
-      <div className="h-full flex flex-col items-center justify-center space-y-4 bg-charcoal text-white min-h-[400px]">
-        <Loader2 className="w-10 h-10 text-orange animate-spin" />
-        <p className="text-[10px] uppercase font-black tracking-widest">Syncing Identity...</p>
-      </div>
-    )
-  }
-
-  if (!isUserAdmin) {
-    return (
-      <div className="h-full flex flex-col items-center justify-center space-y-4 bg-charcoal text-white min-h-[400px]">
-        <ShieldAlert className="w-12 h-12 text-emergency mb-2" />
-        <h2 className="text-xl font-black uppercase text-white">Access Restricted</h2>
-        <p className="text-[10px] uppercase font-black tracking-widest text-white/40">Administrative Clearance Level Required</p>
-      </div>
-    )
-  }
-  
-  const [selectedRequest, setSelectedRequest] = useState<any>(null)
-  const [isReviewing, setIsReviewing] = useState(false)
-  const [isProcessing, setIsProcessing] = useState(false)
 
   const handleGrantAccess = async (requestId: string) => {
     if (!db) return
@@ -129,6 +111,25 @@ export default function ProfileRequestsPage() {
     } finally {
       setIsProcessing(false)
     }
+  }
+
+  if (isProfileLoading) {
+    return (
+      <div className="h-full flex flex-col items-center justify-center space-y-4 bg-charcoal text-white min-h-[400px]">
+        <Loader2 className="w-10 h-10 text-orange animate-spin" />
+        <p className="text-[10px] uppercase font-black tracking-widest">Syncing Identity...</p>
+      </div>
+    )
+  }
+
+  if (!isUserAdmin) {
+    return (
+      <div className="h-full flex flex-col items-center justify-center space-y-4 bg-charcoal text-white min-h-[400px]">
+        <ShieldAlert className="w-12 h-12 text-emergency mb-2" />
+        <h2 className="text-xl font-black uppercase text-white">Access Restricted</h2>
+        <p className="text-[10px] uppercase font-black tracking-widest text-white/40">Administrative Clearance Level Required</p>
+      </div>
+    )
   }
 
   const renderStatusBadge = (status: string) => {
