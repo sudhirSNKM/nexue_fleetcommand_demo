@@ -35,7 +35,7 @@ export default function PassengersListPage() {
   const { toast } = useToast()
   
   const userProfileRef = useMemoFirebase(() => user && db ? doc(db, "userProfiles", user.uid) : null, [user, db])
-  const { data: profile } = useDoc(userProfileRef)
+  const { data: profile, isLoading: isProfileLoading } = useDoc(userProfileRef)
   
   const role = (profile?.role || "").toLowerCase().replace(/\s+/g, '-')
   const isSuperAdmin = role === "super-admin"
@@ -47,7 +47,7 @@ export default function PassengersListPage() {
     limit(50)
   ) : null, [db, isUserAdmin])
 
-  const { data: passengers, isLoading } = useCollection(passengersQuery)
+  const { data: passengers, isLoading: isPassengersLoading } = useCollection(passengersQuery)
 
   const recentRidesQuery = useMemoFirebase(() => (db && isUserAdmin) ? query(
     collection(db, "rides"),
@@ -71,6 +71,15 @@ export default function PassengersListPage() {
 
   const getPassengerLastRide = (passengerId: string) => {
     return recentRides?.find(r => r.passengerId === passengerId);
+  }
+
+  if (isProfileLoading) {
+    return (
+      <div className="h-full flex flex-col items-center justify-center space-y-4 bg-charcoal min-h-[400px]">
+        <Loader2 className="w-10 h-10 text-orange animate-spin" />
+        <p className="text-[10px] text-white uppercase font-black tracking-[0.3em]">Syncing Clearance...</p>
+      </div>
+    )
   }
 
   if (!isUserAdmin) {
@@ -130,7 +139,7 @@ export default function PassengersListPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-white/5 text-white font-bold uppercase text-[10px]">
-              {isLoading ? (
+              {isPassengersLoading ? (
                 [1, 2, 3, 4, 5].map(i => (
                   <tr key={i} className="animate-pulse">
                     <td colSpan={5} className="p-4"><div className="h-4 bg-white/5 rounded w-full" /></td>
@@ -208,7 +217,7 @@ export default function PassengersListPage() {
                   </tr>
                 )
               })}
-              {!passengers?.length && !isLoading && (
+              {!passengers?.length && !isPassengersLoading && (
                 <tr>
                   <td colSpan={5} className="p-20 text-center opacity-20 italic">
                     <Activity className="w-12 h-12 mx-auto mb-4" />

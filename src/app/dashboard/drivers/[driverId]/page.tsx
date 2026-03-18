@@ -2,7 +2,7 @@
 "use client"
 
 import React, { useState, useMemo } from "react"
-import { useParams, useRouter } from "next/navigation"
+import { useRouter } from "next/navigation"
 import { motion, AnimatePresence } from "framer-motion"
 import { 
   ArrowLeft, 
@@ -29,8 +29,7 @@ import {
   Activity,
   Zap,
   CheckCircle2,
-  Loader2,
-  Eye
+  Loader2
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -66,9 +65,9 @@ interface PageProps {
   params: Promise<{ driverId: string }>
 }
 
-export default function DriverProfilePage({ params }: PageProps) {
-  const resolvedParams = React.use(params)
-  const driverId = resolvedParams.driverId
+export default function DriverProfilePage(props: PageProps) {
+  const params = React.use(props.params)
+  const driverId = params.driverId
   const router = useRouter()
   const { toast } = useToast()
   const db = useFirestore()
@@ -80,11 +79,9 @@ export default function DriverProfilePage({ params }: PageProps) {
   const role = (currentProfile?.role || "").toLowerCase().replace(/\s+/g, '-')
   const isUserAdmin = role === "admin" || role === "super-admin"
 
-  // FETCH DRIVER PROFILE
   const profileRef = useMemoFirebase(() => (db && isUserAdmin) ? doc(db, "userProfiles", driverId) : null, [db, driverId, isUserAdmin])
   const { data: driver, isLoading: isProfileLoading } = useDoc(profileRef)
 
-  // FETCH RIDE HISTORY (Actual Data from DB)
   const ridesQuery = useMemoFirebase(() => (db && isUserAdmin) ? query(
     collection(db, "rides"), 
     where("driverId", "==", driverId),
@@ -132,25 +129,6 @@ export default function DriverProfilePage({ params }: PageProps) {
     return Object.values(groups)
   }, [rides])
 
-  const [docNotes, setDocNotes] = useState<Record<string, string>>({})
-
-  const handleUpdateDocStatus = (docType: string, newStatus: string) => {
-    if (!profileRef) return
-    const docPath = `docs.${docType}.status`
-    const notePath = `docs.${docType}.adminNote`
-    
-    const updateData: any = { [docPath]: newStatus }
-    if (docNotes[docType]) {
-      updateData[notePath] = docNotes[docType]
-    }
-    
-    updateDocumentNonBlocking(profileRef, updateData)
-    toast({
-      title: "Credential Updated",
-      description: `${docType.toUpperCase()} status set to ${newStatus}.`
-    })
-  }
-
   const handleStatusChange = (newStatus: string) => {
     if (!profileRef) return
     updateDocumentNonBlocking(profileRef, { status: newStatus })
@@ -188,7 +166,6 @@ export default function DriverProfilePage({ params }: PageProps) {
 
   return (
     <div className="space-y-8 pb-20">
-      {/* HEADER CONTROLS */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div className="flex items-center gap-4">
           <Button 
@@ -226,7 +203,6 @@ export default function DriverProfilePage({ params }: PageProps) {
       </div>
 
       <div className="grid grid-cols-1 xl:grid-cols-4 gap-8">
-        {/* SIDEBAR: OVERVIEW */}
         <div className="space-y-6">
           <Card className={cn("glass-panel border-none shadow-2xl overflow-hidden", isPending && "ring-2 ring-orange/50")}>
             <div className="h-24 bg-gradient-to-br from-navy to-charcoal border-b border-white/5" />
@@ -308,7 +284,6 @@ export default function DriverProfilePage({ params }: PageProps) {
           </Button>
         </div>
 
-        {/* MAIN CONTENT: PERFORMANCE & HISTORY */}
         <div className="xl:col-span-3 space-y-8">
           <Tabs defaultValue="overview" className="w-full">
             <TabsList className="bg-navy/40 p-1 rounded-xl h-14 border border-white/5">
@@ -455,97 +430,22 @@ export default function DriverProfilePage({ params }: PageProps) {
             </TabsContent>
 
             <TabsContent value="documents" className="mt-8">
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                {['license', 'rc', 'manifest'].map((docKey) => {
-                  const docData = driver?.docs?.[docKey]
-                  const status = docData?.status || 'missing'
-                  const labels: any = { license: 'Driving License', rc: 'Vehicle RC', manifest: 'Asset Manifest' }
-                  const icons: any = { license: User, rc: Car, manifest: FileText }
-                  const Icon = icons[docKey]
-
-                  return (
-                    <Card key={docKey} className="glass-panel border-none p-6 relative overflow-hidden group">
-                      <div className="flex flex-col md:flex-row gap-6">
-                        <div className="flex-1 space-y-4">
-                           <div className="flex items-center gap-3">
-                              <div className="p-2 rounded-lg bg-navy/40">
-                                 <Icon className="w-5 h-5 text-orange" />
-                              </div>
-                              <h4 className="text-sm font-black uppercase text-white">{labels[docKey]}</h4>
-                              <Badge className={cn(
-                                "text-[8px] font-black uppercase",
-                                status === 'approved' ? "bg-active/10 text-active" :
-                                status === 'pending' ? "bg-orange/10 text-orange" :
-                                status === 'resubmit' ? "bg-emergency/10 text-emergency" : "bg-white/5 text-white/40"
-                              )}>
-                                {status}
-                              </Badge>
-                           </div>
-
-                           {docData?.url ? (
-                             <div className="aspect-video bg-navy/20 rounded-xl overflow-hidden relative group/img">
-                                <img src={docData.url} alt={labels[docKey]} className="w-full h-full object-cover opacity-60 group-hover/img:scale-105 transition-transform" />
-                                <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover/img:opacity-100 transition-opacity bg-black/40">
-                                   <Button size="sm" variant="outline" className="text-white border-white/20 hover:bg-white/10 font-black uppercase text-[8px]" asChild>
-                                      <a href={docData.url} target="_blank"><Eye className="w-3 h-3 mr-1" /> Inspect File</a>
-                                   </Button>
-                                </div>
-                             </div>
-                           ) : (
-                             <div className="aspect-video bg-navy/20 rounded-xl border-2 border-dashed border-white/5 flex flex-col items-center justify-center">
-                                <AlertCircle className="w-8 h-8 text-white/10 mb-2" />
-                                <p className="text-[9px] font-black uppercase text-white/20">Credential Not Uploaded</p>
-                             </div>
-                           )}
-
-                           {docData?.adminNote && (
-                             <div className="p-3 rounded-lg bg-emergency/5 border border-emergency/10">
-                                <p className="text-[8px] font-black text-emergency uppercase mb-1">Last Rejection Reason</p>
-                                <p className="text-[10px] text-white/60 italic">"{docData.adminNote}"</p>
-                             </div>
-                           )}
-                        </div>
-
-                        <div className="w-full md:w-48 space-y-3">
-                           <p className="text-[9px] font-black uppercase text-white/30 tracking-widest border-b border-white/5 pb-2">Verification Actions</p>
-                           <div className="grid grid-cols-1 gap-2">
-                              <Button 
-                                onClick={() => handleUpdateDocStatus(docKey, 'approved')}
-                                disabled={status === 'approved' || !docData?.url}
-                                className="bg-active/10 hover:bg-active text-active hover:text-white font-black uppercase text-[9px] h-9 border border-active/20"
-                              >
-                                Approve
-                              </Button>
-                              <div className="space-y-2 pt-2 border-t border-white/5 mt-2">
-                                <textarea 
-                                  placeholder="Notes for rejection/resubmit..."
-                                  value={docNotes[docKey] || ""}
-                                  onChange={(e) => setDocNotes({...docNotes, [docKey]: e.target.value})}
-                                  className="w-full bg-navy/40 border border-white/10 rounded-lg p-2 text-[10px] text-white focus:border-orange/50 outline-none resize-none h-16"
-                                />
-                                <div className="grid grid-cols-2 gap-2">
-                                  <Button 
-                                    onClick={() => handleUpdateDocStatus(docKey, 'resubmit')}
-                                    disabled={!docData?.url}
-                                    className="bg-orange/10 hover:bg-orange text-orange hover:text-white font-black uppercase text-[8px] h-9 border border-orange/20"
-                                  >
-                                    Resubmit
-                                  </Button>
-                                  <Button 
-                                    onClick={() => handleUpdateDocStatus(docKey, 'rejected')}
-                                    disabled={!docData?.url}
-                                    className="bg-emergency/10 hover:bg-emergency text-emergency hover:text-white font-black uppercase text-[8px] h-9 border border-emergency/20"
-                                  >
-                                    Reject
-                                  </Button>
-                                </div>
-                              </div>
-                           </div>
-                        </div>
-                      </div>
-                    </Card>
-                  )
-                })}
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {[
+                  { label: "Driving License", icon: User, status: driver.licenseNumber ? "Provided" : "Missing" },
+                  { label: "Vehicle RC", icon: Car, status: driver.vehicleNumber ? "Provided" : "Missing" },
+                  { label: "Asset Manifest", icon: FileText, status: driver.vehicleModel ? "Provided" : "Missing" },
+                ].map((docItem, i) => (
+                  <Card key={i} className="glass-panel border-none p-6 flex flex-col items-center group relative overflow-hidden">
+                    <div className="p-4 rounded-full bg-navy/40 mb-4">
+                      <docItem.icon className={cn("w-8 h-8", docItem.status === "Provided" ? "text-active" : "text-orange")} />
+                    </div>
+                    <p className="text-sm font-black text-white uppercase mb-2">{docItem.label}</p>
+                    <Badge className={cn("text-[9px] font-black uppercase", docItem.status === "Provided" ? "bg-active/10 text-active" : "bg-orange/10 text-orange")}>
+                      {docItem.status}
+                    </Badge>
+                  </Card>
+                ))}
               </div>
             </TabsContent>
           </Tabs>
