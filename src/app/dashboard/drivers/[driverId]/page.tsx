@@ -61,12 +61,16 @@ import {
 import { cn } from "@/lib/utils"
 import { useToast } from "@/hooks/use-toast"
 
-export default function DriverProfilePage() {
-  const params = useParams()
+interface PageProps {
+  params: Promise<{ driverId: string }>
+}
+
+export default function DriverProfilePage({ params }: PageProps) {
+  const resolvedParams = React.use(params)
+  const driverId = resolvedParams.driverId
   const router = useRouter()
   const { toast } = useToast()
   const db = useFirestore()
-  const driverId = params.driverId as string
 
   const { user: currentUser } = useUser()
   const currentUserRef = useMemoFirebase(() => currentUser && db ? doc(db, "userProfiles", currentUser.uid) : null, [currentUser, db])
