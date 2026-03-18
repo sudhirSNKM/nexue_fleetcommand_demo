@@ -39,10 +39,10 @@ export default function RegisterPage() {
         id: user.uid,
         name,
         email,
-        role, // kebab-case: passenger, driver, admin, super-admin
+        role, 
         status: role === "driver" ? "pending" : "active",
         walletBalance: role === "passenger" ? 500 : 0,
-        rating: 0, // NEW: Start with 0 to indicate unrated status
+        rating: 0, 
         createdAt: serverTimestamp(),
       }
 
