@@ -71,5 +71,17 @@ service cloud.firestore {
       allow write: if isAdmin() || (signedIn() && statsId.split('_')[0] == request.auth.uid);
     }
 
+    // FLEET ASSETS
+    match /fleetAssets/{assetId} {
+      allow read: if signedIn();
+      allow write: if isAdmin();
+    }
+
+    // ALERTS
+    match /alerts/{alertId} {
+      allow read: if signedIn();
+      allow write: if isAdmin();
+    }
+
   }
 }
