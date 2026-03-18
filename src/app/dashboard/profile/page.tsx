@@ -20,15 +20,25 @@ import {
   Car,
   ShieldCheck,
   LogOut,
-  ChevronRight
+  ChevronRight,
+  Eye,
+  RefreshCw,
+  XCircle
 } from "lucide-react"
+import { 
+  Tabs, 
+  TabsContent, 
+  TabsList, 
+  TabsTrigger 
+} from "@/components/ui/tabs"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
-import { useUser, useFirestore, useDoc, useMemoFirebase, useCollection, useAuth } from "@/firebase"
 import { doc, collection, addDoc, query, where, orderBy, limit, serverTimestamp, updateDoc } from "firebase/firestore"
+import { ref, uploadBytes, getDownloadURL } from "firebase/storage"
+import { useUser, useFirestore, useDoc, useMemoFirebase, useCollection, useAuth, useStorage } from "@/firebase"
 import { useRouter } from "next/navigation"
 import { useToast } from "@/hooks/use-toast"
 import { Badge } from "@/components/ui/badge"
@@ -39,6 +49,7 @@ export default function UniversalProfilePage() {
   const { user } = useUser()
   const db = useFirestore()
   const auth = useAuth()
+  const storage = useStorage()
   const router = useRouter()
   const { toast } = useToast()
 
@@ -143,6 +154,41 @@ export default function UniversalProfilePage() {
       toast({
         variant: "destructive",
         title: "Submission Failed",
+        description: error.message,
+      })
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>, docType: string) => {
+    const file = e.target.files?.[0]
+    if (!file || !user || !db || !storage) return
+
+    setIsSubmitting(true)
+    try {
+      const fileRef = ref(storage, `documents/${user.uid}/${docType}`)
+      await uploadBytes(fileRef, file)
+      const downloadURL = await getDownloadURL(fileRef)
+
+      const docPath = `docs.${docType}`
+      await updateDoc(doc(db, "userProfiles", user.uid), {
+        [docPath]: {
+          url: downloadURL,
+          status: "pending",
+          uploadedAt: serverTimestamp(),
+          fileName: file.name
+        }
+      })
+
+      toast({
+        title: "Document Uploaded",
+        description: `${docType.toUpperCase()} is now pending verification.`,
+      })
+    } catch (error: any) {
+      toast({
+        variant: "destructive",
+        title: "Upload Failed",
         description: error.message,
       })
     } finally {
@@ -274,179 +320,273 @@ export default function UniversalProfilePage() {
         </aside>
 
         <div className="md:col-span-2 space-y-8">
-           <Card className={cn("border-none shadow-2xl", isMobilityUser ? "bg-white" : "glass-panel")}>
-              <CardHeader className={cn("p-6 border-b", isMobilityUser ? "bg-slate-50 border-slate-100" : "bg-navy/10 border-white/5")}>
-                <CardTitle className="text-xs font-black uppercase flex items-center gap-3">
-                   <ShieldAlert className="w-5 h-5 text-orange" />
-                   Core Protocol Parameters
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="p-8 space-y-6">
-                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                    <div className="space-y-2">
-                       <Label className={cn("text-[10px] font-black uppercase tracking-widest", isMobilityUser ? "text-slate-400" : "text-white/50")}>Full Legal Identity</Label>
-                       <Input 
-                        value={formData.name}
-                        onChange={(e) => setFormData({...formData, name: e.target.value})}
-                        readOnly={!isEditing}
-                        className={cn(
-                          "h-12 font-bold", 
-                          isMobilityUser ? "bg-slate-50 border-slate-200" : "bg-navy/40 border-white/10 text-white",
-                          !isEditing && "opacity-50 cursor-not-allowed border-transparent"
-                        )} 
-                       />
-                    </div>
-                    <div className="space-y-2">
-                       <Label className={cn("text-[10px] font-black uppercase tracking-widest", isMobilityUser ? "text-slate-400" : "text-white/50")}>Link (Email)</Label>
-                       <Input value={profile?.email || ""} readOnly className={cn("h-12 font-mono text-white/40", isMobilityUser ? "bg-slate-50 border-transparent text-slate-400" : "bg-navy/20 border-transparent")} />
-                    </div>
+          <Tabs defaultValue="details" className="w-full">
+            <TabsList className={cn("inline-flex h-12 items-center justify-start rounded-xl p-1 mb-6", isMobilityUser ? "bg-slate-100" : "bg-navy/40")}>
+              <TabsTrigger value="details" className="rounded-lg px-6 py-2 text-[10px] font-black uppercase tracking-widest data-[state=active]:bg-orange data-[state=active]:text-white transition-all">Protocol Details</TabsTrigger>
+              {role === 'driver' && (
+                <TabsTrigger value="documents" className="rounded-lg px-6 py-2 text-[10px] font-black uppercase tracking-widest data-[state=active]:bg-orange data-[state=active]:text-white transition-all">Document Vault</TabsTrigger>
+              )}
+              <TabsTrigger value="audit" className="rounded-lg px-6 py-2 text-[10px] font-black uppercase tracking-widest data-[state=active]:bg-orange data-[state=active]:text-white transition-all">Audit Trail</TabsTrigger>
+            </TabsList>
 
-                    <div className="space-y-2">
-                       <Label className={cn("text-[10px] font-black uppercase tracking-widest", isMobilityUser ? "text-slate-400" : "text-white/50")}>Emergency Comms (Phone)</Label>
-                       <Input 
-                        value={formData.phone}
-                        onChange={(e) => setFormData({...formData, phone: e.target.value})}
-                        readOnly={!isEditing}
-                        className={cn(
-                          "h-12 font-bold", 
-                          isMobilityUser ? "bg-slate-50 border-slate-200" : "bg-navy/40 border-white/10 text-white",
-                          !isEditing && "opacity-50 cursor-not-allowed border-transparent"
-                        )} 
-                       />
-                    </div>
+            <TabsContent value="details" className="space-y-8">
+               <Card className={cn("border-none shadow-2xl", isMobilityUser ? "bg-white" : "glass-panel")}>
+                  <CardHeader className={cn("p-6 border-b", isMobilityUser ? "bg-slate-50 border-slate-100" : "bg-navy/10 border-white/5")}>
+                    <CardTitle className="text-xs font-black uppercase flex items-center gap-3">
+                       <ShieldAlert className="w-5 h-5 text-orange" />
+                       Core Protocol Parameters
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="p-8 space-y-6">
+                     <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                        {/* ... Existing Fields ... */}
+                        <div className="space-y-2">
+                           <Label className={cn("text-[10px] font-black uppercase tracking-widest", isMobilityUser ? "text-slate-400" : "text-white/50")}>Full Legal Identity</Label>
+                           <Input 
+                            value={formData.name}
+                            onChange={(e) => setFormData({...formData, name: e.target.value})}
+                            readOnly={!isEditing}
+                            className={cn(
+                              "h-12 font-bold", 
+                              isMobilityUser ? "bg-slate-50 border-slate-200" : "bg-navy/40 border-white/10 text-white",
+                              !isEditing && "opacity-50 cursor-not-allowed border-transparent"
+                            )} 
+                           />
+                        </div>
+                        <div className="space-y-2">
+                           <Label className={cn("text-[10px] font-black uppercase tracking-widest", isMobilityUser ? "text-slate-400" : "text-white/50")}>Link (Email)</Label>
+                           <Input value={profile?.email || ""} readOnly className={cn("h-12 font-mono text-white/40", isMobilityUser ? "bg-slate-50 border-transparent text-slate-400" : "bg-navy/20 border-transparent")} />
+                        </div>
 
-                    {role === 'driver' && (
-                      <div className="space-y-2">
-                        <Label className={cn("text-[10px] font-black uppercase tracking-widest", isMobilityUser ? "text-slate-400" : "text-white/50")}>Assigned Vehicle Class</Label>
-                        <Input 
-                          value={formData.vehicleType}
-                          onChange={(e) => setFormData({...formData, vehicleType: e.target.value})}
-                          readOnly={!isEditing}
-                          className={cn(
-                            "h-12 font-bold", 
-                            isMobilityUser ? "bg-slate-50 border-slate-200" : "bg-navy/40 border-white/10 text-white",
-                            !isEditing && "opacity-50 cursor-not-allowed border-transparent"
-                          )} 
-                        />
-                      </div>
-                    )}
+                        <div className="space-y-2">
+                           <Label className={cn("text-[10px] font-black uppercase tracking-widest", isMobilityUser ? "text-slate-400" : "text-white/50")}>Emergency Comms (Phone)</Label>
+                           <Input 
+                            value={formData.phone}
+                            onChange={(e) => setFormData({...formData, phone: e.target.value})}
+                            readOnly={!isEditing}
+                            className={cn(
+                              "h-12 font-bold", 
+                              isMobilityUser ? "bg-slate-50 border-slate-200" : "bg-navy/40 border-white/10 text-white",
+                              !isEditing && "opacity-50 cursor-not-allowed border-transparent"
+                            )} 
+                           />
+                        </div>
 
-                    {(role === 'admin' || role === 'super-admin') && (
-                      <div className="space-y-2">
-                        <Label className={cn("text-[10px] font-black uppercase tracking-widest", isMobilityUser ? "text-slate-400" : "text-white/50")}>Operational Sector (Zone)</Label>
-                        <Input 
-                          value={formData.zone}
-                          onChange={(e) => setFormData({...formData, zone: e.target.value})}
-                          readOnly={!isEditing}
-                          className={cn(
-                            "h-12 font-bold", 
-                            isMobilityUser ? "bg-slate-50 border-slate-200" : "bg-navy/40 border-white/10 text-white",
-                            !isEditing && "opacity-50 cursor-not-allowed border-transparent"
-                          )} 
-                        />
-                      </div>
-                    )}
-                 </div>
-
-                 <AnimatePresence>
-                    {isEditing && (
-                      <motion.div 
-                        initial={{ opacity: 0, height: 0 }}
-                        animate={{ opacity: 1, height: 'auto' }}
-                        exit={{ opacity: 0, height: 0 }}
-                        className="space-y-4 pt-6 border-t border-slate-100"
-                      >
-                         <div className="space-y-2">
-                            <Label className="text-[10px] font-black uppercase text-orange flex items-center gap-2">
-                              <AlertCircle className="w-4 h-4" /> Hardened Justification (Proof)
-                            </Label>
-                            <Textarea 
-                               value={proofText}
-                               onChange={(e) => setProofText(e.target.value)}
-                               placeholder="Provide legal reason for update and links to verification images/docs..."
-                               className={cn(
-                                 "min-h-[100px] text-xs font-medium focus:ring-orange/50",
-                                 isMobilityUser ? "bg-slate-50 border-slate-200" : "bg-navy/40 border-orange/20 text-white"
-                               )}
+                        {role === 'driver' && (
+                          <div className="space-y-2">
+                            <Label className={cn("text-[10px] font-black uppercase tracking-widest", isMobilityUser ? "text-slate-400" : "text-white/50")}>Assigned Vehicle Class</Label>
+                            <Input 
+                              value={formData.vehicleType}
+                              onChange={(e) => setFormData({...formData, vehicleType: e.target.value})}
+                              readOnly={!isEditing}
+                              className={cn(
+                                "h-12 font-bold", 
+                                isMobilityUser ? "bg-slate-50 border-slate-200" : "bg-navy/40 border-white/10 text-white",
+                                !isEditing && "opacity-50 cursor-not-allowed border-transparent"
+                              )} 
                             />
-                         </div>
-                         <div className={cn("p-4 rounded-xl border border-dashed flex items-center justify-between", isMobilityUser ? "bg-slate-50 border-slate-200" : "bg-orange/5 border-orange/20")}>
-                            <div className="flex items-center gap-3">
-                               <Upload className="w-5 h-5 text-orange" />
-                               <span className="text-[10px] font-black uppercase text-orange/60">Upload Scan Manifest</span>
+                          </div>
+                        )}
+
+                        {(role === 'admin' || role === 'super-admin') && (
+                          <div className="space-y-2">
+                            <Label className={cn("text-[10px] font-black uppercase tracking-widest", isMobilityUser ? "text-slate-400" : "text-white/50")}>Operational Sector (Zone)</Label>
+                            <Input 
+                              value={formData.zone}
+                              onChange={(e) => setFormData({...formData, zone: e.target.value})}
+                              readOnly={!isEditing}
+                              className={cn(
+                                "h-12 font-bold", 
+                                isMobilityUser ? "bg-slate-50 border-slate-200" : "bg-navy/40 border-white/10 text-white",
+                                !isEditing && "opacity-50 cursor-not-allowed border-transparent"
+                              )} 
+                            />
+                          </div>
+                        )}
+                     </div>
+
+                     <AnimatePresence>
+                        {isEditing && (
+                          <motion.div 
+                            initial={{ opacity: 0, height: 0 }}
+                            animate={{ opacity: 1, height: 'auto' }}
+                            exit={{ opacity: 0, height: 0 }}
+                            className="space-y-4 pt-6 border-t border-slate-100"
+                          >
+                             <div className="space-y-2">
+                                <Label className="text-[10px] font-black uppercase text-orange flex items-center gap-2">
+                                  <AlertCircle className="w-4 h-4" /> Hardened Justification (Proof)
+                                </Label>
+                                <Textarea 
+                                   value={proofText}
+                                   onChange={(e) => setProofText(e.target.value)}
+                                   placeholder="Provide legal reason for update and links to verification images/docs..."
+                                   className={cn(
+                                     "min-h-[100px] text-xs font-medium focus:ring-orange/50",
+                                     isMobilityUser ? "bg-slate-50 border-slate-200" : "bg-navy/40 border-orange/20 text-white"
+                                   )}
+                                />
+                             </div>
+                             <div className={cn("p-4 rounded-xl border border-dashed flex items-center justify-between", isMobilityUser ? "bg-slate-50 border-slate-200" : "bg-orange/5 border-orange/20")}>
+                                <div className="flex items-center gap-3">
+                                   <Upload className="w-5 h-5 text-orange" />
+                                   <span className="text-[10px] font-black uppercase text-orange/60">Upload Scan Manifest</span>
+                                </div>
+                                <Button variant="ghost" size="sm" className="text-[9px] font-black uppercase">Browse Files</Button>
+                             </div>
+                          </motion.div>
+                        )}
+                     </AnimatePresence>
+
+                     <div className="flex flex-col sm:flex-row gap-4 pt-4">
+                        {!isEditing ? (
+                          <>
+                            {(!activeRequest || activeRequest.status === 'approved') && (
+                              <Button 
+                                onClick={handleRequestAccess}
+                                disabled={isSubmitting}
+                                className="bg-orange hover:bg-orange/90 text-white font-black uppercase text-[10px] h-12 px-10 shadow-lg shadow-orange/20 border-none"
+                              >
+                                <Send className="w-4 h-4 mr-3" /> Initiate Protocol Update
+                              </Button>
+                            )}
+                            {activeRequest?.status === 'granted' && (
+                               <Button 
+                                onClick={() => setIsEditing(true)}
+                                className="bg-active hover:bg-active/90 text-white font-black uppercase text-[10px] h-12 px-10 shadow-lg shadow-active/20 border-none"
+                              >
+                                 <Edit3 className="w-4 h-4 mr-3" /> Authorize Modifications
+                               </Button>
+                            )}
+                          </>
+                        ) : (
+                          <div className="grid grid-cols-2 gap-4 w-full">
+                             <Button 
+                                onClick={() => setIsEditing(false)}
+                                variant="outline"
+                                className={cn("h-12 font-black uppercase text-[10px]", isMobilityUser ? "border-slate-200" : "border-white/10")}
+                             >
+                                Abort
+                             </Button>
+                             <Button 
+                                onClick={handleSubmitChanges}
+                                disabled={isSubmitting}
+                                className="bg-active hover:bg-active/90 text-white font-black uppercase text-[10px] h-12 shadow-lg shadow-active/20 border-none"
+                             >
+                                Commit for Review
+                             </Button>
+                          </div>
+                        )}
+                     </div>
+                  </CardContent>
+               </Card>
+            </TabsContent>
+
+            {role === 'driver' && (
+              <TabsContent value="documents" className="space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {['license', 'rc', 'manifest'].map((docKey) => {
+                    const docData = profile?.docs?.[docKey]
+                    const status = docData?.status || 'missing'
+                    const labels: any = { license: 'Driving License', rc: 'Vehicle RC', manifest: 'Asset Manifest' }
+                    
+                    return (
+                      <Card key={docKey} className="bg-white border-none shadow-xl overflow-hidden group">
+                        <CardHeader className="bg-slate-50 border-b border-slate-100 p-4">
+                          <div className="flex justify-between items-center">
+                            <CardTitle className="text-[10px] font-black uppercase tracking-widest flex items-center gap-2">
+                              <FileText className="w-4 h-4 text-orange" /> {labels[docKey]}
+                            </CardTitle>
+                            <Badge className={cn(
+                              "text-[8px] font-black uppercase",
+                              status === 'approved' ? "bg-active/10 text-active" :
+                              status === 'pending' ? "bg-orange/10 text-orange" :
+                              status === 'resubmit' ? "bg-emergency/10 text-emergency" : "bg-slate-100 text-slate-400"
+                            )}>
+                              {status === 'resubmit' ? 'RE-SUBMISSION REQUIRED' : status}
+                            </Badge>
+                          </div>
+                        </CardHeader>
+                        <CardContent className="p-6">
+                          {docData?.url ? (
+                            <div className="space-y-4">
+                               <div className="aspect-video bg-slate-900 rounded-xl overflow-hidden relative group">
+                                  <img src={docData.url} alt={labels[docKey]} className="w-full h-full object-cover opacity-60 group-hover:scale-110 transition-transform" />
+                                  <div className="absolute inset-0 flex items-center justify-center gap-3 opacity-0 group-hover:opacity-100 transition-opacity bg-black/40 backdrop-blur-sm">
+                                     <Button size="sm" variant="outline" className="text-white border-white/20 hover:bg-white/10 font-black uppercase text-[8px]" asChild>
+                                        <a href={docData.url} target="_blank"><Eye className="w-3 h-3 mr-1" /> View</a>
+                                     </Button>
+                                     {(status === 'resubmit' || status === 'rejected' || status === 'missing') && (
+                                       <div className="relative">
+                                          <input 
+                                            type="file" 
+                                            className="absolute inset-0 opacity-0 cursor-pointer" 
+                                            onChange={(e) => handleFileUpload(e, docKey)} 
+                                          />
+                                          <Button size="sm" className="bg-orange text-white font-black uppercase text-[8px]">
+                                             <RefreshCw className="w-3 h-3 mr-1" /> Re-upload
+                                          </Button>
+                                       </div>
+                                     )}
+                                  </div>
+                               </div>
+                               {docData.adminNote && (
+                                 <div className="p-3 bg-emergency/5 border border-emergency/10 rounded-lg">
+                                    <p className="text-[8px] font-black text-emergency uppercase tracking-widest mb-1">Command Note</p>
+                                    <p className="text-[10px] font-medium text-slate-600 italic">"{docData.adminNote}"</p>
+                                 </div>
+                               )}
                             </div>
-                            <Button variant="ghost" size="sm" className="text-[9px] font-black uppercase">Browse Files</Button>
-                         </div>
-                      </motion.div>
-                    )}
-                 </AnimatePresence>
+                          ) : (
+                            <div className="flex flex-col items-center justify-center p-12 border-2 border-dashed border-slate-100 rounded-2xl bg-slate-50">
+                               <Upload className="w-10 h-10 text-slate-200 mb-4" />
+                               <p className="text-[10px] font-black uppercase text-slate-400 mb-6">File Not Logged</p>
+                               <div className="relative">
+                                  <input 
+                                    type="file" 
+                                    className="absolute inset-0 opacity-0 cursor-pointer" 
+                                    onChange={(e) => handleFileUpload(e, docKey)} 
+                                  />
+                                  <Button className="bg-orange hover:bg-orange/90 text-white font-black uppercase text-[10px] px-8 h-10 shadow-lg shadow-orange/20 border-none">
+                                    Upload Credentials
+                                  </Button>
+                               </div>
+                            </div>
+                          )}
+                        </CardContent>
+                      </Card>
+                    )
+                  })}
+                </div>
+              </TabsContent>
+            )}
 
-                 <div className="flex flex-col sm:flex-row gap-4 pt-4">
-                    {!isEditing ? (
-                      <>
-                        {(!activeRequest || activeRequest.status === 'approved') && (
-                          <Button 
-                            onClick={handleRequestAccess}
-                            disabled={isSubmitting}
-                            className="bg-orange hover:bg-orange/90 text-white font-black uppercase text-[10px] h-12 px-10 shadow-lg shadow-orange/20 border-none"
-                          >
-                            <Send className="w-4 h-4 mr-3" /> Initiate Protocol Update
-                          </Button>
-                        )}
-                        {activeRequest?.status === 'granted' && (
-                           <Button 
-                            onClick={() => setIsEditing(true)}
-                            className="bg-active hover:bg-active/90 text-white font-black uppercase text-[10px] h-12 px-10 shadow-lg shadow-active/20 border-none"
-                          >
-                             <Edit3 className="w-4 h-4 mr-3" /> Authorize Modifications
-                           </Button>
-                        )}
-                      </>
-                    ) : (
-                      <div className="grid grid-cols-2 gap-4 w-full">
-                         <Button 
-                            onClick={() => setIsEditing(false)}
-                            variant="outline"
-                            className={cn("h-12 font-black uppercase text-[10px]", isMobilityUser ? "border-slate-200" : "border-white/10")}
-                         >
-                            Abort
-                         </Button>
-                         <Button 
-                            onClick={handleSubmitChanges}
-                            disabled={isSubmitting}
-                            className="bg-active hover:bg-active/90 text-white font-black uppercase text-[10px] h-12 shadow-lg shadow-active/20 border-none"
-                         >
-                            Commit for Review
-                         </Button>
-                      </div>
-                    )}
+            <TabsContent value="audit" className="space-y-6">
+              <Card className={cn("border-none shadow-2xl p-8", isMobilityUser ? "bg-white" : "glass-panel")}>
+                 <div className="flex items-center justify-between mb-6">
+                   <h4 className="text-sm font-black uppercase flex items-center gap-3">
+                     <Layout className="w-5 h-5 text-orange" />
+                     Terminal Access Log
+                   </h4>
+                   <ChevronRight className="w-4 h-4 text-slate-300" />
                  </div>
-              </CardContent>
-           </Card>
-
-           <Card className={cn("border-none shadow-2xl p-8", isMobilityUser ? "bg-white" : "glass-panel")}>
-              <div className="flex items-center justify-between mb-6">
-                <h4 className="text-sm font-black uppercase flex items-center gap-3">
-                  <Layout className="w-5 h-5 text-orange" />
-                  Terminal Access Log
-                </h4>
-                <ChevronRight className="w-4 h-4 text-slate-300" />
-              </div>
-              <div className="space-y-4">
-                 {[
-                   { action: "Session Initiated", time: "2m ago", desc: "Global Prime Sector" },
-                   { action: "Identity Pulse", time: "1h ago", desc: "Automated Verification" }
-                 ].map((log, i) => (
-                   <div key={i} className={cn("p-4 rounded-xl flex justify-between items-center", isMobilityUser ? "bg-slate-50" : "bg-white/5")}>
-                      <div>
-                        <p className="text-[10px] font-black uppercase">{log.action}</p>
-                        <p className="text-[9px] font-bold text-slate-400 uppercase mt-0.5">{log.desc}</p>
+                 <div className="space-y-4">
+                    {[
+                      { action: "Session Initiated", time: "2m ago", desc: "Global Prime Sector" },
+                      { action: "Identity Pulse", time: "1h ago", desc: "Automated Verification" }
+                    ].map((log, i) => (
+                      <div key={i} className={cn("p-4 rounded-xl flex justify-between items-center", isMobilityUser ? "bg-slate-50" : "bg-white/5")}>
+                         <div>
+                           <p className="text-[10px] font-black uppercase">{log.action}</p>
+                           <p className="text-[9px] font-bold text-slate-400 uppercase mt-0.5">{log.desc}</p>
+                         </div>
+                         <span className="text-[9px] font-mono text-slate-400">{log.time}</span>
                       </div>
-                      <span className="text-[9px] font-mono text-slate-400">{log.time}</span>
-                   </div>
-                 ))}
-              </div>
-           </Card>
+                    ))}
+                 </div>
+              </Card>
+            </TabsContent>
+          </Tabs>
         </div>
       </div>
     </div>

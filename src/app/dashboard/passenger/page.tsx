@@ -72,8 +72,17 @@ export default function PassengerApp() {
       const bTime = b.createdAt?.toMillis?.() || 0
       return bTime - aTime
     })
+    
     const liveRide = sorted.find(r => liveStatuses.includes(r.status))
-    if (liveRide?.id === reviewedRideId) return null
+    if (!liveRide) return null
+    if (liveRide.id === reviewedRideId) return null
+    
+    // Auto-archive 'Paid' rides that were settled over 30 mins ago
+    if (liveRide.status === "Paid") {
+      const paidTime = liveRide.paidAt?.toMillis?.() || liveRide.createdAt?.toMillis?.() || 0
+      if (Date.now() - paidTime > 30 * 60 * 1000) return null
+    }
+
     return liveRide
   }, [activeRides, reviewedRideId])
 
@@ -163,8 +172,8 @@ export default function PassengerApp() {
     toast({ title: "Review Logged", description: "Tactical performance updated." })
   }
 
-  const handleResetTerminal = () => {
-    setReviewedRideId(null)
+  const handleResetTerminal = (rideId?: string) => {
+    if (rideId) setReviewedRideId(rideId)
     setPickup("")
     setDropoff("")
     setRating(0)
@@ -300,7 +309,7 @@ export default function PassengerApp() {
                           Submit Review & New Mission
                         </Button>
                       ) : (
-                        <Button onClick={handleResetTerminal} variant="ghost" className="text-[10px] font-black uppercase text-slate-400">
+                        <Button onClick={() => handleResetTerminal(currentRide.id)} variant="ghost" className="text-[10px] font-black uppercase text-slate-400">
                           <RefreshCw className="w-3 h-3 mr-2" /> Start New Mission
                         </Button>
                       )}
