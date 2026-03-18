@@ -1,4 +1,3 @@
-
 "use client"
 
 import { useEffect } from "react"
@@ -39,7 +38,7 @@ export default function Home() {
         </div>
         
         <h1 className="text-5xl font-black tracking-tighter uppercase mb-2">
-          Nexus <span className="text-orange">FleetCommand</span>
+          Fleet<span className="text-orange">OS</span>
         </h1>
         <p className="text-muted-foreground uppercase tracking-[0.4em] text-sm">Initializing Tactical Interface</p>
         

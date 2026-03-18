@@ -1,4 +1,3 @@
-
 "use client"
 
 import React, { useState, useMemo } from "react"
@@ -225,7 +224,7 @@ export default function DriverEarningsTerminal() {
                 <div>
                    <div className="flex items-center gap-2 mb-4">
                       <Zap className="w-6 h-6 text-orange fill-orange" />
-                      <span className="font-black text-xl tracking-tighter">RAPIDO <span className="text-orange">OS</span></span>
+                      <span className="font-black text-xl tracking-tighter">Fleet<span className="text-orange">OS</span></span>
                    </div>
                    <h2 className="text-2xl font-black uppercase tracking-tighter">Earnings Manifest</h2>
                    <p className="text-[9px] font-bold text-white/40 uppercase tracking-[0.4em] mt-1">Official Tactical Payout Record</p>

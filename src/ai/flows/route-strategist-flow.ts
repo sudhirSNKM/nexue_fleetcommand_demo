@@ -33,7 +33,7 @@ const prompt = ai.definePrompt({
   name: 'routeStrategistPrompt',
   input: { schema: AnalyzeRouteInputSchema },
   output: { schema: AnalyzeRouteOutputSchema },
-  prompt: `You are the NexAI Tactical Strategist for Rapido OS. 
+  prompt: `You are the NexAI Tactical Strategist for FleetOS. 
 Analyze the following ride route and provide a high-tech, tactical briefing.
 
 Route Details:
