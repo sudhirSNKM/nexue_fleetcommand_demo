@@ -1,7 +1,7 @@
 
 "use client"
 
-import React from "react"
+import React, { useState } from "react"
 import { motion } from "framer-motion"
 import { 
   ShieldCheck, 
@@ -12,20 +12,36 @@ import {
   MoreVertical,
   Mail,
   MapPin,
-  ShieldAlert
+  ShieldAlert,
+  Zap,
+  User
 } from "lucide-react"
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { 
+  Dialog, 
+  DialogContent, 
+  DialogHeader, 
+  DialogTitle, 
+  DialogTrigger,
+  DialogDescription,
+  DialogFooter
+} from "@/components/ui/dialog"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
 import { useFirestore, useCollection, useMemoFirebase, updateDocumentNonBlocking } from "@/firebase"
-import { collection, query, where, doc } from "firebase/firestore"
+import { collection, query, where, doc, setDoc, serverTimestamp } from "firebase/firestore"
 import { cn } from "@/lib/utils"
 import { useToast } from "@/hooks/use-toast"
 
 export default function AdminManagementPage() {
   const db = useFirestore()
   const { toast } = useToast()
+  const [isDialogOpen, setIsDialogOpen] = useState(false)
+  const [newAdmin, setNewAdmin] = useState({ name: '', email: '', zone: '' })
+  const [isSubmitting, setIsSubmitting] = useState(false)
   
   const adminsQuery = useMemoFirebase(() => query(
     collection(db, "userProfiles"), 
@@ -43,6 +59,42 @@ export default function AdminManagementPage() {
     })
   }
 
+  const handleProvision = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setIsSubmitting(true)
+    try {
+      // NOTE: In a real app, you would create an Auth user here via Cloud Functions.
+      // For this prototype, we provision the profile record.
+      const adminId = `admin_${Date.now()}`
+      const adminRef = doc(db, "userProfiles", adminId)
+      
+      await setDoc(adminRef, {
+        id: adminId,
+        name: newAdmin.name,
+        email: newAdmin.email,
+        zone: newAdmin.zone,
+        role: 'admin',
+        status: 'Active',
+        createdAt: serverTimestamp()
+      })
+
+      toast({ 
+        title: "Provisioning Successful", 
+        description: `${newAdmin.name} has been added to the administrative registry.` 
+      })
+      setIsDialogOpen(false)
+      setNewAdmin({ name: '', email: '', zone: '' })
+    } catch (error: any) {
+      toast({ 
+        variant: "destructive", 
+        title: "Provisioning Failed", 
+        description: error.message 
+      })
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
+
   return (
     <div className="space-y-8">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
@@ -51,9 +103,76 @@ export default function AdminManagementPage() {
           <p className="text-[10px] text-white/40 uppercase font-black tracking-[0.4em] mt-1">Operations Admin & Access Controls</p>
         </div>
         <div className="flex gap-4">
-          <Button className="bg-orange text-white font-black uppercase text-[10px] h-11 px-6 shadow-lg shadow-orange/20 border-none">
-            <UserPlus className="w-4 h-4 mr-2" /> Provision New Admin
-          </Button>
+          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+            <DialogTrigger asChild>
+              <Button className="bg-orange text-white font-black uppercase text-[10px] h-11 px-6 shadow-lg shadow-orange/20 border-none">
+                <UserPlus className="w-4 h-4 mr-2" /> Provision New Admin
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="bg-charcoal border-white/10 text-white max-w-md">
+              <DialogHeader>
+                <DialogTitle className="text-xl font-black uppercase tracking-tighter flex items-center gap-2">
+                  <Zap className="w-5 h-5 text-orange" /> Admin Authorization
+                </DialogTitle>
+                <DialogDescription className="text-[10px] uppercase font-bold text-white/40">
+                  Provision new administrative credentials for the platform registry.
+                </DialogDescription>
+              </DialogHeader>
+              <form onSubmit={handleProvision} className="space-y-6 pt-4">
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <Label className="text-[9px] uppercase font-black text-white/40 ml-1">Personnel Name</Label>
+                    <div className="relative">
+                      <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/20" />
+                      <Input 
+                        placeholder="Operator Name" 
+                        value={newAdmin.name}
+                        onChange={e => setNewAdmin({...newAdmin, name: e.target.value})}
+                        required
+                        className="pl-10 bg-navy/20 border-white/10 h-11 text-sm font-bold focus:ring-orange/50" 
+                      />
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-[9px] uppercase font-black text-white/40 ml-1">Network ID (Email)</Label>
+                    <div className="relative">
+                      <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/20" />
+                      <Input 
+                        type="email"
+                        placeholder="admin@nexus-fleet.com" 
+                        value={newAdmin.email}
+                        onChange={e => setNewAdmin({...newAdmin, email: e.target.value})}
+                        required
+                        className="pl-10 bg-navy/20 border-white/10 h-11 text-sm font-bold focus:ring-orange/50" 
+                      />
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-[9px] uppercase font-black text-white/40 ml-1">Assigned Sector (Zone)</Label>
+                    <div className="relative">
+                      <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/20" />
+                      <Input 
+                        placeholder="e.g. Sector 4 / Downtown" 
+                        value={newAdmin.zone}
+                        onChange={e => setNewAdmin({...newAdmin, zone: e.target.value})}
+                        required
+                        className="pl-10 bg-navy/20 border-white/10 h-11 text-sm font-bold focus:ring-orange/50" 
+                      />
+                    </div>
+                  </div>
+                </div>
+                <DialogFooter>
+                  <Button 
+                    type="submit" 
+                    disabled={isSubmitting}
+                    className="w-full bg-orange hover:bg-orange/90 text-white font-black uppercase text-xs h-12 shadow-lg"
+                  >
+                    {isSubmitting ? "Processing Authorization..." : "Authorize Personnel"}
+                  </Button>
+                </DialogFooter>
+              </form>
+            </DialogContent>
+          </Dialog>
         </div>
       </div>
 

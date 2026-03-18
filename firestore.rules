@@ -34,9 +34,18 @@ service cloud.firestore {
       allow write: if signedIn() && (request.auth.uid == userId || isSuperAdmin());
     }
 
-    // DRIVER SHIFTS (TEMPORARY PERMISSIVE RULE)
+    // DRIVER SHIFTS (HIERARCHICAL RULE)
     match /driverShifts/{shiftId} {
-      allow read, write: if signedIn();
+      allow read: if isAdmin() ||
+                  (signedIn() && resource.data.driverId == request.auth.uid);
+
+      allow create: if isAdmin() ||
+                    (signedIn() && request.resource.data.driverId == request.auth.uid);
+
+      allow update: if isAdmin() ||
+                    (signedIn() && resource.data.driverId == request.auth.uid);
+
+      allow delete: if isAdmin();
     }
 
     // DRIVER LOCATIONS
