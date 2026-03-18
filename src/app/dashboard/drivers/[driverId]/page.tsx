@@ -106,7 +106,7 @@ export default function DriverProfilePage() {
     return {
       totalEarnings,
       totalTrips: rides.length,
-      avgRating: driver?.rating || 4.8,
+      avgRating: driver?.rating || 0,
       distance: Math.floor(rides.length * 8.4)
     }
   }, [rides, driver])
@@ -205,7 +205,7 @@ export default function DriverProfilePage() {
                 <div className="text-center">
                   <p className="text-[9px] font-black text-white/30 uppercase">Rating</p>
                   <div className="flex items-center gap-1 text-orange font-black text-sm">
-                    <Star className="w-3 h-3 fill-orange" /> {driver.rating || '5.0'}
+                    <Star className="w-3 h-3 fill-orange" /> {driver.rating > 0 ? driver.rating.toFixed(1) : 'NEW'}
                   </div>
                 </div>
                 <div className="text-center">
@@ -281,7 +281,7 @@ export default function DriverProfilePage() {
                   { label: "Missions", val: metrics.totalTrips, icon: Zap, color: "text-active" },
                   { label: "Revenue", val: `₹${metrics.totalEarnings}`, icon: CreditCard, color: "text-orange" },
                   { label: "Distance", val: `${metrics.distance}km`, icon: MapPin, color: "text-white" },
-                  { label: "Safety Score", val: driver.rating || 4.8, icon: Shield, color: "text-active" },
+                  { label: "Safety Score", val: driver.rating > 0 ? driver.rating.toFixed(1) : 'NEW', icon: Shield, color: "text-active" },
                 ].map((m, i) => (
                   <Card key={i} className="glass-panel border-none p-6 bg-navy/20 relative group overflow-hidden">
                     <m.icon className={cn("absolute -right-4 -bottom-4 w-20 h-20 opacity-5 group-hover:opacity-10 transition-opacity", m.color)} />

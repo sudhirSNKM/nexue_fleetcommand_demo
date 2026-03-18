@@ -17,7 +17,6 @@ service cloud.firestore {
     }
 
     function getRole() {
-      // Safely fetch role, defaulting to passenger if profile missing
       return hasProfile() ? getProfile().data.role : "passenger";
     }
 
@@ -26,7 +25,6 @@ service cloud.firestore {
     }
 
     function isAdmin() {
-      // Match both admin and super-admin for hierarchical access
       return signedIn() && (getRole() == "admin" || getRole() == "super-admin");
     }
 
@@ -36,7 +34,7 @@ service cloud.firestore {
       allow write: if signedIn() && (request.auth.uid == userId || isSuperAdmin());
     }
 
-    // DRIVER SHIFTS (TEMPORARY PERMISSIVE RULE FOR DEBUGGING)
+    // DRIVER SHIFTS (TEMPORARY PERMISSIVE RULE)
     match /driverShifts/{shiftId} {
       allow read, write: if signedIn();
     }
@@ -68,7 +66,6 @@ service cloud.firestore {
 
     // DRIVER STATS
     match /driverStats/{statsId} {
-      // statsId is structured as {driverId}_{date}
       allow read: if isAdmin() || (signedIn() && statsId.split('_')[0] == request.auth.uid);
       allow write: if isAdmin() || (signedIn() && statsId.split('_')[0] == request.auth.uid);
     }

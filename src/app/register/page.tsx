@@ -1,3 +1,4 @@
+
 "use client"
 
 import React, { useState } from "react"
@@ -39,10 +40,10 @@ export default function RegisterPage() {
         id: user.uid,
         name,
         email,
-        role, // Standardized to passenger, driver, admin, super-admin
+        role, // kebab-case: passenger, driver, admin, super-admin
         status: role === "driver" ? "pending" : "active",
         walletBalance: role === "passenger" ? 500 : 0,
-        rating: 5.0,
+        rating: 0, // NEW: Start with 0 to indicate unrated status
         createdAt: serverTimestamp(),
       }
 
