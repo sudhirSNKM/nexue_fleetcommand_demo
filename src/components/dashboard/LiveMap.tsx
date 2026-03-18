@@ -14,8 +14,8 @@ const Marker = dynamic(() => import('react-leaflet').then(mod => mod.Marker), { 
 const Popup = dynamic(() => import('react-leaflet').then(mod => mod.Popup), { ssr: false })
 
 interface LiveMapProps {
-  locations: any[] | null | undefined;
-  activeRides: any[] | null | undefined;
+  locations?: any[] | null;
+  activeRides?: any[] | null;
 }
 
 export default function LiveMap({ locations = [], activeRides = [] }: LiveMapProps) {
@@ -68,7 +68,6 @@ export default function LiveMap({ locations = [], activeRides = [] }: LiveMapPro
               attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
             />
             
-            {/* RENDER LIVE DRIVER LOCATIONS */}
             {safeLocations.map(loc => (
               <Marker 
                 key={loc.id} 
@@ -107,7 +106,6 @@ export default function LiveMap({ locations = [], activeRides = [] }: LiveMapPro
               </Marker>
             ))}
 
-            {/* RENDER ACTIVE RIDE PICKUP MARKERS */}
             {safeActiveRides.map(ride => (
               <React.Fragment key={ride.id}>
                 {ride.pickup && (
@@ -122,7 +120,6 @@ export default function LiveMap({ locations = [], activeRides = [] }: LiveMapPro
           </MapContainer>
         )}
 
-        {/* LEGEND OVERLAY */}
         <div className="absolute top-4 right-4 z-[1000] pointer-events-none">
           <div className="bg-charcoal/90 backdrop-blur-md p-3 rounded-xl border border-white/10 shadow-2xl space-y-2">
             <p className="text-[9px] font-black text-white/40 uppercase tracking-widest mb-1 border-b border-white/5 pb-1 flex items-center gap-2">

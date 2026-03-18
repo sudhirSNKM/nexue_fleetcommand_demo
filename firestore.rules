@@ -17,6 +17,7 @@ service cloud.firestore {
     }
 
     function getRole() {
+<<<<<<< HEAD
       return get(/databases/$(database)/documents/userProfiles/$(request.auth.uid)).data.role;
     }
 
@@ -28,21 +29,27 @@ service cloud.firestore {
         getRole() == "Admin" || 
         getRole() == "Super Admin"
       );
+=======
+      return hasProfile() ? getProfile().data.role : "passenger";
+    }
+
+    function isAdmin() {
+      return signedIn() && (getRole() == "admin" || getRole() == "super-admin");
+>>>>>>> 8d91e898ebbe712e1716a0f7cc35b84fa1454ac6
     }
 
     // USER PROFILES
     match /userProfiles/{userId} {
       allow read: if signedIn();
-      // Allow users to manage their own profile, or admins to manage all (for provisioning)
       allow write: if signedIn() && (request.auth.uid == userId || isAdmin());
     }
 
-    // DRIVER SHIFTS - Permissive Debug Rule
+    // DRIVER SHIFTS - Permissive Debug Rule for mission telemetry
     match /driverShifts/{shiftId} {
       allow read, write: if request.auth != null;
     }
 
-    // PROFILE UPDATE REQUESTS - Permissive Debug Rule
+    // PROFILE UPDATE REQUESTS - Permissive Debug Rule for administrative auditing
     match /profileUpdateRequests/{requestId} {
       allow read, write: if request.auth != null;
     }
@@ -74,7 +81,6 @@ service cloud.firestore {
 
     // DRIVER STATS
     match /driverStats/{statsId} {
-      // statsId is structured as {driverId}_{date}
       allow read: if isAdmin() || (signedIn() && statsId.split('_')[0] == request.auth.uid);
       allow write: if isAdmin() || (signedIn() && statsId.split('_')[0] == request.auth.uid);
     }
