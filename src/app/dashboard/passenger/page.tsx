@@ -1,9 +1,10 @@
+
 "use client"
 
 import React, { useState, useMemo, useEffect } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { 
-  MapPin, Navigation, Car, Bike, Zap, Package, Truck, ShieldAlert, Star, Phone, QrCode, Banknote, CheckCircle2, Clock, X
+  MapPin, Navigation, Car, Bike, Zap, Package, Truck, ShieldAlert, Star, Phone, QrCode, Banknote, CheckCircle2, Clock, X, Layout
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -44,7 +45,7 @@ export default function PassengerApp() {
   const [payingOnline, setPayingOnline] = useState(false)
   const [scanTimer, setScanTimer] = useState<number | null>(null)
   const [rating, setRating] = useState(0)
-  const [reviewSubmitted, setReviewSubmitted] = useState(false)
+  const [reviewedRideId, setReviewedRideId] = useState<string | null>(null)
   
   const hasLocations = pickup.trim().length > 2 && dropoff.trim().length > 2
   const mockDistance = useMemo(() => hasLocations ? Math.floor(Math.random() * 8) + 2 : 0, [hasLocations, pickup, dropoff])
@@ -71,8 +72,11 @@ export default function PassengerApp() {
       const bTime = b.createdAt?.toMillis?.() || 0
       return bTime - aTime
     })
-    return sorted.find(r => liveStatuses.includes(r.status))
-  }, [activeRides])
+    const liveRide = sorted.find(r => liveStatuses.includes(r.status))
+    // If the latest live ride is already reviewed locally, don't show it as the "current" active ride
+    if (liveRide?.id === reviewedRideId) return null
+    return liveRide
+  }, [activeRides, reviewedRideId])
 
   // Mission Notifications Effect
   useEffect(() => {
@@ -147,6 +151,8 @@ export default function PassengerApp() {
       fare: currentFare,
       createdAt: serverTimestamp()
     })
+    setReviewedRideId(null) // Reset reviewed ID if we start a new search
+    setRating(0)
     setTimeout(() => {
       toast({ title: "Broadcast Initiated", description: "Scanning sector for available units." })
     }, 0)
@@ -161,10 +167,17 @@ export default function PassengerApp() {
     if (!db || !rating) return
     const rideRef = doc(db, "rides", rideId)
     updateDocumentNonBlocking(rideRef, { rating, reviewedAt: serverTimestamp() })
-    setReviewSubmitted(true)
+    setReviewedRideId(rideId)
     setTimeout(() => {
       toast({ title: "Review Logged", description: "Tactical performance updated." })
     }, 0)
+  }
+
+  const handleResetTerminal = () => {
+    setReviewedRideId(null)
+    setPickup("")
+    setDropoff("")
+    setRating(0)
   }
 
   return (
@@ -276,7 +289,7 @@ export default function PassengerApp() {
                   </div>
                 )}
 
-                {currentRide.status === "Paid" && !reviewSubmitted && (
+                {currentRide.status === "Paid" && (
                   <div className="text-center space-y-4">
                     <div className="w-16 h-16 bg-active/10 rounded-full flex items-center justify-center mx-auto mb-2">
                       <CheckCircle2 className="w-10 h-10 text-active" />
@@ -290,20 +303,14 @@ export default function PassengerApp() {
                         </button>
                       ))}
                     </div>
-                    {rating > 0 && (
-                      <Button onClick={() => handleSubmitReview(currentRide.id)} className="w-full bg-slate-900 text-white font-black uppercase text-xs h-12 shadow-lg border-none">
-                        Submit Tactical Review
-                      </Button>
-                    )}
-                  </div>
-                )}
-
-                {reviewSubmitted && (
-                  <div className="text-center py-10 space-y-4">
-                    <Zap className="w-12 h-12 text-orange mx-auto animate-pulse" />
-                    <p className="text-sm font-black uppercase tracking-widest">Mission Archived</p>
-                    <p className="text-[10px] text-slate-400 font-bold uppercase">Returning to Standby Protocol...</p>
-                    <Button onClick={() => window.location.reload()} variant="outline" className="text-[10px] font-black uppercase border-slate-200">New Mission</Button>
+                    <div className="grid grid-cols-1 gap-2 mt-4">
+                      {rating > 0 && (
+                        <Button onClick={() => handleSubmitReview(currentRide.id)} className="w-full bg-slate-900 text-white font-black uppercase text-xs h-12 shadow-lg border-none">
+                          Submit Tactical Review
+                        </Button>
+                      )}
+                      <Button onClick={handleResetTerminal} variant="ghost" className="text-[10px] font-black uppercase text-slate-400">Skip & Return to Standby</Button>
+                    </div>
                   </div>
                 )}
 
