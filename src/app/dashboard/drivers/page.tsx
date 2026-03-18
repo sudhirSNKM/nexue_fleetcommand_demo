@@ -109,7 +109,7 @@ export default function DriversPage() {
                           <p className="text-[8px] text-white/30 uppercase font-black mb-0.5">Tactical Rating</p>
                           <div className="flex items-center justify-center gap-1 text-orange font-black text-xs">
                             <Star className={cn("w-3 h-3", (driver.rating || 0) > 0 ? "fill-orange" : "text-white/20")} />
-                            {driver.rating > 0 ? driver.rating.toFixed(1) : 'NEW'}
+                            {(driver.rating || 0) > 0 ? driver.rating.toFixed(1) : 'NEW'}
                           </div>
                         </div>
                         <div className="hidden sm:block text-center">

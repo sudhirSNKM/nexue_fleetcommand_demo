@@ -73,12 +73,19 @@ export default function AdminOperationsCenter() {
   const statsSummary = useMemo(() => {
     const onlineDrivers = allDrivers?.filter(d => d.status === "Online").length || 0
     const activeTrips = activeMissions?.length || 0
-    const revenue = recentRides?.filter(r => r.status === "Paid").reduce((acc, r) => acc + (r.fare || 0), 0) || 0
+    const revenue = recentRides?.filter(r => r.status === "Paid").reduce((acc, r) => acc + (Number(r.fare) || 0), 0) || 0
     
+    // Derived Safety Score
+    const ratedDrivers = allDrivers?.filter(d => (d.rating || 0) > 0) || []
+    const avgRating = ratedDrivers.length > 0 
+      ? (ratedDrivers.reduce((acc, d) => acc + d.rating, 0) / ratedDrivers.length).toFixed(2)
+      : "NEW"
+
     return {
       onlineDrivers,
       activeTrips,
       revenue,
+      avgRating,
       fleetSize: allDrivers?.length || 0
     }
   }, [allDrivers, activeMissions, recentRides])
@@ -122,10 +129,10 @@ export default function AdminOperationsCenter() {
       {/* METRICS ROW */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         {[
-          { label: "Total Fleet Hours", value: "1,204h", trend: "+5%", icon: Clock, color: "text-orange" },
+          { label: "Active Deployments", value: statsSummary.activeTrips.toString(), trend: "Live", icon: Zap, color: "text-active" },
           { label: "Safety Compliance", value: "99.2%", trend: "Optimal", icon: ShieldCheck, color: "text-active" },
-          { label: "Operator Avg Rating", value: "4.82", trend: "Stable", icon: Star, color: "text-orange" },
-          { label: "Active Drivers", value: statsSummary.onlineDrivers.toString(), trend: "Live", icon: Users, color: "text-white" },
+          { label: "Operator Avg Rating", value: statsSummary.avgRating.toString(), trend: "Stable", icon: Star, color: "text-orange" },
+          { label: "Active Drivers", value: statsSummary.onlineDrivers.toString(), trend: "Sync", icon: Users, color: "text-white" },
         ].map((stat, i) => (
           <Card key={i} className="glass-panel admin-card p-6 bg-navy/20 border-none relative overflow-hidden group">
             <stat.icon className="absolute -right-4 -bottom-4 w-20 h-20 opacity-5 group-hover:opacity-10 transition-opacity text-white" />

@@ -350,7 +350,7 @@ export default function PassengerApp() {
                          <div className="flex items-center justify-center gap-1 mt-0.5">
                            <Star className="w-3 h-3 text-orange fill-orange" />
                            <span className="text-[10px] text-slate-500 uppercase font-black">
-                             {driverProfile.rating > 0 ? driverProfile.rating.toFixed(1) : 'NEW'} Rating
+                             {(driverProfile.rating || 0) > 0 ? driverProfile.rating.toFixed(1) : 'NEW'} Rating
                            </span>
                          </div>
                        </div>
@@ -383,7 +383,7 @@ export default function PassengerApp() {
         <div className="grid grid-cols-2 gap-4">
           <Card className="p-3 text-center border-none shadow-xl bg-white border-slate-100">
             <p className="text-[9px] uppercase font-black text-slate-500 mb-1">Operator Rep</p>
-            <p className="text-xl font-black text-slate-900">{profile?.rating ? profile.rating.toFixed(1) : '5.0'}</p>
+            <p className="text-xl font-black text-slate-900">{(profile?.rating || 0) > 0 ? profile.rating.toFixed(1) : 'NEW'}</p>
           </Card>
           <Card className="p-3 text-center border-none shadow-xl bg-white border-slate-100">
             <p className="text-[9px] uppercase font-black text-slate-500 mb-1">Nexus Credits</p>

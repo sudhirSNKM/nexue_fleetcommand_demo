@@ -59,7 +59,7 @@ export default function LiveMap({ locations = [], activeRides = [] }: LiveMapPro
   const safeActiveRides = activeRides || []
 
   return (
-    <Card className="glass-panel border-none shadow-none h-full flex flex-col bg-transparent">
+    <Card className="glass-panel border-none shadow-none h-full min-h-[400px] flex flex-col bg-transparent">
       <CardContent className="flex-1 p-0 relative h-full">
         {L && (
           <MapContainer center={[12.9716, 77.5946]} zoom={12} className="h-full w-full" zoomControl={false}>
@@ -109,7 +109,7 @@ export default function LiveMap({ locations = [], activeRides = [] }: LiveMapPro
             {safeActiveRides.map(ride => (
               <React.Fragment key={ride.id}>
                 {ride.pickup && (
-                   <Marker position={[ride.pickup.lat, ride.pickup.lng]} icon={L.divIcon({ html: '<div class="w-3 h-3 bg-active rounded-full ring-2 ring-white"></div>', className: 'pickup' })}>
+                   <Marker position={[ride.pickup.lat, ride.pickup.lng]} icon={L.divIcon({ html: '<div class="w-3 h-3 bg-active rounded-full ring-2 ring-white shadow-[0_0_10px_#00CC00]"></div>', className: 'pickup' })}>
                      <Popup className="custom-popup">
                         <p className="text-[8px] font-black uppercase">Active Pickup: {ride.id.substring(0,6)}</p>
                      </Popup>
