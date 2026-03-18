@@ -17,7 +17,7 @@ service cloud.firestore {
     }
 
     function getRole() {
-      return hasProfile() ? getProfile().data.role.lower() : "passenger";
+      return hasProfile() ? getProfile().data.role.toLower() : "passenger";
     }
 
     function isAdmin() {
