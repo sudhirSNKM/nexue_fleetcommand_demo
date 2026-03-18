@@ -24,9 +24,12 @@ service cloud.firestore {
       return signedIn() && (getRole() == "admin" || getRole() == "super-admin");
     }
 
-    // USER PROFILES
+    // USER PROFILES: Identity Registry
+    // Reads are public to support email/phone resolution at login (before auth token exists).
+    // Writes are restricted to the profile owner or an admin.
     match /userProfiles/{userId} {
-      allow read, write: if signedIn();
+      allow read: if true;
+      allow write: if signedIn() && (request.auth.uid == userId || isAdmin());
     }
 
     // DRIVER SHIFTS

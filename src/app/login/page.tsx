@@ -28,23 +28,29 @@ export default function LoginPage() {
     setIsLoading(true)
     
     try {
-      let emailToUse = identifier.toLowerCase()
+      let emailToUse = identifier.toLowerCase().trim();
+      let registryFound = false;
 
-      // Unified Auth Strategy: Check if identifier is email or phone
-      const isEmail = /^\S+@\S+\.\S+$/.test(identifier)
+      // Stage 1: Tactical Identity Resolution
+      // We search the central personnel registry (Firestore) to find the current active comms link (Email/Phone)
+      const q = query(collection(db, "userProfiles"), where("email", "==", emailToUse), limit(1));
+      const pq = query(collection(db, "userProfiles"), where("phone", "==", identifier.trim()), limit(1));
       
-      if (!isEmail) {
-        // Resolve Identity via Phone Registry
-        const q = query(collection(db, "userProfiles"), where("phone", "==", identifier.trim()), limit(1))
-        const querySnapshot = await getDocs(q)
-        
-        if (querySnapshot.empty) {
-          throw new Error("Comms link not found in personnel registry.")
-        }
-        
-        emailToUse = querySnapshot.docs[0].data().email
+      const [emailSnap, phoneSnap] = await Promise.all([getDocs(q), getDocs(pq)]);
+      
+      if (!emailSnap.empty) {
+        emailToUse = emailSnap.docs[0].data().email;
+        registryFound = true;
+      } else if (!phoneSnap.empty) {
+        emailToUse = phoneSnap.docs[0].data().email;
+        registryFound = true;
       }
 
+      if (!registryFound && !/^\S+@\S+\.\S+$/.test(identifier)) {
+        throw new Error("Personnel record not found in tactical registry. Verify identifier.");
+      }
+
+      // Stage 2: Authentication Handshake
       await signInWithEmailAndPassword(auth, emailToUse, password)
       const user = auth.currentUser!;
       
