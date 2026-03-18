@@ -3,13 +3,13 @@
 
 import React, { useState } from "react"
 import { motion } from "framer-motion"
-import { Truck, ShieldCheck, Lock, Mail, Phone, User } from "lucide-react"
+import { Truck, ShieldCheck, Lock, User } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { useAuth, useFirestore } from "@/firebase"
 import { signInWithEmailAndPassword } from "firebase/auth"
-import { collection, query, where, getDocs, limit, doc } from "firebase/firestore"
+import { collection, query, where, getDocs, limit, doc, updateDoc, getDoc } from "firebase/firestore"
 import { useRouter } from "next/navigation"
 import { useToast } from "@/hooks/use-toast"
 import Link from "next/link"
@@ -49,14 +49,10 @@ export default function LoginPage() {
       const user = auth.currentUser!;
       
       const userDocRef = doc(db, "userProfiles", user.uid);
-      const { updateDoc, getDoc } = await import("firebase/firestore");
       const userSnap = await getDoc(userDocRef);
       
       if (userSnap.exists() && userSnap.data().currentSessionId) {
-        toast({
-          title: "Session Override detected",
-          description: "An active link was detected elsewhere. Overriding for new tactical session.",
-        });
+        // Log trace of override but proceed with new session
       }
 
       // Session Security Protocol: Generate and synchronize unique session identifier

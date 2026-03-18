@@ -32,9 +32,10 @@ export default function RideHistoryPage() {
   const { data: profile } = useDoc(userProfileRef)
   
   // Normalize Role for robust clearance checking
-  const role = (profile?.role || "passenger").toLowerCase().replace(/\s+/g, '-')
-  const isMobilityUser = role === "passenger" || role === "driver"
+  const rawRole = profile?.role || "passenger"
+  const role = rawRole.toLowerCase().trim().replace(/[\s_-]+/g, '-')
   const isAdmin = role === "admin" || role === "super-admin"
+  const isMobilityUser = !isAdmin
 
   // Filter query logic: Mobility users see own rides, Admins see all recent rides
   const ridesQuery = useMemoFirebase(() => {
@@ -57,7 +58,7 @@ export default function RideHistoryPage() {
       orderBy("createdAt", "desc"),
       limit(50)
     )
-  }, [user, db, profile?.role, role, isAdmin])
+  }, [user, db, profile, role, isAdmin])
 
   const { data: rides, isLoading } = useCollection(ridesQuery)
 
