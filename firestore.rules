@@ -83,5 +83,11 @@ service cloud.firestore {
     match /adminChats/{chatId}/{document=**} {
       allow read, write: if isAdmin();
     }
+
+    // FLEET ASSETS
+    match /fleetAssets/{assetId} {
+      allow read: if signedIn();
+      allow write: if isAdmin();
+    }
   }
 }
