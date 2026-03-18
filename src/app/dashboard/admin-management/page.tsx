@@ -43,14 +43,14 @@ export default function AdminManagementPage() {
 
   const adminsQuery = useMemoFirebase(() => (db && isUserAdmin) ? query(
     collection(db, "userProfiles"), 
-    where("role", "==", "admin")
+    where("role", "in", ["admin", "super-admin"])
   ) : null, [db, isUserAdmin])
 
   const { data: admins, isLoading } = useCollection(adminsQuery)
 
   if (!isUserAdmin) {
     return (
-      <div className="h-full flex flex-col items-center justify-center space-y-4 bg-charcoal text-white">
+      <div className="h-full flex flex-col items-center justify-center space-y-4 bg-charcoal text-white min-h-[400px]">
         <div className="w-10 h-10 border-4 border-orange/20 border-t-orange rounded-full animate-spin" />
         <p className="text-[10px] uppercase font-black tracking-widest">Validating Clearance...</p>
       </div>
@@ -69,10 +69,13 @@ export default function AdminManagementPage() {
   }
 
   const handleProvisionAdmin = async () => {
-    if (!db || !newAdmin.email || !newAdmin.name) return
+    if (!db || !newAdmin.email || !newAdmin.name) {
+      toast({ variant: "destructive", title: "Incomplete Data", description: "All fields are required." })
+      return
+    }
     setIsSubmitting(true)
     try {
-      // 1. Search for existing profile by email to ensure database consistency
+      // 1. Search for existing profile by email
       const q = query(collection(db, "userProfiles"), where("email", "==", newAdmin.email.toLowerCase()))
       const querySnapshot = await getDocs(q)
       
@@ -86,7 +89,7 @@ export default function AdminManagementPage() {
         })
         toast({ title: "Designation Authorized", description: `Existing profile for ${newAdmin.email} promoted to Admin status.` })
       } else {
-        // 3. Provision a new administrative identity
+        // 3. Provision a new administrative identity (placeholder)
         const mockId = `admin_${Math.random().toString(36).substring(7)}`
         await setDoc(doc(db, "userProfiles", mockId), {
           id: mockId,
@@ -98,7 +101,7 @@ export default function AdminManagementPage() {
           createdAt: serverTimestamp(),
           rating: 0
         })
-        toast({ title: "Designation Authorized", description: `New administrative terminal initialized for ${newAdmin.name}.` })
+        toast({ title: "Designation Authorized", description: `New administrative terminal initialized for ${newAdmin.name}. User must register with this email.` })
       }
       setIsProvisioning(false)
       setNewAdmin({ name: "", email: "", zone: "Global" })
@@ -140,10 +143,10 @@ export default function AdminManagementPage() {
                     <div className="flex items-center gap-4">
                       <Avatar className="h-12 w-12 ring-2 ring-white/5 shadow-2xl">
                         <AvatarImage src={`https://picsum.photos/seed/${admin.id}/100/100`} />
-                        <AvatarFallback className="bg-navy text-white font-black">{admin.name[0]}</AvatarFallback>
+                        <AvatarFallback className="bg-navy text-white font-black">{admin.name ? admin.name[0] : 'A'}</AvatarFallback>
                       </Avatar>
                       <div>
-                        <h4 className="text-sm font-black text-white uppercase">{admin.name}</h4>
+                        <h4 className="text-sm font-black text-white uppercase">{admin.name || 'Unnamed Admin'}</h4>
                         <div className="flex items-center gap-3 mt-1 text-[9px] font-black uppercase text-white/40 tracking-widest">
                           <span className="flex items-center gap-1"><Mail className="w-3 h-3" /> {admin.email}</span>
                           <span className="flex items-center gap-1 text-orange uppercase font-black"><MapPin className="w-3 h-3" /> {admin.zone || 'Global Sector'}</span>

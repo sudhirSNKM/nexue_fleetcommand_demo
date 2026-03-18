@@ -39,11 +39,11 @@ export default function RegisterPage() {
       const profileData: any = {
         id: user.uid,
         name,
-        email,
+        email: email.toLowerCase(),
         role, 
         status: role === "driver" ? "pending" : "Active",
         walletBalance: role === "passenger" ? 500 : 0,
-        rating: 0, // Initialize with 0 to trigger "NEW" status UI
+        rating: 0, 
         createdAt: serverTimestamp(),
       }
 

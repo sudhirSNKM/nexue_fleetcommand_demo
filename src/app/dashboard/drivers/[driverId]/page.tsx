@@ -1,3 +1,4 @@
+
 "use client"
 
 import React, { useState, useMemo } from "react"
@@ -26,7 +27,8 @@ import {
   UserX,
   History,
   Activity,
-  Zap
+  Zap,
+  CheckCircle2
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -65,11 +67,12 @@ export default function DriverProfilePage() {
   const db = useFirestore()
   const driverId = params.driverId as string
 
-  const [activeTimeframe, setActiveTimeframe] = useState("today")
   const { user: currentUser } = useUser()
   const currentUserRef = useMemoFirebase(() => currentUser && db ? doc(db, "userProfiles", currentUser.uid) : null, [currentUser, db])
   const { data: currentProfile } = useDoc(currentUserRef)
-  const isUserAdmin = currentProfile?.role === "admin" || currentProfile?.role === "super-admin"
+  
+  const role = (currentProfile?.role || "").toLowerCase()
+  const isUserAdmin = role === "admin" || role === "super-admin"
 
   // FETCH DRIVER PROFILE
   const profileRef = useMemoFirebase(() => (db && isUserAdmin) ? doc(db, "userProfiles", driverId) : null, [db, driverId, isUserAdmin])
@@ -84,15 +87,6 @@ export default function DriverProfilePage() {
   ) : null, [db, driverId, isUserAdmin])
   const { data: rides } = useCollection(ridesQuery)
 
-  // FETCH SHIFT LOGS
-  const shiftsQuery = useMemoFirebase(() => (db && isUserAdmin) ? query(
-    collection(db, "driverShifts"),
-    where("driverId", "==", driverId),
-    orderBy("punchInTime", "desc"),
-    limit(10)
-  ) : null, [db, driverId, isUserAdmin])
-  const { data: shifts } = useCollection(shiftsQuery)
-
   // MOCK CHART DATA
   const chartData = [
     { day: 'Mon', trips: 12, earnings: 1450 },
@@ -105,7 +99,7 @@ export default function DriverProfilePage() {
   ]
 
   const metrics = useMemo(() => {
-    if (!rides) return { totalEarnings: 0, totalTrips: 0, avgRating: 4.8, distance: 1240 }
+    if (!rides) return { totalEarnings: 0, totalTrips: 0, avgRating: 0, distance: 0 }
     const totalEarnings = rides.reduce((acc, r) => acc + (r.fare || 0), 0)
     return {
       totalEarnings,
@@ -134,9 +128,9 @@ export default function DriverProfilePage() {
   }
 
   if (!isUserAdmin || isProfileLoading) return (
-    <div className="h-screen w-screen flex items-center justify-center bg-charcoal text-white">
+    <div className="h-full flex items-center justify-center bg-charcoal text-white min-h-[400px]">
       <div className="w-10 h-10 border-4 border-orange/20 border-t-orange rounded-full animate-spin" />
-      {!isUserAdmin && <p className="ml-4 text-[10px] uppercase font-black tracking-widest">Validating clearance...</p>}
+      <p className="ml-4 text-[10px] uppercase font-black tracking-widest">Validating clearance...</p>
     </div>
   )
 
@@ -148,7 +142,7 @@ export default function DriverProfilePage() {
     </div>
   )
 
-  const isPending = driver.status === 'Pending'
+  const isPending = driver.status === 'pending' || driver.status === 'Pending'
 
   return (
     <div className="space-y-8 pb-20">
@@ -210,7 +204,8 @@ export default function DriverProfilePage() {
                 <div className="text-center">
                   <p className="text-[9px] font-black text-white/30 uppercase">Rating</p>
                   <div className="flex items-center gap-1 text-orange font-black text-sm">
-                    <Star className="w-3 h-3 fill-orange" /> {driver.rating > 0 ? driver.rating.toFixed(1) : 'NEW'}
+                    <Star className={cn("w-3 h-3", (driver.rating || 0) > 0 ? "fill-orange" : "text-white/20")} /> 
+                    {driver.rating > 0 ? driver.rating.toFixed(1) : 'NEW'}
                   </div>
                 </div>
                 <div className="text-center">
@@ -218,7 +213,7 @@ export default function DriverProfilePage() {
                   <Badge className={cn(
                     "text-[8px] font-black uppercase",
                     driver.status === 'Online' ? 'bg-active/10 text-active' : 
-                    driver.status === 'Pending' ? 'bg-orange/10 text-orange' : 'bg-white/5 text-white/40'
+                    isPending ? 'bg-orange/10 text-orange' : 'bg-white/5 text-white/40'
                   )}>
                     {driver.status || 'Offline'}
                   </Badge>
@@ -385,6 +380,11 @@ export default function DriverProfilePage() {
                           <td className="p-4 text-white/40">{new Date(ride.createdAt?.seconds * 1000).toLocaleString()}</td>
                         </tr>
                       ))}
+                      {!rides?.length && (
+                        <tr>
+                          <td colSpan={5} className="p-10 text-center text-white/20 uppercase font-black text-[10px]">No missions archived</td>
+                        </tr>
+                      )}
                     </tbody>
                   </table>
                 </CardContent>
@@ -397,14 +397,14 @@ export default function DriverProfilePage() {
                   { label: "Driving License", icon: User, status: driver.licenseNumber ? "Provided" : "Missing" },
                   { label: "Vehicle RC", icon: Car, status: driver.vehicleNumber ? "Provided" : "Missing" },
                   { label: "Asset Manifest", icon: FileText, status: driver.vehicleModel ? "Provided" : "Missing" },
-                ].map((doc, i) => (
+                ].map((docItem, i) => (
                   <Card key={i} className="glass-panel border-none p-6 flex flex-col items-center group relative overflow-hidden">
                     <div className="p-4 rounded-full bg-navy/40 mb-4">
-                      <doc.icon className={cn("w-8 h-8", doc.status === "Provided" ? "text-active" : "text-orange")} />
+                      <docItem.icon className={cn("w-8 h-8", docItem.status === "Provided" ? "text-active" : "text-orange")} />
                     </div>
-                    <p className="text-sm font-black text-white uppercase mb-2">{doc.label}</p>
-                    <Badge className={cn("text-[9px] font-black uppercase", doc.status === "Provided" ? "bg-active/10 text-active" : "bg-orange/10 text-orange")}>
-                      {doc.status}
+                    <p className="text-sm font-black text-white uppercase mb-2">{docItem.label}</p>
+                    <Badge className={cn("text-[9px] font-black uppercase", docItem.status === "Provided" ? "bg-active/10 text-active" : "bg-orange/10 text-orange")}>
+                      {docItem.status}
                     </Badge>
                   </Card>
                 ))}
