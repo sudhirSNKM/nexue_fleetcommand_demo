@@ -66,10 +66,11 @@ export default function ProfileRequestsPage() {
       await updateDoc(doc(db, "profileUpdateRequests", requestId), {
         status: "granted",
         grantedAt: serverTimestamp(),
+        grantedBy: profile?.name || user?.uid
       })
       toast({
-        title: "Access Granted",
-        description: "The driver has been granted access to update their profile.",
+        title: "Access Authorized",
+        description: "The operator has been granted clearance to modify their profile data.",
       })
     } catch (error: any) {
       toast({
@@ -91,7 +92,8 @@ export default function ProfileRequestsPage() {
       const updatedData = {
         ...selectedRequest.requestedChanges,
         profileLastUpdatedAt: serverTimestamp(),
-        profileUpdateProof: selectedRequest.proofNotes
+        profileUpdateProof: selectedRequest.proofNotes,
+        updatedBy: profile?.name || user?.uid
       }
       await updateDoc(profileRef, updatedData)
 
@@ -99,7 +101,7 @@ export default function ProfileRequestsPage() {
       await updateDoc(doc(db, "profileUpdateRequests", selectedRequest.id), {
         status: "approved",
         approvedAt: serverTimestamp(),
-        committedBy: "admin"
+        committedBy: profile?.name || user?.uid
       })
 
       // 3. Optional: Create Audit Log

@@ -83,7 +83,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         { icon: Layers, label: "Zones", href: "/dashboard/zones" },
         { icon: DollarSign, label: "Pricing Engine", href: "/dashboard/pricing" },
         { icon: ShieldCheck, label: "Admin Ops", href: "/dashboard/admin-management" },
-        { icon: Activity, label: "Audit Logs", href: "/dashboard/audit-logs" }
+        { icon: Activity, label: "Audit Logs", href: "/dashboard/audit-logs" },
+        { icon: Settings, label: "System Config", href: "/dashboard/settings" }
       )
     } else if (role === "admin") {
       items.push(
@@ -95,7 +96,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         { icon: History, label: "Trips", href: "/dashboard/history" },
         { icon: User, label: "Passengers", href: "/dashboard/passengers-list" },
         { icon: BarChart3, label: "Analytics", href: "/dashboard/analytics" },
-        { icon: AlertTriangle, label: "Alerts", href: "/dashboard/alerts" }
+        { icon: AlertTriangle, label: "Alerts", href: "/dashboard/alerts" },
+        { icon: Settings, label: "System Config", href: "/dashboard/settings" }
       )
     } else if (role === "driver") {
       items.push(
@@ -109,7 +111,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       )
     }
 
-    items.push({ icon: Settings, label: "Account", href: (role === "admin" || role === "super-admin") ? "/dashboard/account" : "/dashboard/settings" })
+    items.push({ icon: User, label: "Profile", href: "/dashboard/profile" })
     return items
   }, [role, isPendingDriver])
 
