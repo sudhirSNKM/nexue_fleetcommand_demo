@@ -1,4 +1,3 @@
-
 "use client"
 
 import React, { useState } from "react"
@@ -11,7 +10,7 @@ import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { useAuth, useFirestore } from "@/firebase"
 import { createUserWithEmailAndPassword } from "firebase/auth"
-import { doc, setDoc, serverTimestamp } from "firebase/firestore"
+import { doc, setDoc, serverTimestamp, getDocs, query, collection, where } from "firebase/firestore"
 import { useRouter } from "next/navigation"
 import { useToast } from "@/hooks/use-toast"
 import Link from "next/link"
@@ -51,6 +50,22 @@ export default function RegisterPage() {
 
     setIsLoading(true)
     try {
+      // 1. Check for pre-provisioned roles (e.g. provisioned admin)
+      const q = query(collection(db, "userProfiles"), where("email", "==", email.toLowerCase()))
+      const querySnapshot = await getDocs(q)
+      
+      let finalRole = role
+      let finalStatus = role === "driver" ? "pending" : "Active"
+      
+      if (!querySnapshot.empty) {
+        const existingData = querySnapshot.docs[0].data()
+        // If they were pre-provisioned as admin, keep that role
+        if (existingData.role === 'admin' || existingData.role === 'super-admin') {
+          finalRole = existingData.role
+          finalStatus = "Active"
+        }
+      }
+
       const userCredential = await createUserWithEmailAndPassword(auth, email, password)
       const user = userCredential.user
 
@@ -59,14 +74,14 @@ export default function RegisterPage() {
         name,
         email: email.toLowerCase(),
         phone: phone.trim(),
-        role, 
-        status: role === "driver" ? "pending" : "Active",
-        walletBalance: role === "passenger" ? 500 : 0,
+        role: finalRole, 
+        status: finalStatus,
+        walletBalance: finalRole === "passenger" ? 500 : 0,
         rating: 0, 
         createdAt: serverTimestamp(),
       }
 
-      if (role === "driver") {
+      if (finalRole === "driver") {
         profileData.vehicleType = vehicleType
       }
 
@@ -74,10 +89,10 @@ export default function RegisterPage() {
 
       toast({
         title: "Terminal Initialized",
-        description: role === "driver" ? "Step 1 complete. Now provide vehicle details." : `Welcome, ${name}. Your account is active.`,
+        description: finalRole === "driver" ? "Step 1 complete. Now provide vehicle details." : `Welcome, ${name}. Your account is active.`,
       })
 
-      if (role === "driver") {
+      if (finalRole === "driver") {
         router.push("/onboarding/vehicle-details")
       } else {
         router.push("/dashboard")

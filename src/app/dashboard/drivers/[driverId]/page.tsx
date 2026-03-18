@@ -1,4 +1,3 @@
-
 "use client"
 
 import React, { useState, useMemo } from "react"
@@ -29,7 +28,8 @@ import {
   Activity,
   Zap,
   CheckCircle2,
-  Loader2
+  Loader2,
+  MessageSquare
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -66,8 +66,8 @@ interface PageProps {
 }
 
 export default function DriverProfilePage(props: PageProps) {
-  const params = React.use(props.params)
-  const driverId = params.driverId
+  const unwrappedParams = React.use(props.params)
+  const driverId = unwrappedParams.driverId
   const router = useRouter()
   const { toast } = useToast()
   const db = useFirestore()
@@ -86,19 +86,22 @@ export default function DriverProfilePage(props: PageProps) {
     collection(db, "rides"), 
     where("driverId", "==", driverId),
     orderBy("createdAt", "desc"),
-    limit(50)
+    limit(100)
   ) : null, [db, driverId, isUserAdmin])
   const { data: rides, isLoading: isRidesLoading } = useCollection(ridesQuery)
 
   const metrics = useMemo(() => {
-    if (!rides) return { totalEarnings: 0, totalTrips: 0, avgRating: 0, distance: 0 }
+    if (!rides) return { totalEarnings: 0, totalTrips: 0, avgRating: 0, distance: 0, feedbacks: [] }
     const validRides = rides.filter(r => r.status === 'Completed' || r.status === 'Paid')
     const totalEarnings = validRides.reduce((acc, r) => acc + (Number(r.fare) || 0), 0)
+    const feedbacks = rides.filter(r => r.feedback).map(r => ({ id: r.id, feedback: r.feedback, rating: r.rating, date: r.reviewedAt }))
+    
     return {
       totalEarnings,
       totalTrips: validRides.length,
       avgRating: driver?.rating || 0,
-      distance: Math.floor(validRides.length * 8.4)
+      distance: Math.floor(validRides.length * 8.4),
+      feedbacks
     }
   }, [rides, driver])
 
@@ -134,7 +137,7 @@ export default function DriverProfilePage(props: PageProps) {
     updateDocumentNonBlocking(profileRef, { status: newStatus })
     toast({
       title: "Tactical Update",
-      description: `Operator status changed to ${newStatus}. Platform registry updated.`
+      description: `Operator status changed to ${newStatus}. Registry updated.`
     })
   }
 
@@ -271,8 +274,38 @@ export default function DriverProfilePage(props: PageProps) {
                 ))}
               </div>
 
-              {chartData.length > 0 ? (
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <Card className="glass-panel border-none h-full flex flex-col">
+                  <CardHeader className="p-4 bg-navy/10 border-b border-white/5 flex flex-row items-center justify-between">
+                    <CardTitle className="text-[10px] font-black uppercase text-white/60 tracking-widest flex items-center gap-2">
+                      <MessageSquare className="w-4 h-4 text-orange" /> Passenger Feed
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="p-4 flex-1 overflow-y-auto max-h-[300px] space-y-4 scrollbar-hide">
+                    {metrics.feedbacks.length > 0 ? (
+                      metrics.feedbacks.map((f, i) => (
+                        <div key={i} className="p-3 bg-white/5 rounded-xl border border-white/5 space-y-2">
+                          <div className="flex justify-between items-center">
+                            <div className="flex gap-1">
+                              {[...Array(5)].map((_, idx) => (
+                                <Star key={idx} className={cn("w-2 h-2", idx < (f.rating || 0) ? "text-orange fill-orange" : "text-white/10")} />
+                              ))}
+                            </div>
+                            <span className="text-[8px] text-white/20 font-mono">RID_{f.id.substring(0,6)}</span>
+                          </div>
+                          <p className="text-[10px] text-white/70 italic leading-relaxed">"{f.feedback}"</p>
+                        </div>
+                      ))
+                    ) : (
+                      <div className="h-full flex flex-col items-center justify-center py-10 opacity-20">
+                        <MessageSquare className="w-8 h-8 mb-2" />
+                        <p className="text-[9px] font-black uppercase">No feedback logged</p>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+
+                {chartData.length > 0 && (
                   <Card className="glass-panel border-none">
                     <CardHeader className="p-4 bg-navy/10 border-b border-white/5"><CardTitle className="text-[10px] font-black uppercase text-white/60 tracking-widest flex items-center gap-2"><TrendingUp className="w-4 h-4 text-orange" /> Earnings Pulse</CardTitle></CardHeader>
                     <CardContent className="p-6 h-[300px]">
@@ -288,27 +321,8 @@ export default function DriverProfilePage(props: PageProps) {
                       </ResponsiveContainer>
                     </CardContent>
                   </Card>
-                  <Card className="glass-panel border-none">
-                    <CardHeader className="p-4 bg-navy/10 border-b border-white/5"><CardTitle className="text-[10px] font-black uppercase text-white/60 tracking-widest flex items-center gap-2"><Zap className="w-4 h-4 text-active" /> Operational Activity</CardTitle></CardHeader>
-                    <CardContent className="p-6 h-[300px]">
-                      <ResponsiveContainer width="100%" height="100%">
-                        <BarChart data={chartData}>
-                          <CartesianGrid strokeDasharray="3 3" stroke="#ffffff05" vertical={false} />
-                          <XAxis dataKey="day" stroke="#ffffff20" fontSize={10} axisLine={false} tickLine={false} />
-                          <YAxis stroke="#ffffff20" fontSize={10} axisLine={false} tickLine={false} />
-                          <Tooltip contentStyle={{ backgroundColor: '#131518', border: '1px solid #ffffff10', fontSize: '12px' }} />
-                          <Bar dataKey="trips" radius={[4, 4, 0, 0]}>{chartData.map((entry, index) => <Cell key={index} fill={entry.trips > 5 ? '#00CC00' : '#FF8000'} />)}</Bar>
-                        </BarChart>
-                      </ResponsiveContainer>
-                    </CardContent>
-                  </Card>
-                </div>
-              ) : (
-                <Card className="glass-panel border-none p-20 text-center">
-                   <Activity className="w-12 h-12 text-white/10 mx-auto mb-4" />
-                   <p className="text-[10px] font-black uppercase text-white/40 tracking-widest">No mission performance data detected in registry</p>
-                </Card>
-              )}
+                )}
+              </div>
             </TabsContent>
 
             <TabsContent value="history" className="mt-8">

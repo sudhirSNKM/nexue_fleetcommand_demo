@@ -3,15 +3,16 @@
 import React, { useState, useMemo, useEffect } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { 
-  MapPin, Navigation, Car, Bike, Zap, Package, Truck, ShieldAlert, Star, Phone, QrCode, Banknote, CheckCircle2, Clock, X, Layout, RefreshCw
+  MapPin, Navigation, Car, Bike, Zap, Package, Truck, ShieldAlert, Star, Phone, QrCode, Banknote, CheckCircle2, Clock, X, Layout, RefreshCw, MessageSquare
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
+import { Textarea } from "@/components/ui/textarea"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import TacticalMap from "@/components/dashboard/TacticalMap"
 import { useUser, useFirestore, useCollection, useMemoFirebase, useDoc, updateDocumentNonBlocking } from "@/firebase"
-import { collection, query, where, addDoc, serverTimestamp, doc, limit, increment } from "firebase/firestore"
+import { collection, query, where, addDoc, serverTimestamp, doc, limit, increment, getDocs, updateDoc } from "firebase/firestore"
 import { useToast } from "@/hooks/use-toast"
 import { cn } from "@/lib/utils"
 
@@ -44,7 +45,9 @@ export default function PassengerApp() {
   const [payingOnline, setPayingOnline] = useState(false)
   const [scanTimer, setScanTimer] = useState<number | null>(null)
   const [rating, setRating] = useState(0)
+  const [feedback, setFeedback] = useState("")
   const [reviewedRideId, setReviewedRideId] = useState<string | null>(null)
+  const [isSubmittingReview, setIsSubmittingReview] = useState(false)
   
   const hasLocations = pickup.trim().length > 2 && dropoff.trim().length > 2
   const mockDistance = useMemo(() => hasLocations ? Math.floor(Math.random() * 8) + 2 : 0, [hasLocations, pickup, dropoff])
@@ -76,7 +79,6 @@ export default function PassengerApp() {
     if (!liveRide) return null
     if (liveRide.id === reviewedRideId) return null
     
-    // Auto-archive 'Paid' rides that were settled over 30 mins ago
     if (liveRide.status === "Paid") {
       const paidTime = liveRide.paidAt?.toMillis?.() || liveRide.createdAt?.toMillis?.() || 0
       if (Date.now() - paidTime > 30 * 60 * 1000) return null
@@ -86,7 +88,7 @@ export default function PassengerApp() {
   }, [activeRides, reviewedRideId])
 
   useEffect(() => {
-    if (!currentRide?.status) return;
+    if (!currentRide?.status || !db) return;
     if (currentRide.status === "Rejected") {
       const timer = setTimeout(() => {
         toast({ 
@@ -94,8 +96,7 @@ export default function PassengerApp() {
           description: "Applying priority search surcharge...",
           variant: "destructive" 
         })
-        const rideRef = doc(db, "rides", currentRide.id)
-        updateDocumentNonBlocking(rideRef, {
+        updateDocumentNonBlocking(doc(db, "rides", currentRide.id), {
           status: "Requested",
           fare: increment(25),
           lastRejectedAt: serverTimestamp()
@@ -155,6 +156,7 @@ export default function PassengerApp() {
     })
     setReviewedRideId(null)
     setRating(0)
+    setFeedback("")
     toast({ title: "Broadcast Initiated", description: "Scanning sector for available units." })
   }
 
@@ -163,12 +165,54 @@ export default function PassengerApp() {
     updateDocumentNonBlocking(doc(db, "rides", rideId), { status: "Cancelled", cancelledAt: serverTimestamp() })
   }
 
-  const handleSubmitReview = (rideId: string) => {
-    if (!db || !rating) return
-    const rideRef = doc(db, "rides", rideId)
-    updateDocumentNonBlocking(rideRef, { rating, reviewedAt: serverTimestamp() })
-    setReviewedRideId(rideId)
-    toast({ title: "Review Logged", description: "Tactical performance updated." })
+  const handleSubmitReview = async (rideId: string) => {
+    if (!db || !rating || !currentRide?.driverId) return
+    setIsSubmittingReview(true)
+    try {
+      const rideRef = doc(db, "rides", rideId)
+      await updateDoc(rideRef, { 
+        rating, 
+        feedback, 
+        reviewedAt: serverTimestamp() 
+      })
+
+      const driverId = currentRide.driverId
+      const q = query(
+        collection(db, "rides"),
+        where("driverId", "==", driverId),
+        where("status", "in", ["Completed", "Paid"])
+      )
+      
+      const querySnapshot = await getDocs(q)
+      let totalRating = 0
+      let count = 0
+      
+      querySnapshot.forEach((d) => {
+        const data = d.data()
+        if (d.id === rideId) {
+          totalRating += rating
+          count++
+        } else if (data.rating) {
+          totalRating += data.rating
+          count++
+        }
+      })
+
+      if (!querySnapshot.docs.find(d => d.id === rideId)) {
+        totalRating += rating
+        count++
+      }
+
+      const avgRating = totalRating / count
+      await updateDoc(doc(db, "userProfiles", driverId), { rating: avgRating })
+
+      setReviewedRideId(rideId)
+      toast({ title: "Review Logged", description: "Operator rating synchronized." })
+    } catch (error: any) {
+      toast({ variant: "destructive", title: "Review Error", description: error.message })
+    } finally {
+      setIsSubmittingReview(false)
+    }
   }
 
   const handleResetTerminal = (rideId?: string) => {
@@ -176,6 +220,7 @@ export default function PassengerApp() {
     setPickup("")
     setDropoff("")
     setRating(0)
+    setFeedback("")
     setActiveService('Ride')
   }
 
@@ -294,18 +339,35 @@ export default function PassengerApp() {
                       <CheckCircle2 className="w-10 h-10 text-active" />
                     </div>
                     <h3 className="text-sm font-black uppercase tracking-widest text-slate-900">Settlement Confirmed</h3>
-                    <p className="text-xs text-slate-500 font-bold uppercase">Rate your Operator</p>
-                    <div className="flex justify-center gap-2">
-                      {[1, 2, 3, 4, 5].map((s) => (
-                        <button key={s} onClick={() => setRating(s)} className="transition-transform active:scale-90">
-                          <Star className={cn("w-8 h-8", rating >= s ? "text-orange fill-orange" : "text-slate-200")} />
-                        </button>
-                      ))}
+                    <div className="space-y-4">
+                      <p className="text-xs text-slate-500 font-bold uppercase">Rate Tactical Performance</p>
+                      <div className="flex justify-center gap-2">
+                        {[1, 2, 3, 4, 5].map((s) => (
+                          <button key={s} onClick={() => setRating(s)} className="transition-transform active:scale-90">
+                            <Star className={cn("w-8 h-8", rating >= s ? "text-orange fill-orange" : "text-slate-200")} />
+                          </button>
+                        ))}
+                      </div>
+                      <div className="space-y-2 text-left">
+                        <label className="text-[9px] font-black uppercase text-slate-400 ml-1 flex items-center gap-2">
+                          <MessageSquare className="w-3 h-3" /> Mission Feedback / Complaints
+                        </label>
+                        <Textarea 
+                          placeholder="Brief mission details or issues..."
+                          value={feedback}
+                          onChange={e => setFeedback(e.target.value)}
+                          className="bg-slate-50 border-slate-200 text-xs min-h-[80px]"
+                        />
+                      </div>
                     </div>
                     <div className="grid grid-cols-1 gap-2 mt-4">
                       {rating > 0 ? (
-                        <Button onClick={() => handleSubmitReview(currentRide.id)} className="w-full bg-slate-900 text-white font-black uppercase text-xs h-12 shadow-lg border-none">
-                          Submit Review & New Mission
+                        <Button 
+                          onClick={() => handleSubmitReview(currentRide.id)} 
+                          disabled={isSubmittingReview}
+                          className="w-full bg-slate-900 text-white font-black uppercase text-xs h-12 shadow-lg border-none"
+                        >
+                          {isSubmittingReview ? "Archiving..." : "Submit Review & Exit"}
                         </Button>
                       ) : (
                         <Button onClick={() => handleResetTerminal(currentRide.id)} variant="ghost" className="text-[10px] font-black uppercase text-slate-400">
@@ -361,7 +423,6 @@ export default function PassengerApp() {
                              {(driverProfile.rating || 0) > 0 ? driverProfile.rating.toFixed(1) : 'NEW'} Rating
                            </span>
                          </div>
-                         {/* Revealed Comms Link */}
                          {["Accepted", "Arrived", "InProgress"].includes(currentRide.status) && (
                            <div className="mt-2 text-[10px] font-bold text-orange uppercase tracking-widest">
                              Contact: {driverProfile.phone}
