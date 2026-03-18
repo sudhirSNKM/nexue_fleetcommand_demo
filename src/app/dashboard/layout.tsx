@@ -102,6 +102,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     } else if (role === "driver") {
       items.push(
         { icon: Navigation, label: "Duty Console", href: "/dashboard/driver" },
+        { icon: DollarSign, label: "Earnings", href: "/dashboard/driver/earnings" },
         { icon: History, label: "History", href: "/dashboard/history" }
       )
     } else if (role === "passenger") {
