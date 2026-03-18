@@ -55,9 +55,33 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     if (!isUserLoading && !user) {
       router.push("/login")
     }
-  }, [user, isUserLoading, router])
+
+    // Session Integrity Guard: Synchronize Terminal Session ID
+    if (user && profile && !isProfileLoading) {
+      const localSessionId = localStorage.getItem("nexus_terminal_session")
+      const remoteSessionId = profile.currentSessionId
+
+      // If remote ID exists and mismatch detected, abort current session
+      if (remoteSessionId && localSessionId && remoteSessionId !== localSessionId) {
+        handleSignOut()
+        alert("TERMINAL OVERRIDE: A NEW SESSION LINK HAS BEEN INITIALIZED ELSEWHERE. THIS COMMAND TERMINATED TO RESOLVE CONFLICT.")
+      }
+    }
+  }, [user, isUserLoading, router, profile, isProfileLoading])
 
   const handleSignOut = async () => {
+    if (user && db) {
+      const { updateDoc, getDoc } = await import("firebase/firestore")
+      const profileRef = doc(db, "userProfiles", user.uid)
+      const snap = await getDoc(profileRef)
+      const localSessionId = localStorage.getItem("nexus_terminal_session")
+      
+      // Only clear remote session if it matches our local one
+      if (snap.exists() && snap.data().currentSessionId === localSessionId) {
+        await updateDoc(profileRef, { currentSessionId: null })
+      }
+    }
+    localStorage.removeItem("nexus_terminal_session")
     await signOut(auth)
     router.push("/login")
   }

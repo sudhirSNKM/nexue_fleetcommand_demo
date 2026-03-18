@@ -26,8 +26,7 @@ service cloud.firestore {
 
     // USER PROFILES
     match /userProfiles/{userId} {
-      allow read: if signedIn();
-      allow write: if signedIn();
+      allow read, write: if signedIn();
     }
 
     // DRIVER SHIFTS - Permissive Debug Rule
@@ -48,9 +47,7 @@ service cloud.firestore {
 
     // RIDES
     match /rides/{rideId} {
-      allow read: if signedIn();
-      allow create: if signedIn();
-      allow update: if signedIn();
+      allow read, write: if signedIn();
     }
 
     // PRICING RULES
@@ -67,13 +64,12 @@ service cloud.firestore {
 
     // DRIVER STATS
     match /driverStats/{statsId} {
-      allow read: if isAdmin() || (signedIn() && statsId.split('_')[0] == request.auth.uid);
-      allow write: if isAdmin() || (signedIn() && statsId.split('_')[0] == request.auth.uid);
+      allow read, write: if isAdmin() || (signedIn() && statsId.split('_')[0] == request.auth.uid);
     }
 
     // FLEET ASSETS
     match /fleetAssets/{assetId} {
-      allow read: if signedIn();
+      allow read: if request.auth != null;
       allow write: if isAdmin();
     }
 
