@@ -210,7 +210,7 @@ export default function AdminAccountPage() {
                 </div>
                 <div className="space-y-2">
                   <Label className="text-[9px] uppercase font-black text-white/40 ml-1">Contact Link (Email)</Label>
-                  <Input value={profile?.email} readOnly className="bg-navy/20 border-white/5 text-white/40 font-mono h-11" />
+                  <Input value={profile?.email || ""} readOnly className="bg-navy/20 border-white/5 text-white/40 font-mono h-11" />
                 </div>
                 <div className="space-y-2">
                   <Label className="text-[9px] uppercase font-black text-white/40 ml-1">Operational Zone</Label>

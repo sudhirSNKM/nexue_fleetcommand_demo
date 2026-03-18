@@ -229,9 +229,11 @@ export default function DriverApp() {
         </Card>
 
         <div className="grid grid-cols-2 gap-4">
-          <Card className="p-4 text-center border-none shadow-md bg-white">
-            <p className="text-[9px] uppercase font-black text-slate-400 mb-1">Total Earnings</p>
-            <h4 className="text-xl font-black text-slate-900">₹{dailyStats?.earnings || 0}</h4>
+          <Card className="p-4 text-center border-none shadow-md bg-white hover:bg-slate-50 transition-all cursor-pointer group" onClick={() => router.push('/dashboard/driver/earnings')}>
+            <p className="text-[9px] uppercase font-black text-slate-400 mb-1 flex items-center justify-center gap-1 group-hover:text-orange">
+              Total Earnings <ArrowRight className="w-2 h-2" />
+            </p>
+            <h4 className="text-xl font-black text-slate-900 group-hover:text-orange">₹{dailyStats?.earnings || 0}</h4>
           </Card>
           <Card className="p-4 text-center border-none shadow-md bg-white">
             <p className="text-[9px] uppercase font-black text-slate-400 mb-1">Missions</p>

@@ -298,7 +298,7 @@ export default function UniversalProfilePage() {
                     </div>
                     <div className="space-y-2">
                        <Label className={cn("text-[10px] font-black uppercase tracking-widest", isMobilityUser ? "text-slate-400" : "text-white/50")}>Link (Email)</Label>
-                       <Input value={profile?.email} readOnly className={cn("h-12 font-mono text-white/40", isMobilityUser ? "bg-slate-50 border-transparent text-slate-400" : "bg-navy/20 border-transparent")} />
+                       <Input value={profile?.email || ""} readOnly className={cn("h-12 font-mono text-white/40", isMobilityUser ? "bg-slate-50 border-transparent text-slate-400" : "bg-navy/20 border-transparent")} />
                     </div>
 
                     <div className="space-y-2">
