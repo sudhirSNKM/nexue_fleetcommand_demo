@@ -23,12 +23,15 @@ import {
   Filter,
   ShieldCheck,
   Star,
-  Timer
+  Timer,
+  ShieldAlert,
+  ArrowRight
 } from "lucide-react"
 import { useUser, useFirestore, useDoc, useCollection, useMemoFirebase } from "@/firebase"
 import { doc, collection, query, limit, where, orderBy } from "firebase/firestore"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
+import Link from "next/link"
 
 export default function AdminOperationsCenter() {
   const { user } = useUser()
@@ -42,21 +45,24 @@ export default function AdminOperationsCenter() {
   const role = (profile?.role || "").toLowerCase().replace(/\s+/g, '-')
   const isUserAdmin = role === "admin" || role === "super-admin"
 
-  // LIVE DATA SUBSCRIPTIONS (Operational Focus)
-  const ridesQuery = useMemoFirebase(() => db ? query(collection(db, "rides"), orderBy("createdAt", "desc"), limit(20)) : null, [db])
+  // LIVE DATA SUBSCRIPTIONS (Operational Focus) - ONLY IF ADMIN
+  const ridesQuery = useMemoFirebase(() => (db && isUserAdmin) ? query(collection(db, "rides"), orderBy("createdAt", "desc"), limit(20)) : null, [db, isUserAdmin])
   const { data: recentRides } = useCollection(ridesQuery)
 
-  const activeRidesQuery = useMemoFirebase(() => db ? query(collection(db, "rides"), where("status", "in", ["Accepted", "Arrived", "InProgress"])) : null, [db])
+  const activeRidesQuery = useMemoFirebase(() => (db && isUserAdmin) ? query(collection(db, "rides"), where("status", "in", ["Accepted", "Arrived", "InProgress"])) : null, [db, isUserAdmin])
   const { data: activeMissions } = useCollection(activeRidesQuery)
 
-  const driversQuery = useMemoFirebase(() => db ? query(collection(db, "userProfiles"), where("role", "==", "driver")) : null, [db])
+  const driversQuery = useMemoFirebase(() => (db && isUserAdmin) ? query(collection(db, "userProfiles"), where("role", "==", "driver")) : null, [db, isUserAdmin])
   const { data: allDrivers } = useCollection(driversQuery)
 
-  const locationsQuery = useMemoFirebase(() => db ? collection(db, "driverLocations") : null, [db])
+  const locationsQuery = useMemoFirebase(() => (db && isUserAdmin) ? collection(db, "driverLocations") : null, [db, isUserAdmin])
   const { data: liveLocations } = useCollection(locationsQuery)
 
-  const shiftsQuery = useMemoFirebase(() => db ? query(collection(db, "driverShifts"), orderBy("punchInTime", "desc"), limit(10)) : null, [db])
+  const shiftsQuery = useMemoFirebase(() => (db && isUserAdmin) ? query(collection(db, "driverShifts"), orderBy("punchInTime", "desc"), limit(10)) : null, [db, isUserAdmin])
   const { data: recentShifts } = useCollection(shiftsQuery)
+
+  const profileRequestsQuery = useMemoFirebase(() => (db && isUserAdmin) ? query(collection(db, "profileUpdateRequests"), where("status", "in", ["pending", "submitted"]), limit(5)) : null, [db, isUserAdmin])
+  const { data: pendingRequests } = useCollection(profileRequestsQuery)
 
   useEffect(() => {
     if (isUserAdmin) {
@@ -169,6 +175,35 @@ export default function AdminOperationsCenter() {
                   </motion.div>
                 ))}
               </AnimatePresence>
+            </CardContent>
+          </Card>
+
+          <Card className="glass-panel admin-card border-l-4 border-orange">
+            <CardHeader className="p-4 bg-orange/5 border-b border-white/5 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <ShieldAlert className="w-4 h-4 text-orange" />
+                <CardTitle className="text-[10px] font-black uppercase text-orange">Profile Auth Requests</CardTitle>
+              </div>
+              <Link href="/dashboard/admin/profile-requests">
+                <Button variant="ghost" className="h-6 px-2 text-[8px] uppercase font-black text-orange hover:bg-orange/10">View All</Button>
+              </Link>
+            </CardHeader>
+            <CardContent className="p-4 space-y-3">
+              {pendingRequests?.length === 0 ? (
+                <p className="text-[10px] text-white/20 uppercase font-black text-center py-4">No Pending Actions</p>
+              ) : (
+                pendingRequests?.map(req => (
+                  <div key={req.id} className="p-3 bg-white/5 rounded border border-white/5 flex items-center justify-between">
+                    <div>
+                      <p className="text-[10px] font-black uppercase text-white">{req.userName}</p>
+                      <p className="text-[8px] text-orange uppercase font-bold">{req.status === 'pending' ? 'Auth Request' : 'Review Required'}</p>
+                    </div>
+                    <Link href="/dashboard/admin/profile-requests">
+                       <ArrowRight className="w-4 h-4 text-orange" />
+                    </Link>
+                  </div>
+                ))
+              )}
             </CardContent>
           </Card>
 

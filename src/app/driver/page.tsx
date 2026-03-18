@@ -17,6 +17,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Progress } from "@/components/ui/progress"
+import Link from "next/link"
 
 export default function DriverMobileApp() {
   const [isTripActive, setIsTripActive] = useState(false)
@@ -148,11 +149,12 @@ export default function DriverMobileApp() {
           <CreditCard className="w-6 h-6" />
           <span className="text-[9px] font-bold uppercase">Expenses</span>
         </button>
-        <button className="flex flex-col items-center gap-1 text-muted-foreground">
+        <Link href="/driver/profile" className="flex flex-col items-center gap-1 text-muted-foreground hover:text-orange transition-colors">
           <User className="w-6 h-6" />
           <span className="text-[9px] font-bold uppercase">Profile</span>
-        </button>
+        </Link>
       </nav>
+
     </div>
   )
 }

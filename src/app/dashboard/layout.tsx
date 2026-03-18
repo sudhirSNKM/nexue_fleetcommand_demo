@@ -80,6 +80,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         { icon: Users, label: "Drivers", href: "/dashboard/drivers" },
         { icon: Car, label: "Vehicles", href: "/dashboard/fleet" },
         { icon: Navigation, label: "Trips", href: "/dashboard/trips" },
+        { icon: ShieldAlert, label: "Profile Requests", href: "/dashboard/admin/profile-requests" },
         { icon: Layers, label: "Zones", href: "/dashboard/zones" },
         { icon: DollarSign, label: "Pricing Engine", href: "/dashboard/pricing" },
         { icon: ShieldCheck, label: "Admin Ops", href: "/dashboard/admin-management" },
@@ -88,6 +89,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     } else if (role === "admin") {
       items.push(
         { icon: LayoutDashboard, label: "Dashboard", href: "/dashboard/admin" },
+        { icon: ShieldAlert, label: "Profile Requests", href: "/dashboard/admin/profile-requests" },
         { icon: Users, label: "Drivers", href: "/dashboard/drivers" },
         { icon: Timer, label: "Duty / Shifts", href: "/dashboard/duty" },
         { icon: Car, label: "Fleet", href: "/dashboard/fleet" },
