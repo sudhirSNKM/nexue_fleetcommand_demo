@@ -39,7 +39,8 @@ export default function AdminManagementPage() {
 
   const userProfileRef = useMemoFirebase(() => user && db ? doc(db, "userProfiles", user.uid) : null, [user, db])
   const { data: profile } = useDoc(userProfileRef)
-  const isUserAdmin = profile?.role === "admin" || profile?.role === "super-admin"
+  const role = (profile?.role || "").toLowerCase().replace(/\s+/g, '-')
+  const isUserAdmin = role === "admin" || role === "super-admin"
 
   const adminsQuery = useMemoFirebase(() => (db && isUserAdmin) ? query(
     collection(db, "userProfiles"), 

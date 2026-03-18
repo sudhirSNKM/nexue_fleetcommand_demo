@@ -19,13 +19,13 @@ export default function DriversPage() {
   const userProfileRef = useMemoFirebase(() => user && db ? doc(db, "userProfiles", user.uid) : null, [user, db])
   const { data: profile, isLoading: isProfileLoading } = useDoc(userProfileRef)
   
-  const role = (profile?.role || "").toLowerCase()
+  const role = (profile?.role || "").toLowerCase().replace(/\s+/g, '-')
   const isUserAdmin = role === "admin" || role === "super-admin"
   
   const driversQuery = useMemoFirebase(() => (db && isUserAdmin) ? query(collection(db, "userProfiles"), where("role", "==", "driver")) : null, [db, isUserAdmin])
   const { data: drivers, isLoading: isDriversLoading } = useCollection(driversQuery)
 
-  const shiftsQuery = useMemoFirebase(() => (db && isUserAdmin) ? query(collection(db, "driverShifts"), orderBy("punchInTime", "desc")) : null, [db, isUserAdmin])
+  const shiftsQuery = useMemoFirebase(() => (db && isUserAdmin) ? query(collection(db, "driverShifts"), orderBy("punchInTime", "desc"), limit(50)) : null, [db, isUserAdmin])
   const { data: shifts, isLoading: isShiftsLoading } = useCollection(shiftsQuery)
 
   if (isProfileLoading) {
