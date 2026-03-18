@@ -38,6 +38,19 @@
         "createdAt": { "type": "string", "format": "date-time" }
       },
       "required": ["id", "passengerId", "serviceType", "vehicleType", "pickup", "dropoff", "fare", "status"]
+    },
+    "ChatMessage": {
+      "title": "ChatMessage",
+      "type": "object",
+      "description": "Administrative coordination message.",
+      "properties": {
+        "id": { "type": "string" },
+        "senderId": { "type": "string" },
+        "senderName": { "type": "string" },
+        "text": { "type": "string" },
+        "timestamp": { "type": "string", "format": "date-time" }
+      },
+      "required": ["senderId", "text", "timestamp"]
     }
   },
   "auth": {
@@ -50,7 +63,8 @@
       { "path": "/driverStats/{statsId}", "definition": { "entityName": "DriverStats", "description": "Daily earnings telemetry." } },
       { "path": "/driverLocations/{driverId}", "definition": { "entityName": "Location", "description": "Real-time tracking coordinates." } },
       { "path": "/auditLogs/{logId}", "definition": { "entityName": "AuditLog", "description": "System audit logs." } },
-      { "path": "/pricingRules/{ruleId}", "definition": { "entityName": "PricingRule", "description": "Fare configuration." } }
+      { "path": "/pricingRules/{ruleId}", "definition": { "entityName": "PricingRule", "description": "Fare configuration." } },
+      { "path": "/adminChats/{chatId}/messages/{messageId}", "definition": { "entityName": "ChatMessage", "description": "Direct admin messages." } }
     ]
   }
 }

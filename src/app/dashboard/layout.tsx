@@ -1,3 +1,4 @@
+
 "use client"
 
 import * as React from "react"
@@ -23,7 +24,8 @@ import {
   User,
   LayoutDashboard,
   ShieldAlert,
-  Clock
+  Clock,
+  MessageSquare
 } from "lucide-react"
 import { motion, AnimatePresence } from "framer-motion"
 import Link from "next/link"
@@ -91,6 +93,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const status = (profile?.status || "Active").toLowerCase()
   const isMobilityUser = role === "passenger" || role === "driver"
   const isPendingDriver = role === "driver" && status === "pending"
+  const isAdmin = role === "admin" || role === "super-admin"
 
   const navItems = React.useMemo(() => {
     if (isPendingDriver) return [{ icon: Settings, label: "Onboarding", href: "/onboarding/vehicle-details" }]
@@ -99,6 +102,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     if (role === "super-admin") {
       items.push(
         { icon: Globe, label: "Command Center", href: "/dashboard/super-admin" },
+        { icon: MessageSquare, label: "Tactical Comms", href: "/dashboard/chat" },
         { icon: BarChart3, label: "Analytics", href: "/dashboard/analytics" },
         { icon: Users, label: "Drivers", href: "/dashboard/drivers" },
         { icon: Car, label: "Vehicles", href: "/dashboard/fleet" },
@@ -113,6 +117,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     } else if (role === "admin") {
       items.push(
         { icon: LayoutDashboard, label: "Dashboard", href: "/dashboard/admin" },
+        { icon: MessageSquare, label: "Tactical Comms", href: "/dashboard/chat" },
         { icon: ShieldAlert, label: "Profile Requests", href: "/dashboard/admin/profile-requests" },
         { icon: Users, label: "Drivers", href: "/dashboard/drivers" },
         { icon: Timer, label: "Duty / Shifts", href: "/dashboard/duty" },

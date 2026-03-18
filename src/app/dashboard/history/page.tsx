@@ -17,7 +17,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { useUser, useFirestore, useCollection, useMemoFirebase, useDoc } from "@/firebase"
-import { collection, query, where, doc, limit } from "firebase/firestore"
+import { collection, query, where, doc, limit, orderBy } from "firebase/firestore"
 import { analyzeRoute, type AnalyzeRouteOutput } from "@/ai/flows/route-strategist-flow"
 import { Skeleton } from "@/components/ui/skeleton"
 import { cn } from "@/lib/utils"
@@ -33,17 +33,28 @@ export default function RideHistoryPage() {
   
   const role = profile?.role || "passenger"
   const isMobilityUser = role === "passenger" || role === "driver"
+  const isAdmin = role === "admin" || role === "super-admin"
 
-  // Filter query by user role and ID
+  // Filter query logic: Mobility users see own rides, Admins see all recent rides
   const ridesQuery = useMemoFirebase(() => {
     if (!user || !db || !profile) return null
+    
+    if (isAdmin) {
+      return query(
+        collection(db, "rides"),
+        orderBy("createdAt", "desc"),
+        limit(50)
+      )
+    }
+
     const filterKey = role === "driver" ? "driverId" : "passengerId"
     return query(
       collection(db, "rides"),
       where(filterKey, "==", user.uid),
+      orderBy("createdAt", "desc"),
       limit(20)
     )
-  }, [user, db, profile, role])
+  }, [user, db, profile, role, isAdmin])
 
   const { data: rides, isLoading } = useCollection(ridesQuery)
 
@@ -63,7 +74,7 @@ export default function RideHistoryPage() {
     }
   }
 
-  const totalEarnings = rides?.reduce((sum, ride) => sum + (ride.fare || 0), 0) || 0
+  const totalEarnings = rides?.reduce((sum, ride) => sum + (Number(ride.fare) || 0), 0) || 0
 
   return (
     <div className="space-y-8 max-w-7xl mx-auto">
@@ -73,7 +84,9 @@ export default function RideHistoryPage() {
             <HistoryIcon className="w-10 h-10 text-orange" />
             Mission Archives
           </h1>
-          <p className={cn("text-sm font-bold uppercase tracking-widest mt-1", isMobilityUser ? "text-slate-500" : "text-white/70")}>Operational History Log</p>
+          <p className={cn("text-sm font-bold uppercase tracking-widest mt-1", isMobilityUser ? "text-slate-500" : "text-white/70")}>
+            {isAdmin ? "Global Infrastructure Manifest" : "Operational History Log"}
+          </p>
         </div>
         
         <div className="flex gap-4">
