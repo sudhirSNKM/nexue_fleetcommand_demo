@@ -79,5 +79,7 @@ service cloud.firestore {
       allow write: if isAdmin();
     }
 
-  }
-}
+    // SYSTEM SETTINGS
+    match /settings/{docId} {
+      allow read, write: if isAdmin();
+    }

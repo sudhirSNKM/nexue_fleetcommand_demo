@@ -11,12 +11,14 @@ import { useUser, useFirestore, useCollection, useMemoFirebase, updateDocumentNo
 import { collection, query, where, doc, serverTimestamp, increment } from "firebase/firestore"
 import { useToast } from "@/hooks/use-toast"
 import { ResponsiveContainer, BarChart, Bar, XAxis, Tooltip, Cell } from "recharts"
+import { useRouter } from "next/navigation"
 import { cn } from "@/lib/utils"
 
 export default function DriverApp() {
   const { user } = useUser()
   const db = useFirestore()
   const { toast } = useToast()
+  const router = useRouter()
   const [showUPI, setShowUPI] = useState(false)
 
   const todayDate = new Date().toISOString().split('T')[0]
@@ -129,21 +131,40 @@ export default function DriverApp() {
 
                   {/* Passenger Comms Link */}
                   {passengerProfile && (activeRide.status === "Accepted" || activeRide.status === "Arrived" || activeRide.status === "InProgress") && (
-                    <div className="p-4 bg-slate-50 rounded-xl border border-slate-100 flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-full bg-navy/10 flex items-center justify-center">
-                          <User className="w-5 h-5 text-navy" />
+                    <div className="space-y-4">
+                      <div className="p-4 bg-slate-50 rounded-xl border border-slate-100 flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-full bg-navy/10 flex items-center justify-center">
+                            <User className="w-5 h-5 text-navy" />
+                          </div>
+                          <div>
+                            <p className="text-[10px] font-black uppercase text-slate-400">Client Contact</p>
+                            <p className="text-xs font-black text-slate-900 uppercase">{passengerProfile.name}</p>
+                          </div>
                         </div>
-                        <div>
-                          <p className="text-[10px] font-black uppercase text-slate-400">Client Contact</p>
-                          <p className="text-xs font-black text-slate-900 uppercase">{passengerProfile.name}</p>
-                        </div>
+                        <Button asChild size="icon" className="rounded-full bg-active hover:bg-active/90 shadow-lg border-none">
+                          <a href={`tel:${passengerProfile.phone}`}>
+                            <Phone className="w-4 h-4 text-white" />
+                          </a>
+                        </Button>
                       </div>
-                      <Button asChild size="icon" className="rounded-full bg-active hover:bg-active/90 shadow-lg border-none">
-                        <a href={`tel:${passengerProfile.phone}`}>
-                          <Phone className="w-4 h-4 text-white" />
-                        </a>
-                      </Button>
+
+                      {activeRide.serviceType === 'Parcel' && (
+                        <div className="grid grid-cols-2 gap-2">
+                           <div className="p-3 bg-white border border-slate-100 rounded-xl space-y-1">
+                              <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-1">
+                                <Phone className="w-2 h-2 text-orange" /> Picker Number
+                              </p>
+                              <p className="text-[10px] font-black text-slate-900">{activeRide.pickupPhone || 'Not Mentioned'}</p>
+                           </div>
+                           <div className="p-3 bg-white border border-slate-100 rounded-xl space-y-1">
+                              <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-1">
+                                <Phone className="w-2 h-2 text-orange" /> Drop Point
+                              </p>
+                              <p className="text-[10px] font-black text-slate-900">{activeRide.dropoffPhone || 'Not Mentioned'}</p>
+                           </div>
+                        </div>
+                      )}
                     </div>
                   )}
 
