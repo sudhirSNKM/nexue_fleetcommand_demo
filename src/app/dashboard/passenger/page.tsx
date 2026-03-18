@@ -4,7 +4,7 @@
 import React, { useState, useMemo, useEffect } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { 
-  MapPin, Navigation, Car, Bike, Zap, Package, Truck, ShieldAlert, Star, Phone, QrCode, Banknote, CheckCircle2, Clock, X, Layout
+  MapPin, Navigation, Car, Bike, Zap, Package, Truck, ShieldAlert, Star, Phone, QrCode, Banknote, CheckCircle2, Clock, X, Layout, RefreshCw
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -66,41 +66,37 @@ export default function PassengerApp() {
   
   const currentRide = useMemo(() => {
     if (!activeRides) return null
-    const liveStatuses = ["Requested", "Accepted", "Arrived", "InProgress", "Completed", "Paid", "Rejected"]
+    const liveStatuses = ["Requested", "Accepted", "Arrived", "InProgress", "Completed", "Paid"]
     const sorted = [...activeRides].sort((a, b) => {
       const aTime = a.createdAt?.toMillis?.() || 0
       const bTime = b.createdAt?.toMillis?.() || 0
       return bTime - aTime
     })
     const liveRide = sorted.find(r => liveStatuses.includes(r.status))
-    // If the latest live ride is already reviewed locally, don't show it as the "current" active ride
     if (liveRide?.id === reviewedRideId) return null
     return liveRide
   }, [activeRides, reviewedRideId])
 
-  // Mission Notifications Effect
   useEffect(() => {
     if (!currentRide?.status) return;
-
     if (currentRide.status === "Rejected") {
       const timer = setTimeout(() => {
         toast({ 
-          title: "Operator Busy", 
-          description: "Applying ₹20 surge for priority re-broadcast...",
+          title: "Unit Unavailable", 
+          description: "Applying priority search surcharge...",
           variant: "destructive" 
         })
         const rideRef = doc(db, "rides", currentRide.id)
         updateDocumentNonBlocking(rideRef, {
           status: "Requested",
-          fare: increment(20),
+          fare: increment(25),
           lastRejectedAt: serverTimestamp()
         })
-      }, 500);
+      }, 1000);
       return () => clearTimeout(timer);
     }
   }, [currentRide?.status, currentRide?.id, db, toast]);
 
-  // Mission Timeout Logic (1 Minute)
   useEffect(() => {
     let interval: NodeJS.Timeout
     if (currentRide?.status === "Requested") {
@@ -110,13 +106,11 @@ export default function PassengerApp() {
           if (prev !== null && prev <= 1) {
             clearInterval(interval)
             handleCancelRide(currentRide.id)
-            setTimeout(() => {
-              toast({ 
-                title: "Mission Timeout", 
-                description: "No units responded within the tactical window.",
-                variant: "destructive"
-              })
-            }, 0)
+            toast({ 
+              title: "Search Terminated", 
+              description: "No units responded within the tactical window.",
+              variant: "destructive"
+            })
             return 0
           }
           return prev !== null ? prev - 1 : null
@@ -151,11 +145,9 @@ export default function PassengerApp() {
       fare: currentFare,
       createdAt: serverTimestamp()
     })
-    setReviewedRideId(null) // Reset reviewed ID if we start a new search
+    setReviewedRideId(null)
     setRating(0)
-    setTimeout(() => {
-      toast({ title: "Broadcast Initiated", description: "Scanning sector for available units." })
-    }, 0)
+    toast({ title: "Broadcast Initiated", description: "Scanning sector for available units." })
   }
 
   const handleCancelRide = (rideId: string) => {
@@ -168,9 +160,7 @@ export default function PassengerApp() {
     const rideRef = doc(db, "rides", rideId)
     updateDocumentNonBlocking(rideRef, { rating, reviewedAt: serverTimestamp() })
     setReviewedRideId(rideId)
-    setTimeout(() => {
-      toast({ title: "Review Logged", description: "Tactical performance updated." })
-    }, 0)
+    toast({ title: "Review Logged", description: "Tactical performance updated." })
   }
 
   const handleResetTerminal = () => {
@@ -178,6 +168,7 @@ export default function PassengerApp() {
     setPickup("")
     setDropoff("")
     setRating(0)
+    setActiveService('Ride')
   }
 
   return (
@@ -304,12 +295,15 @@ export default function PassengerApp() {
                       ))}
                     </div>
                     <div className="grid grid-cols-1 gap-2 mt-4">
-                      {rating > 0 && (
+                      {rating > 0 ? (
                         <Button onClick={() => handleSubmitReview(currentRide.id)} className="w-full bg-slate-900 text-white font-black uppercase text-xs h-12 shadow-lg border-none">
-                          Submit Tactical Review
+                          Submit Review & New Mission
+                        </Button>
+                      ) : (
+                        <Button onClick={handleResetTerminal} variant="ghost" className="text-[10px] font-black uppercase text-slate-400">
+                          <RefreshCw className="w-3 h-3 mr-2" /> Start New Mission
                         </Button>
                       )}
-                      <Button onClick={handleResetTerminal} variant="ghost" className="text-[10px] font-black uppercase text-slate-400">Skip & Return to Standby</Button>
                     </div>
                   </div>
                 )}
