@@ -321,12 +321,36 @@ export default function UniversalProfilePage() {
 
         <div className="md:col-span-2 space-y-8">
           <Tabs defaultValue="details" className="w-full">
-            <TabsList className={cn("inline-flex h-12 items-center justify-start rounded-xl p-1 mb-6", isMobilityUser ? "bg-slate-100" : "bg-navy/40")}>
-              <TabsTrigger value="details" className="rounded-lg px-6 py-2 text-[10px] font-black uppercase tracking-widest data-[state=active]:bg-orange data-[state=active]:text-white transition-all">Protocol Details</TabsTrigger>
+            <TabsList className={cn("inline-flex h-12 items-center justify-start rounded-xl p-1 mb-6", isMobilityUser ? "bg-slate-200/50" : "bg-navy/40")}>
+              <TabsTrigger 
+                value="details" 
+                className={cn(
+                  "rounded-lg px-6 py-2 text-[10px] font-black uppercase tracking-widest data-[state=active]:bg-orange data-[state=active]:text-white transition-all",
+                  isMobilityUser ? "text-slate-600" : "text-white/60"
+                )}
+              >
+                Protocol Details
+              </TabsTrigger>
               {role === 'driver' && (
-                <TabsTrigger value="documents" className="rounded-lg px-6 py-2 text-[10px] font-black uppercase tracking-widest data-[state=active]:bg-orange data-[state=active]:text-white transition-all">Document Vault</TabsTrigger>
+                <TabsTrigger 
+                  value="documents" 
+                  className={cn(
+                    "rounded-lg px-6 py-2 text-[10px] font-black uppercase tracking-widest data-[state=active]:bg-orange data-[state=active]:text-white transition-all",
+                    isMobilityUser ? "text-slate-600" : "text-white/60"
+                  )}
+                >
+                  Document Vault
+                </TabsTrigger>
               )}
-              <TabsTrigger value="audit" className="rounded-lg px-6 py-2 text-[10px] font-black uppercase tracking-widest data-[state=active]:bg-orange data-[state=active]:text-white transition-all">Audit Trail</TabsTrigger>
+              <TabsTrigger 
+                value="audit" 
+                className={cn(
+                  "rounded-lg px-6 py-2 text-[10px] font-black uppercase tracking-widest data-[state=active]:bg-orange data-[state=active]:text-white transition-all",
+                  isMobilityUser ? "text-slate-600" : "text-white/60"
+                )}
+              >
+                Audit Trail
+              </TabsTrigger>
             </TabsList>
 
             <TabsContent value="details" className="space-y-8">
@@ -341,32 +365,32 @@ export default function UniversalProfilePage() {
                      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                         {/* ... Existing Fields ... */}
                         <div className="space-y-2">
-                           <Label className={cn("text-[10px] font-black uppercase tracking-widest", isMobilityUser ? "text-slate-400" : "text-white/50")}>Full Legal Identity</Label>
+                           <Label className={cn("text-[10px] font-black uppercase tracking-widest", isMobilityUser ? "text-slate-500" : "text-white/50")}>Full Legal Identity</Label>
                            <Input 
                             value={formData.name}
                             onChange={(e) => setFormData({...formData, name: e.target.value})}
                             readOnly={!isEditing}
                             className={cn(
                               "h-12 font-bold", 
-                              isMobilityUser ? "bg-slate-50 border-slate-200" : "bg-navy/40 border-white/10 text-white",
+                              isMobilityUser ? "bg-slate-50 border-slate-200 text-slate-900" : "bg-navy/40 border-white/10 text-white",
                               !isEditing && "opacity-50 cursor-not-allowed border-transparent"
                             )} 
                            />
                         </div>
                         <div className="space-y-2">
-                           <Label className={cn("text-[10px] font-black uppercase tracking-widest", isMobilityUser ? "text-slate-400" : "text-white/50")}>Link (Email)</Label>
-                           <Input value={profile?.email || ""} readOnly className={cn("h-12 font-mono text-white/40", isMobilityUser ? "bg-slate-50 border-transparent text-slate-400" : "bg-navy/20 border-transparent")} />
+                           <Label className={cn("text-[10px] font-black uppercase tracking-widest", isMobilityUser ? "text-slate-500" : "text-white/50")}>Link (Email)</Label>
+                           <Input value={profile?.email || ""} readOnly className={cn("h-12 font-mono", isMobilityUser ? "bg-slate-50 border-transparent text-slate-500" : "bg-navy/20 border-transparent text-white/40")} />
                         </div>
 
                         <div className="space-y-2">
-                           <Label className={cn("text-[10px] font-black uppercase tracking-widest", isMobilityUser ? "text-slate-400" : "text-white/50")}>Emergency Comms (Phone)</Label>
+                           <Label className={cn("text-[10px] font-black uppercase tracking-widest", isMobilityUser ? "text-slate-500" : "text-white/50")}>Emergency Comms (Phone)</Label>
                            <Input 
                             value={formData.phone}
                             onChange={(e) => setFormData({...formData, phone: e.target.value})}
                             readOnly={!isEditing}
                             className={cn(
                               "h-12 font-bold", 
-                              isMobilityUser ? "bg-slate-50 border-slate-200" : "bg-navy/40 border-white/10 text-white",
+                              isMobilityUser ? "bg-slate-50 border-slate-200 text-slate-900" : "bg-navy/40 border-white/10 text-white",
                               !isEditing && "opacity-50 cursor-not-allowed border-transparent"
                             )} 
                            />
@@ -374,14 +398,14 @@ export default function UniversalProfilePage() {
 
                         {role === 'driver' && (
                           <div className="space-y-2">
-                            <Label className={cn("text-[10px] font-black uppercase tracking-widest", isMobilityUser ? "text-slate-400" : "text-white/50")}>Assigned Vehicle Class</Label>
+                            <Label className={cn("text-[10px] font-black uppercase tracking-widest", isMobilityUser ? "text-slate-500" : "text-white/50")}>Assigned Vehicle Class</Label>
                             <Input 
                               value={formData.vehicleType}
                               onChange={(e) => setFormData({...formData, vehicleType: e.target.value})}
                               readOnly={!isEditing}
                               className={cn(
                                 "h-12 font-bold", 
-                                isMobilityUser ? "bg-slate-50 border-slate-200" : "bg-navy/40 border-white/10 text-white",
+                                isMobilityUser ? "bg-slate-50 border-slate-200 text-slate-900" : "bg-navy/40 border-white/10 text-white",
                                 !isEditing && "opacity-50 cursor-not-allowed border-transparent"
                               )} 
                             />
@@ -390,14 +414,14 @@ export default function UniversalProfilePage() {
 
                         {(role === 'admin' || role === 'super-admin') && (
                           <div className="space-y-2">
-                            <Label className={cn("text-[10px] font-black uppercase tracking-widest", isMobilityUser ? "text-slate-400" : "text-white/50")}>Operational Sector (Zone)</Label>
+                            <Label className={cn("text-[10px] font-black uppercase tracking-widest", isMobilityUser ? "text-slate-500" : "text-white/50")}>Operational Sector (Zone)</Label>
                             <Input 
                               value={formData.zone}
                               onChange={(e) => setFormData({...formData, zone: e.target.value})}
                               readOnly={!isEditing}
                               className={cn(
                                 "h-12 font-bold", 
-                                isMobilityUser ? "bg-slate-50 border-slate-200" : "bg-navy/40 border-white/10 text-white",
+                                isMobilityUser ? "bg-slate-50 border-slate-200 text-slate-900" : "bg-navy/40 border-white/10 text-white",
                                 !isEditing && "opacity-50 cursor-not-allowed border-transparent"
                               )} 
                             />
@@ -423,7 +447,7 @@ export default function UniversalProfilePage() {
                                    placeholder="Provide legal reason for update and links to verification images/docs..."
                                    className={cn(
                                      "min-h-[100px] text-xs font-medium focus:ring-orange/50",
-                                     isMobilityUser ? "bg-slate-50 border-slate-200" : "bg-navy/40 border-orange/20 text-white"
+                                     isMobilityUser ? "bg-slate-50 border-slate-200 text-slate-900" : "bg-navy/40 border-orange/20 text-white"
                                    )}
                                 />
                              </div>
@@ -501,7 +525,7 @@ export default function UniversalProfilePage() {
                               "text-[8px] font-black uppercase",
                               status === 'approved' ? "bg-active/10 text-active" :
                               status === 'pending' ? "bg-orange/10 text-orange" :
-                              status === 'resubmit' ? "bg-emergency/10 text-emergency" : "bg-slate-100 text-slate-400"
+                              status === 'resubmit' ? "bg-emergency/10 text-emergency" : "bg-slate-200 text-slate-600"
                             )}>
                               {status === 'resubmit' ? 'RE-SUBMISSION REQUIRED' : status}
                             </Badge>
@@ -539,8 +563,8 @@ export default function UniversalProfilePage() {
                             </div>
                           ) : (
                             <div className="flex flex-col items-center justify-center p-12 border-2 border-dashed border-slate-100 rounded-2xl bg-slate-50">
-                               <Upload className="w-10 h-10 text-slate-200 mb-4" />
-                               <p className="text-[10px] font-black uppercase text-slate-400 mb-6">File Not Logged</p>
+                               <Upload className="w-10 h-10 text-slate-300 mb-4" />
+                               <p className="text-[10px] font-black uppercase text-slate-500 mb-6">File Not Logged</p>
                                <div className="relative">
                                   <input 
                                     type="file" 
@@ -578,9 +602,9 @@ export default function UniversalProfilePage() {
                       <div key={i} className={cn("p-4 rounded-xl flex justify-between items-center", isMobilityUser ? "bg-slate-50" : "bg-white/5")}>
                          <div>
                            <p className="text-[10px] font-black uppercase">{log.action}</p>
-                           <p className="text-[9px] font-bold text-slate-400 uppercase mt-0.5">{log.desc}</p>
+                           <p className={cn("text-[9px] font-bold uppercase mt-0.5", isMobilityUser ? "text-slate-500" : "text-white/40")}>{log.desc}</p>
                          </div>
-                         <span className="text-[9px] font-mono text-slate-400">{log.time}</span>
+                         <span className={cn("text-[9px] font-mono", isMobilityUser ? "text-slate-400" : "text-white/40")}>{log.time}</span>
                       </div>
                     ))}
                  </div>

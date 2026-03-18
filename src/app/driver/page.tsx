@@ -52,6 +52,18 @@ export default function DriverMobileApp() {
 
   const { data: rides, isLoading } = useCollection(ridesQuery)
 
+  const activeRide = useMemo(() => {
+    return rides?.find(r => !['Completed', 'Paid', 'Cancelled', 'Rejected'].includes(r.status))
+  }, [rides])
+
+  useEffect(() => {
+    if (activeRide) {
+      setIsTripActive(true)
+    } else {
+      setIsTripActive(false)
+    }
+  }, [activeRide])
+
   const earnings = useMemo(() => {
     if (!rides) return { daily: 0, weekly: 0, monthly: 0, total: 0 }
     
@@ -136,10 +148,14 @@ export default function DriverMobileApp() {
                       <span className="w-3 h-3 bg-active rounded-full animate-pulse shadow-[0_0_10px_rgba(0,255,102,0.8)]" />
                       <div>
                         <span className="text-[10px] font-black uppercase tracking-[0.2em] text-active block">Mission Active</span>
-                        <span className="text-[9px] font-mono text-white/40">ID: NKS-{Math.floor(Math.random() * 9000) + 1000}</span>
+                        <span className="text-[9px] font-mono text-white/40">ID: {activeRide?.id.substring(0,8).toUpperCase()}</span>
                       </div>
                     </div>
-                    <span className="text-3xl font-mono font-black text-white tracking-tighter">01:24:12</span>
+                    <span className="text-3xl font-mono font-black text-white tracking-tighter">
+                      {activeRide?.createdAt?.toDate ? 
+                        new Date(new Date().getTime() - activeRide.createdAt.toDate().getTime()).toISOString().substr(11, 8) 
+                        : '00:00:00'}
+                    </span>
                   </div>
 
                   <div className="p-6 bg-navy/40 rounded-2xl border border-white/5 space-y-6">
@@ -149,8 +165,8 @@ export default function DriverMobileApp() {
                       </div>
                       <div>
                         <p className="text-[10px] uppercase text-white/40 font-black tracking-widest">Vector Target</p>
-                        <p className="text-sm font-black text-white mt-1">Logistics Hub - Sector 7</p>
-                        <p className="text-[9px] font-bold text-orange uppercase mt-0.5">ETA: 12 MINUTES</p>
+                        <p className="text-sm font-black text-white mt-1">{activeRide?.dropoff?.address || "Calibrating..."}</p>
+                        <p className="text-[9px] font-bold text-orange uppercase mt-0.5">ESTIMATED TRANSIT</p>
                       </div>
                     </div>
                     
