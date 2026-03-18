@@ -73,7 +73,6 @@ export default function AdminOperationsCenter() {
   const statsSummary = useMemo(() => {
     const onlineDrivers = allDrivers?.filter(d => d.status === "Online").length || 0
     const activeTrips = activeMissions?.length || 0
-    const revenue = recentRides?.filter(r => r.status === "Paid").reduce((acc, r) => acc + (Number(r.fare) || 0), 0) || 0
     
     // Derived Safety Score
     const ratedDrivers = allDrivers?.filter(d => (d.rating || 0) > 0) || []
@@ -84,11 +83,10 @@ export default function AdminOperationsCenter() {
     return {
       onlineDrivers,
       activeTrips,
-      revenue,
       avgRating,
       fleetSize: allDrivers?.length || 0
     }
-  }, [allDrivers, activeMissions, recentRides])
+  }, [allDrivers, activeMissions])
 
   if (!isUserAdmin) {
     return (
@@ -100,6 +98,8 @@ export default function AdminOperationsCenter() {
       </div>
     )
   }
+
+  const criticalAlerts = recentRides?.filter(r => r.status === "Cancelled" || r.status === "Rejected") || []
 
   return (
     <div className="space-y-6 pb-20">
@@ -144,15 +144,15 @@ export default function AdminOperationsCenter() {
       </div>
 
       <div className="grid grid-cols-1 xl:grid-cols-4 gap-6">
-        {/* TACTICAL MAP CONTAINER */}
-        <div className="xl:col-span-3 min-h-[600px] border border-white/5 rounded-2xl overflow-hidden shadow-2xl relative bg-card/20">
+        {/* TACTICAL MAP CONTAINER - REDUCED SIZE */}
+        <div className="xl:col-span-3 min-h-[450px] border border-white/5 rounded-2xl overflow-hidden shadow-2xl relative bg-card/20">
           <LiveMap 
             locations={liveLocations} 
             activeRides={activeMissions} 
           />
           <div className="absolute top-4 left-4 z-[1000] flex gap-2">
             <button 
-              className="px-4 py-2 text-[10px] font-black uppercase rounded-lg border bg-orange border-orange text-white transition-all backdrop-blur-md"
+              className="px-3 py-1.5 text-[9px] font-black uppercase rounded-lg border bg-orange border-orange text-white transition-all backdrop-blur-md"
             >
               <Signal className="w-3 h-3 mr-2 inline" /> Live Tactical Feed
             </button>
@@ -161,29 +161,32 @@ export default function AdminOperationsCenter() {
 
         {/* SIDE PANELS (Operations Focus) */}
         <div className="space-y-6">
-          <Card className="glass-panel admin-card border-l-4 border-emergency">
-            <CardHeader className="p-4 bg-emergency/5 border-b border-white/5">
-              <div className="flex items-center gap-2">
-                <AlertTriangle className="w-4 h-4 text-emergency animate-pulse" />
-                <CardTitle className="text-[10px] font-black uppercase text-emergency">Critical Exceptions</CardTitle>
-              </div>
-            </CardHeader>
-            <CardContent className="p-4 space-y-3 max-h-[300px] overflow-y-auto scrollbar-hide">
-              <AnimatePresence>
-                {recentRides?.filter(r => r.status === "Cancelled" || r.status === "Rejected").slice(0, 5).map(alert => (
-                  <motion.div 
-                    initial={{ opacity: 0, x: 20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    key={alert.id} 
-                    className="p-3 bg-emergency/10 rounded border border-emergency/20"
-                  >
-                    <p className="text-[10px] font-bold uppercase text-white">Status Breach: {alert.id.substring(0,6)}</p>
-                    <p className="text-[8px] text-white/60 mt-1 uppercase">Unit Rejected Broadcast at Sector {Math.floor(Math.random() * 20)}</p>
-                  </motion.div>
-                ))}
-              </AnimatePresence>
-            </CardContent>
-          </Card>
+          {/* Conditional Visibility: Hide if no critical alerts */}
+          {criticalAlerts.length > 0 && (
+            <Card className="glass-panel admin-card border-l-4 border-emergency">
+              <CardHeader className="p-4 bg-emergency/5 border-b border-white/5">
+                <div className="flex items-center gap-2">
+                  <AlertTriangle className="w-4 h-4 text-emergency animate-pulse" />
+                  <CardTitle className="text-[10px] font-black uppercase text-emergency">Critical Exceptions</CardTitle>
+                </div>
+              </CardHeader>
+              <CardContent className="p-4 space-y-3 max-h-[250px] overflow-y-auto scrollbar-hide">
+                <AnimatePresence>
+                  {criticalAlerts.slice(0, 5).map(alert => (
+                    <motion.div 
+                      initial={{ opacity: 0, x: 20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      key={alert.id} 
+                      className="p-3 bg-emergency/10 rounded border border-emergency/20"
+                    >
+                      <p className="text-[10px] font-bold uppercase text-white">Status Breach: {alert.id.substring(0,6)}</p>
+                      <p className="text-[8px] text-white/60 mt-1 uppercase">Unit Rejected Broadcast at Sector {Math.floor(Math.random() * 20)}</p>
+                    </motion.div>
+                  ))}
+                </AnimatePresence>
+              </CardContent>
+            </Card>
+          )}
 
           <Card className="glass-panel admin-card border-l-4 border-orange">
             <CardHeader className="p-4 bg-orange/5 border-b border-white/5 flex items-center justify-between">
@@ -221,7 +224,7 @@ export default function AdminOperationsCenter() {
                 <CardTitle className="text-[10px] font-black uppercase text-white">Live Shift Pulse</CardTitle>
               </div>
             </CardHeader>
-            <CardContent className="p-0 max-h-[400px] overflow-y-auto scrollbar-hide">
+            <CardContent className="p-0 max-h-[300px] overflow-y-auto scrollbar-hide">
               <div className="divide-y divide-white/5">
                 {recentShifts?.map(shift => (
                   <div key={shift.id} className="p-4 hover:bg-white/5 transition-colors flex items-center justify-between group">
