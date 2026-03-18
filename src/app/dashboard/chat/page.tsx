@@ -31,7 +31,10 @@ export default function AdministrativeChatPage() {
 
   const userProfileRef = useMemoFirebase(() => user && db ? doc(db, "userProfiles", user.uid) : null, [user, db])
   const { data: profile } = useDoc(userProfileRef)
-  const isAdmin = profile?.role === "admin" || profile?.role === "super-admin"
+  
+  // Normalize role check
+  const role = (profile?.role || "").toLowerCase().replace(/\s+/g, '-')
+  const isAdmin = role === "admin" || role === "super-admin"
 
   // Tactical Chat Feed: Global Admin Channel
   const chatQuery = useMemoFirebase(() => db ? query(

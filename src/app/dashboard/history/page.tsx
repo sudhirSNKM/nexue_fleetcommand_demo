@@ -31,7 +31,8 @@ export default function RideHistoryPage() {
   const userProfileRef = useMemoFirebase(() => user && db ? doc(db, "userProfiles", user.uid) : null, [user, db])
   const { data: profile } = useDoc(userProfileRef)
   
-  const role = profile?.role || "passenger"
+  // Normalize Role for robust clearance checking
+  const role = (profile?.role || "passenger").toLowerCase().replace(/\s+/g, '-')
   const isMobilityUser = role === "passenger" || role === "driver"
   const isAdmin = role === "admin" || role === "super-admin"
 
@@ -39,22 +40,24 @@ export default function RideHistoryPage() {
   const ridesQuery = useMemoFirebase(() => {
     if (!user || !db || !profile) return null
     
+    // Admins gain visibility into the Global Manifest
     if (isAdmin) {
       return query(
         collection(db, "rides"),
         orderBy("createdAt", "desc"),
-        limit(50)
+        limit(100)
       )
     }
 
+    // Drivers/Passengers restricted to personal logs
     const filterKey = role === "driver" ? "driverId" : "passengerId"
     return query(
       collection(db, "rides"),
       where(filterKey, "==", user.uid),
       orderBy("createdAt", "desc"),
-      limit(20)
+      limit(50)
     )
-  }, [user, db, profile, role, isAdmin])
+  }, [user, db, profile?.role, role, isAdmin])
 
   const { data: rides, isLoading } = useCollection(ridesQuery)
 

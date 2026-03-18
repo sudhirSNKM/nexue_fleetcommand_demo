@@ -17,7 +17,7 @@ service cloud.firestore {
     }
 
     function getRole() {
-      return hasProfile() ? getProfile().data.role : "passenger";
+      return hasProfile() ? getProfile().data.role.lower() : "passenger";
     }
 
     function isAdmin() {
@@ -80,7 +80,7 @@ service cloud.firestore {
     }
 
     // ADMIN CHATS
-    match /adminChats/{chatId}/messages/{messageId} {
+    match /adminChats/{chatId}/{document=**} {
       allow read, write: if isAdmin();
     }
   }
