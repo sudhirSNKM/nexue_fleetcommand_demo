@@ -59,3 +59,15 @@
               linear-gradient(90deg, rgba(25, 42, 77, 0.1) 1px, transparent 1px);
   background-size: 20px 20px;
 }
+
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  @apply bg-charcoal;
+}
+
+::-webkit-scrollbar-thumb {
+  @apply bg-white/10 rounded-full hover:bg-orange/40 transition-colors;
+}
