@@ -88,8 +88,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     router.push("/login")
   }
 
-  // Role Normalization Protocol
-  const role = (profile?.role || "passenger").toLowerCase().replace(/\s+/g, '-')
+  // Role Normalization Protocol: Synchronize database role keys with internal logic
+  const role = (profile?.role || "passenger").toLowerCase().trim().replace(/[\s_-]+/g, '-')
   const status = (profile?.status || "Active").toLowerCase()
   const isMobilityUser = role === "passenger" || role === "driver"
   const isPendingDriver = role === "driver" && status === "pending"
@@ -99,6 +99,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     if (isPendingDriver) return [{ icon: Settings, label: "Onboarding", href: "/onboarding/vehicle-details" }]
     
     const items = []
+    
+    // Command & Admin Tier Protocols
     if (role === "super-admin") {
       items.push(
         { icon: Globe, label: "Command Center", href: "/dashboard/super-admin" },
@@ -128,20 +130,28 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         { icon: AlertTriangle, label: "Alerts", href: "/dashboard/alerts" },
         { icon: Settings, label: "System Config", href: "/dashboard/settings" }
       )
-    } else if (role === "driver") {
+    } 
+    
+    // Workforce Tier Protocols
+    else if (role === "driver") {
       items.push(
         { icon: Navigation, label: "Duty Console", href: "/dashboard/driver" },
         { icon: DollarSign, label: "Earnings", href: "/dashboard/driver/earnings" },
         { icon: History, label: "History", href: "/dashboard/history" }
       )
-    } else if (role === "passenger") {
+    } 
+    
+    // Client Tier Protocols
+    else if (role === "passenger") {
       items.push(
         { icon: Zap, label: "Book Ride", href: "/dashboard/passenger" },
         { icon: History, label: "History", href: "/dashboard/history" }
       )
     }
 
+    // Baseline Identity Protocol
     items.push({ icon: User, label: "Profile", href: "/dashboard/profile" })
+    
     return items
   }, [role, isPendingDriver])
 
@@ -251,6 +261,12 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           </div>
 
           <div className="flex items-center gap-4 lg:gap-6">
+            {isAdmin && (
+              <Link href="/dashboard/chat" className={cn("relative transition-colors", isMobilityUser ? "text-slate-400 hover:text-slate-900" : "text-muted-foreground hover:text-orange")}>
+                <MessageSquare className="w-5 h-5" />
+              </Link>
+            )}
+
             <button className={cn("relative transition-colors", isMobilityUser ? "text-slate-400 hover:text-slate-900" : "text-muted-foreground hover:text-white")}>
               <Bell className="w-5 h-5" />
               <span className="absolute -top-1 -right-1 w-2 h-2 bg-emergency rounded-full" />
