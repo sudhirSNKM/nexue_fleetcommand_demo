@@ -1,4 +1,3 @@
-
 "use client"
 
 import * as React from "react"
@@ -159,7 +158,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             <Zap className="w-5 h-5 text-white" />
           </div>
           <span className={cn("font-black text-xl tracking-tighter", isMobilityUser ? "text-slate-900" : "text-white")}>
-            RAPIDO <span className="text-orange">OS</span>
+            Fleet<span className="text-orange">OS</span>
           </span>
         </Link>
       </div>
