@@ -139,16 +139,23 @@ export default function TripsManagementPage() {
                   </td>
                   <td className="p-4 font-mono text-white text-sm">₹{ride.fare}</td>
                   <td className="p-4">
-                    <div className="flex items-center gap-2">
-                      {getStatusIcon(ride.status)}
-                      <Badge className={cn(
-                        "text-[8px] font-black uppercase px-2 py-0.5",
-                        ride.status === 'Paid' || ride.status === 'Completed' ? "bg-active/10 text-active" : 
-                        ride.status === 'Cancelled' || ride.status === 'Rejected' ? "bg-emergency/10 text-emergency" : 
-                        "bg-orange/10 text-orange"
-                      )}>
-                        {ride.status}
-                      </Badge>
+                    <div className="flex flex-col gap-1">
+                      <div className="flex items-center gap-2">
+                        {getStatusIcon(ride.status)}
+                        <Badge className={cn(
+                          "text-[8px] font-black uppercase px-2 py-0.5",
+                          ride.status === 'Paid' || ride.status === 'Completed' ? "bg-active/10 text-active" : 
+                          ride.status === 'Cancelled' || ride.status === 'Rejected' ? "bg-emergency/10 text-emergency" : 
+                          "bg-orange/10 text-orange"
+                        )}>
+                          {ride.status}
+                        </Badge>
+                      </div>
+                      {ride.status === 'Paid' && ride.paymentMethod && (
+                        <span className="text-[7px] font-black uppercase text-white/40 ml-6 tracking-widest">
+                          Via {ride.paymentMethod === 'Online' ? 'UPI' : 'Cash'}
+                        </span>
+                      )}
                     </div>
                   </td>
                   <td className="p-4 text-white/30 text-[9px]">{new Date(ride.createdAt?.seconds * 1000).toLocaleString()}</td>

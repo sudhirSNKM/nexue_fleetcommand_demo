@@ -102,7 +102,6 @@ export default function DriverProfilePage() {
 
   const chartData = useMemo(() => {
     if (!rides || rides.length === 0) return []
-    // Group last 7 days from actual data
     const groups: Record<string, { day: string, trips: number, earnings: number }> = {}
     const now = new Date()
     for (let i = 6; i >= 0; i--) {
@@ -396,12 +395,19 @@ export default function DriverProfilePage() {
                           </td>
                           <td className="p-4 font-mono text-orange">₹{ride.fare}</td>
                           <td className="p-4">
-                            <Badge className={cn(
-                              "text-[8px] font-black uppercase",
-                              ride.status === 'Paid' || ride.status === 'Completed' ? 'bg-active/10 text-active' : 'bg-orange/10 text-orange'
-                            )}>
-                              {ride.status}
-                            </Badge>
+                            <div className="flex flex-col gap-1">
+                              <Badge className={cn(
+                                "text-[8px] font-black uppercase w-fit",
+                                ride.status === 'Paid' || ride.status === 'Completed' ? 'bg-active/10 text-active' : 'bg-orange/10 text-orange'
+                              )}>
+                                {ride.status}
+                              </Badge>
+                              {ride.status === 'Paid' && ride.paymentMethod && (
+                                <span className="text-[7px] font-black uppercase text-white/40 tracking-widest">
+                                  Via {ride.paymentMethod === 'Online' ? 'UPI' : 'Cash'}
+                                </span>
+                              )}
+                            </div>
                           </td>
                           <td className="p-4 text-white/40">{ride.createdAt?.toDate ? ride.createdAt.toDate().toLocaleString() : 'Syncing...'}</td>
                         </tr>
