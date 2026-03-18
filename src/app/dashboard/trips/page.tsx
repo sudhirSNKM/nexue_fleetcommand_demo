@@ -148,14 +148,9 @@ export default function TripsManagementPage() {
                           ride.status === 'Cancelled' || ride.status === 'Rejected' ? "bg-emergency/10 text-emergency" : 
                           "bg-orange/10 text-orange"
                         )}>
-                          {ride.status}
+                          {ride.status} {ride.status === 'Paid' && ride.paymentMethod ? `• ${ride.paymentMethod.toUpperCase()}` : ''}
                         </Badge>
                       </div>
-                      {ride.status === 'Paid' && ride.paymentMethod && (
-                        <span className="text-[7px] font-black uppercase text-white/40 ml-6 tracking-widest">
-                          Via {ride.paymentMethod === 'Online' ? 'UPI' : 'Cash'}
-                        </span>
-                      )}
                     </div>
                   </td>
                   <td className="p-4 text-white/30 text-[9px]">{new Date(ride.createdAt?.seconds * 1000).toLocaleString()}</td>

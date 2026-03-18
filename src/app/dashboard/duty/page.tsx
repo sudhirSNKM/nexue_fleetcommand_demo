@@ -20,7 +20,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { useUser, useFirestore, useCollection, useMemoFirebase, updateDocumentNonBlocking, useDoc } from "@/firebase"
-import { collection, query, where, doc, serverTimestamp, orderBy, limit } from "firebase/firestore"
+import { collection, query, where, doc, serverTimestamp, orderBy, limit, addDoc } from "firebase/firestore"
 import { cn } from "@/lib/utils"
 
 export default function DutyManagementPage() {
@@ -47,6 +47,35 @@ export default function DutyManagementPage() {
 
   const activeShift = driverShifts?.[0]
 
+  // MIDNIGHT REFRESH & AUTO-SHIFT LOGIC
+  useEffect(() => {
+    // 1. Automatic 12:00 AM Page Reload
+    const now = new Date()
+    const midnight = new Date()
+    midnight.setHours(24, 0, 0, 0)
+    const timeToMidnight = midnight.getTime() - now.getTime()
+
+    const refreshTimer = setTimeout(() => {
+      window.location.reload()
+    }, timeToMidnight)
+
+    // 2. Automatic Shift Activation for Online Drivers
+    if (!isAdmin && user && db && !activeShift && profile?.status === "Online") {
+      const todayDate = new Date().toISOString().split('T')[0]
+      const initializeAutoShift = async () => {
+        await addDoc(collection(db, "driverShifts"), {
+          driverId: user.uid,
+          punchInTime: serverTimestamp(),
+          status: "Active",
+          shiftDate: todayDate
+        })
+      }
+      initializeAutoShift()
+    }
+
+    return () => clearTimeout(refreshTimer)
+  }, [isAdmin, user, db, activeShift, profile?.status])
+
   const handleEndShift = (shiftId: string) => {
     const shiftRef = doc(db, "driverShifts", shiftId)
     updateDocumentNonBlocking(shiftRef, {
@@ -57,7 +86,6 @@ export default function DutyManagementPage() {
 
   if (!isAdmin && !user) return null
 
-  // RENDER ADMIN TACTICAL VIEW
   if (isAdmin) {
     return (
       <div className="space-y-8">
@@ -151,7 +179,6 @@ export default function DutyManagementPage() {
     )
   }
 
-  // FALLBACK TO DRIVER DUTY PAGE (RE-USE EXISTING LOGIC)
   return (
     <div className="space-y-6 max-w-2xl mx-auto">
       <div className="flex items-center justify-between">
@@ -180,8 +207,7 @@ export default function DutyManagementPage() {
                 status: "Active",
                 shiftDate: new Date().toISOString().split('T')[0]
               }
-              const colRef = collection(db, "driverShifts")
-              import("firebase/firestore").then(f => f.addDoc(colRef, newShift))
+              addDoc(collection(db, "driverShifts"), newShift)
             }}
             className="w-full bg-orange hover:bg-orange/90 h-14 font-black uppercase tracking-widest"
           >

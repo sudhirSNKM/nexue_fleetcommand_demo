@@ -49,7 +49,6 @@ export default function PassengersListPage() {
 
   const { data: passengers, isLoading } = useCollection(passengersQuery)
 
-  // Fetch recent rides to correlate passengers with drivers
   const recentRidesQuery = useMemoFirebase(() => (db && isUserAdmin) ? query(
     collection(db, "rides"),
     orderBy("createdAt", "desc"),
