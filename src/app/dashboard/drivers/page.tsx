@@ -8,18 +8,32 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Users, Star, Clock, ShieldCheck, Timer, ChevronRight, Search } from "lucide-react"
-import { useFirestore, useCollection, useMemoFirebase } from "@/firebase"
-import { collection, query, orderBy, where } from "firebase/firestore"
+import { useUser, useFirestore, useCollection, useMemoFirebase, useDoc } from "@/firebase"
+import { collection, query, orderBy, where, doc } from "firebase/firestore"
 import { cn } from "@/lib/utils"
 
 export default function DriversPage() {
   const db = useFirestore()
+  const { user } = useUser()
   
-  const driversQuery = useMemoFirebase(() => query(collection(db, "userProfiles"), where("role", "==", "driver")), [db])
+  const userProfileRef = useMemoFirebase(() => user && db ? doc(db, "userProfiles", user.uid) : null, [user, db])
+  const { data: profile } = useDoc(userProfileRef)
+  const isUserAdmin = profile?.role === "admin" || profile?.role === "super-admin"
+  
+  const driversQuery = useMemoFirebase(() => (db && isUserAdmin) ? query(collection(db, "userProfiles"), where("role", "==", "driver")) : null, [db, isUserAdmin])
   const { data: drivers } = useCollection(driversQuery)
 
-  const shiftsQuery = useMemoFirebase(() => query(collection(db, "driverShifts"), orderBy("punchInTime", "desc")), [db])
+  const shiftsQuery = useMemoFirebase(() => (db && isUserAdmin) ? query(collection(db, "driverShifts"), orderBy("punchInTime", "desc")) : null, [db, isUserAdmin])
   const { data: shifts } = useCollection(shiftsQuery)
+
+  if (!isUserAdmin) {
+    return (
+      <div className="h-full flex flex-col items-center justify-center space-y-4 bg-charcoal">
+        <div className="w-10 h-10 border-4 border-orange/20 border-t-orange rounded-full animate-spin" />
+        <p className="text-[10px] text-white uppercase font-black tracking-[0.3em]">Validating Clearance...</p>
+      </div>
+    )
+  }
 
   return (
     <div className="space-y-8">
