@@ -19,7 +19,8 @@ export default function DriversPage() {
   const userProfileRef = useMemoFirebase(() => user && db ? doc(db, "userProfiles", user.uid) : null, [user, db])
   const { data: profile, isLoading: isProfileLoading } = useDoc(userProfileRef)
   
-  const isUserAdmin = profile?.role === "admin" || profile?.role === "super-admin"
+  const role = (profile?.role || "").toLowerCase()
+  const isUserAdmin = role === "admin" || role === "super-admin"
   
   const driversQuery = useMemoFirebase(() => (db && isUserAdmin) ? query(collection(db, "userProfiles"), where("role", "==", "driver")) : null, [db, isUserAdmin])
   const { data: drivers, isLoading: isDriversLoading } = useCollection(driversQuery)
@@ -41,7 +42,8 @@ export default function DriversPage() {
       <div className="h-full flex flex-col items-center justify-center space-y-4 bg-charcoal text-white">
         <ShieldCheck className="w-12 h-12 text-emergency mb-2" />
         <h2 className="text-xl font-black uppercase">Access Denied</h2>
-        <p className="text-[10px] uppercase font-black tracking-widest text-white/40">Administrative Clearance Level Required</p>
+        <p className="text-[10px] uppercase font-black tracking-widest text-white/40">Administrative Clearance Level Required for ID: {user?.email}</p>
+        <p className="text-[8px] text-white/20 uppercase">Current Profile Role: {profile?.role || "NO_PROFILE_DATA"}</p>
       </div>
     )
   }

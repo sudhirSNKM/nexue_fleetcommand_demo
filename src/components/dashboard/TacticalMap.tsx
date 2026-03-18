@@ -14,8 +14,8 @@ const Popup = dynamic(() => import('react-leaflet').then(mod => mod.Popup), { ss
 const Polyline = dynamic(() => import('react-leaflet').then(mod => mod.Polyline), { ssr: false })
 
 interface MapProps {
-  markers?: Array<{ id: string; lat: number; lng: number; label: string; type: 'driver' | 'pickup' | 'dropoff' }>;
-  route?: [number, number][];
+  markers?: Array<{ id: string; lat: number; lng: number; label: string; type: 'driver' | 'pickup' | 'dropoff' }> | null;
+  route?: [number, number][] | null;
   center?: [number, number];
   zoom?: number;
 }
@@ -43,6 +43,9 @@ export default function TacticalMap({ markers = [], route = [], center = [12.971
     return L.divIcon({ html: svg, className: 'custom-icon', iconSize: [32, 32], iconAnchor: [16, 16] })
   }
 
+  const safeMarkers = markers || []
+  const safeRoute = route || []
+
   return (
     <Card className="glass-panel overflow-hidden h-full min-h-[400px]">
       <CardContent className="p-0 h-full relative">
@@ -52,7 +55,7 @@ export default function TacticalMap({ markers = [], route = [], center = [12.971
               url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
               attribution='&copy; OpenStreetMap'
             />
-            {markers.map(m => (
+            {safeMarkers.map(m => (
               <Marker key={m.id} position={[m.lat, m.lng]} icon={getIcon(m.type)}>
                 <Popup className="custom-popup">
                   <div className="p-2">
@@ -62,8 +65,8 @@ export default function TacticalMap({ markers = [], route = [], center = [12.971
                 </Popup>
               </Marker>
             ))}
-            {route.length > 0 && (
-              <Polyline positions={route} color="#FF8000" weight={4} opacity={0.6} dashArray="10, 10" />
+            {safeRoute.length > 0 && (
+              <Polyline positions={safeRoute} color="#FF8000" weight={4} opacity={0.6} dashArray="10, 10" />
             )}
           </MapContainer>
         )}

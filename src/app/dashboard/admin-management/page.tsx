@@ -22,8 +22,9 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog"
-import { useUser, useFirestore, useCollection, useMemoFirebase, updateDocumentNonBlocking, useDoc } from "@/firebase"
-import { collection, query, where, doc, setDoc, serverTimestamp } from "firebase/firestore"
+import { useUser, useFirestore, useCollection, useMemoFirebase, useDoc } from "@/firebase"
+import { updateDocumentNonBlocking } from "@/firebase/non-blocking-updates"
+import { collection, query, where, doc, setDoc, serverTimestamp, getDocs, updateDoc } from "firebase/firestore"
 import { cn } from "@/lib/utils"
 import { useToast } from "@/hooks/use-toast"
 
@@ -58,31 +59,47 @@ export default function AdminManagementPage() {
 
   const handleStatusToggle = (adminId: string, currentStatus: string) => {
     const newStatus = currentStatus === 'Active' ? 'Suspended' : 'Active'
-    updateDocumentNonBlocking(doc(db, "userProfiles", adminId), { status: newStatus })
-    toast({
-      title: "Clearance Level Updated",
-      description: `Admin status synchronized to ${newStatus}.`,
-    })
+    if (db) {
+      updateDocumentNonBlocking(doc(db, "userProfiles", adminId), { status: newStatus })
+      toast({
+        title: "Clearance Level Updated",
+        description: `Admin status synchronized to ${newStatus}.`,
+      })
+    }
   }
 
   const handleProvisionAdmin = async () => {
     if (!db || !newAdmin.email || !newAdmin.name) return
     setIsSubmitting(true)
     try {
-      // NOTE: In a real app, this would use a cloud function to create the Auth user
-      // For this prototype, we simulate provisioning by adding to the registry
-      const mockId = `admin_${Math.random().toString(36).substring(7)}`
-      await setDoc(doc(db, "userProfiles", mockId), {
-        id: mockId,
-        name: newAdmin.name,
-        email: newAdmin.email,
-        role: "admin",
-        status: "Active",
-        zone: newAdmin.zone,
-        createdAt: serverTimestamp(),
-        rating: 0
-      })
-      toast({ title: "Designation Authorized", description: `${newAdmin.name} added to administrative registry.` })
+      // 1. Search for existing profile by email to ensure database consistency
+      const q = query(collection(db, "userProfiles"), where("email", "==", newAdmin.email.toLowerCase()))
+      const querySnapshot = await getDocs(q)
+      
+      if (!querySnapshot.empty) {
+        // 2. Update existing user's role to Admin
+        const userDoc = querySnapshot.docs[0]
+        await updateDoc(doc(db, "userProfiles", userDoc.id), {
+          role: "admin",
+          status: "Active",
+          zone: newAdmin.zone
+        })
+        toast({ title: "Designation Authorized", description: `Existing profile for ${newAdmin.email} promoted to Admin status.` })
+      } else {
+        // 3. Provision a new administrative identity
+        const mockId = `admin_${Math.random().toString(36).substring(7)}`
+        await setDoc(doc(db, "userProfiles", mockId), {
+          id: mockId,
+          name: newAdmin.name,
+          email: newAdmin.email.toLowerCase(),
+          role: "admin",
+          status: "Active",
+          zone: newAdmin.zone,
+          createdAt: serverTimestamp(),
+          rating: 0
+        })
+        toast({ title: "Designation Authorized", description: `New administrative terminal initialized for ${newAdmin.name}.` })
+      }
       setIsProvisioning(false)
       setNewAdmin({ name: "", email: "", zone: "Global" })
     } catch (error: any) {
@@ -129,7 +146,7 @@ export default function AdminManagementPage() {
                         <h4 className="text-sm font-black text-white uppercase">{admin.name}</h4>
                         <div className="flex items-center gap-3 mt-1 text-[9px] font-black uppercase text-white/40 tracking-widest">
                           <span className="flex items-center gap-1"><Mail className="w-3 h-3" /> {admin.email}</span>
-                          <span className="flex items-center gap-1 text-orange"><MapPin className="w-3 h-3" /> {admin.zone || 'Global Sector'}</span>
+                          <span className="flex items-center gap-1 text-orange uppercase font-black"><MapPin className="w-3 h-3" /> {admin.zone || 'Global Sector'}</span>
                         </div>
                       </div>
                     </div>
