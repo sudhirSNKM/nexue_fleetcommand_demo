@@ -15,8 +15,8 @@ const Marker = dynamic(() => import('react-leaflet').then(mod => mod.Marker), { 
 const Popup = dynamic(() => import('react-leaflet').then(mod => mod.Popup), { ssr: false })
 
 interface LiveMapProps {
-  locations?: any[];
-  activeRides?: any[];
+  locations?: any[] | null;
+  activeRides?: any[] | null;
 }
 
 export default function LiveMap({ locations = [], activeRides = [] }: LiveMapProps) {

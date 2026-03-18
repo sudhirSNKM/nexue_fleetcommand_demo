@@ -1,3 +1,4 @@
+
 rules_version = '2';
 
 service cloud.firestore {
@@ -37,8 +38,7 @@ service cloud.firestore {
 
     // DRIVER SHIFTS
     match /driverShifts/{shiftId} {
-      // Temporary permissive rule for debugging as requested
-      // Once verified, this should be tightened to check for isAdmin() or ownership
+      // Temporarily permissive for debugging as requested
       allow read, write: if signedIn();
     }
 
