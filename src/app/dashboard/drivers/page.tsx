@@ -19,18 +19,18 @@ export default function DriversPage() {
   const userProfileRef = useMemoFirebase(() => user && db ? doc(db, "userProfiles", user.uid) : null, [user, db])
   const { data: profile, isLoading: isProfileLoading } = useDoc(userProfileRef)
   
-  const role = (profile?.role || "").toLowerCase()
+  const role = (profile?.role || "").toLowerCase().replace(/\s+/g, '-')
   const isUserAdmin = role === "admin" || role === "super-admin"
   
   const driversQuery = useMemoFirebase(() => (db && isUserAdmin) ? query(collection(db, "userProfiles"), where("role", "==", "driver")) : null, [db, isUserAdmin])
   const { data: drivers, isLoading: isDriversLoading } = useCollection(driversQuery)
 
-  const shiftsQuery = useMemoFirebase(() => (db && isUserAdmin) ? query(collection(db, "driverShifts"), orderBy("punchInTime", "desc")) : null, [db, isUserAdmin])
+  const shiftsQuery = useMemoFirebase(() => (db && isUserAdmin) ? query(collection(db, "driverShifts"), orderBy("punchInTime", "desc"), limit(50)) : null, [db, isUserAdmin])
   const { data: shifts, isLoading: isShiftsLoading } = useCollection(shiftsQuery)
 
   if (isProfileLoading) {
     return (
-      <div className="h-full flex flex-col items-center justify-center space-y-4 bg-charcoal">
+      <div className="h-full flex flex-col items-center justify-center space-y-4 bg-charcoal min-h-[400px]">
         <Loader2 className="w-10 h-10 text-orange animate-spin" />
         <p className="text-[10px] text-white uppercase font-black tracking-[0.3em]">Syncing Clearance...</p>
       </div>
@@ -39,11 +39,10 @@ export default function DriversPage() {
 
   if (!isUserAdmin) {
     return (
-      <div className="h-full flex flex-col items-center justify-center space-y-4 bg-charcoal text-white">
+      <div className="h-full flex flex-col items-center justify-center space-y-4 bg-charcoal text-white min-h-[400px]">
         <ShieldCheck className="w-12 h-12 text-emergency mb-2" />
         <h2 className="text-xl font-black uppercase">Access Denied</h2>
-        <p className="text-[10px] uppercase font-black tracking-widest text-white/40">Administrative Clearance Level Required for ID: {user?.email}</p>
-        <p className="text-[8px] text-white/20 uppercase">Current Profile Role: {profile?.role || "NO_PROFILE_DATA"}</p>
+        <p className="text-[10px] uppercase font-black tracking-widest text-white/40">Administrative Clearance Level Required</p>
       </div>
     )
   }
@@ -92,7 +91,7 @@ export default function DriversPage() {
                         <div className="relative">
                           <Avatar className="h-12 w-12 ring-2 ring-white/5 shadow-xl">
                             <AvatarImage src={`https://picsum.photos/seed/${driver.id}/100/100`} />
-                            <AvatarFallback className="bg-navy text-white font-black">{driver.name[0]}</AvatarFallback>
+                            <AvatarFallback className="bg-navy text-white font-black">{driver.name ? driver.name[0] : 'U'}</AvatarFallback>
                           </Avatar>
                           <span className={cn(
                             "absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-charcoal",
@@ -100,7 +99,7 @@ export default function DriversPage() {
                           )} />
                         </div>
                         <div>
-                          <p className="font-black text-sm text-white uppercase tracking-tight">{driver.name}</p>
+                          <p className="font-black text-sm text-white uppercase tracking-tight">{driver.name || 'Unnamed'}</p>
                           <p className="text-[9px] text-orange uppercase font-black tracking-widest">{driver.vehicleType || 'Unit Unassigned'}</p>
                         </div>
                       </div>
@@ -109,7 +108,7 @@ export default function DriversPage() {
                         <div className="hidden sm:block text-center">
                           <p className="text-[8px] text-white/30 uppercase font-black mb-0.5">Tactical Rating</p>
                           <div className="flex items-center justify-center gap-1 text-orange font-black text-xs">
-                            <Star className="w-3 h-3 fill-orange" />
+                            <Star className={cn("w-3 h-3", (driver.rating || 0) > 0 ? "fill-orange" : "text-white/20")} />
                             {driver.rating > 0 ? driver.rating.toFixed(1) : 'NEW'}
                           </div>
                         </div>
@@ -120,7 +119,8 @@ export default function DriversPage() {
                         <div className="flex items-center gap-4">
                           <Badge variant="outline" className={cn(
                             "text-[9px] uppercase font-black px-2 py-0.5",
-                            driver.status === 'Online' ? 'border-active text-active bg-active/5' : 'border-white/10 text-white/40'
+                            driver.status === 'Online' ? 'border-active text-active bg-active/5' : 
+                            (driver.status === 'pending' || driver.status === 'Pending') ? 'border-orange text-orange bg-orange/5' : 'border-white/10 text-white/40'
                           )}>
                             {driver.status || 'Offline'}
                           </Badge>
@@ -191,27 +191,6 @@ export default function DriversPage() {
             </CardContent>
           </Card>
         </div>
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {[
-          { icon: Clock, label: "Total Fleet Hours", value: "1,204h", trend: "Nominal", color: "text-orange" },
-          { icon: ShieldCheck, label: "Safety Compliance", value: "99.2%", trend: "Optimal", color: "text-active" },
-          { icon: Star, label: "Operator Avg", value: "4.82", trend: "Stable", color: "text-orange" },
-        ].map((stat, i) => (
-          <Card key={i} className="glass-panel border-none p-6 bg-navy/20">
-            <div className="flex items-center gap-4">
-              <div className={cn("p-4 rounded-2xl bg-white/5 shadow-inner", stat.color)}>
-                <stat.icon className="w-6 h-6" />
-              </div>
-              <div>
-                <p className="text-[10px] text-white/40 uppercase font-black tracking-[0.2em] mb-1">{stat.label}</p>
-                <h4 className="text-2xl font-black font-mono text-white">{stat.value}</h4>
-                <p className={cn("text-[9px] font-black uppercase mt-1", stat.color === 'text-active' ? 'text-active' : 'text-orange')}>{stat.trend}</p>
-              </div>
-            </div>
-          </Card>
-        ))}
       </div>
     </div>
   )

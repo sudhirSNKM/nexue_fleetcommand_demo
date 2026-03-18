@@ -1,3 +1,4 @@
+
 "use client"
 
 import React, { useState, useMemo } from "react"
@@ -26,7 +27,9 @@ import {
   UserX,
   History,
   Activity,
-  Zap
+  Zap,
+  CheckCircle2,
+  Loader2
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -65,55 +68,65 @@ export default function DriverProfilePage() {
   const db = useFirestore()
   const driverId = params.driverId as string
 
-  const [activeTimeframe, setActiveTimeframe] = useState("today")
   const { user: currentUser } = useUser()
   const currentUserRef = useMemoFirebase(() => currentUser && db ? doc(db, "userProfiles", currentUser.uid) : null, [currentUser, db])
   const { data: currentProfile } = useDoc(currentUserRef)
-  const isUserAdmin = currentProfile?.role === "admin" || currentProfile?.role === "super-admin"
+  
+  const role = (currentProfile?.role || "").toLowerCase().replace(/\s+/g, '-')
+  const isUserAdmin = role === "admin" || role === "super-admin"
 
   // FETCH DRIVER PROFILE
   const profileRef = useMemoFirebase(() => (db && isUserAdmin) ? doc(db, "userProfiles", driverId) : null, [db, driverId, isUserAdmin])
   const { data: driver, isLoading: isProfileLoading } = useDoc(profileRef)
 
-  // FETCH RIDE HISTORY
+  // FETCH RIDE HISTORY (Actual Data from DB)
   const ridesQuery = useMemoFirebase(() => (db && isUserAdmin) ? query(
     collection(db, "rides"), 
     where("driverId", "==", driverId),
     orderBy("createdAt", "desc"),
     limit(50)
   ) : null, [db, driverId, isUserAdmin])
-  const { data: rides } = useCollection(ridesQuery)
-
-  // FETCH SHIFT LOGS
-  const shiftsQuery = useMemoFirebase(() => (db && isUserAdmin) ? query(
-    collection(db, "driverShifts"),
-    where("driverId", "==", driverId),
-    orderBy("punchInTime", "desc"),
-    limit(10)
-  ) : null, [db, driverId, isUserAdmin])
-  const { data: shifts } = useCollection(shiftsQuery)
-
-  // MOCK CHART DATA
-  const chartData = [
-    { day: 'Mon', trips: 12, earnings: 1450 },
-    { day: 'Tue', trips: 15, earnings: 1890 },
-    { day: 'Wed', trips: 10, earnings: 1200 },
-    { day: 'Thu', trips: 18, earnings: 2100 },
-    { day: 'Fri', trips: 14, earnings: 1650 },
-    { day: 'Sat', trips: 22, earnings: 2800 },
-    { day: 'Sun', trips: 8, earnings: 900 },
-  ]
+  const { data: rides, isLoading: isRidesLoading } = useCollection(ridesQuery)
 
   const metrics = useMemo(() => {
-    if (!rides) return { totalEarnings: 0, totalTrips: 0, avgRating: 4.8, distance: 1240 }
-    const totalEarnings = rides.reduce((acc, r) => acc + (r.fare || 0), 0)
+    if (!rides) return { totalEarnings: 0, totalTrips: 0, avgRating: 0, distance: 0 }
+    const validRides = rides.filter(r => r.status === 'Completed' || r.status === 'Paid')
+    const totalEarnings = validRides.reduce((acc, r) => acc + (Number(r.fare) || 0), 0)
     return {
       totalEarnings,
-      totalTrips: rides.length,
+      totalTrips: validRides.length,
       avgRating: driver?.rating || 0,
-      distance: Math.floor(rides.length * 8.4)
+      distance: Math.floor(validRides.length * 8.4)
     }
   }, [rides, driver])
+
+  const chartData = useMemo(() => {
+    if (!rides || rides.length === 0) return []
+    // Group last 7 days from actual data
+    const groups: Record<string, { day: string, trips: number, earnings: number }> = {}
+    const now = new Date()
+    for (let i = 6; i >= 0; i--) {
+      const d = new Date(now)
+      d.setDate(now.getDate() - i)
+      const key = d.toLocaleDateString('en-US', { weekday: 'short' })
+      groups[key] = { day: key, trips: 0, earnings: 0 }
+    }
+
+    rides.forEach(r => {
+      if (r.status === 'Completed' || r.status === 'Paid') {
+        const d = r.createdAt?.toDate ? r.createdAt.toDate() : (r.createdAt?.seconds ? new Date(r.createdAt.seconds * 1000) : null)
+        if (d) {
+          const key = d.toLocaleDateString('en-US', { weekday: 'short' })
+          if (groups[key]) {
+            groups[key].trips += 1
+            groups[key].earnings += Number(r.fare) || 0
+          }
+        }
+      }
+    })
+
+    return Object.values(groups)
+  }, [rides])
 
   const handleStatusChange = (newStatus: string) => {
     if (!profileRef) return
@@ -134,9 +147,9 @@ export default function DriverProfilePage() {
   }
 
   if (!isUserAdmin || isProfileLoading) return (
-    <div className="h-screen w-screen flex items-center justify-center bg-charcoal text-white">
+    <div className="h-full flex items-center justify-center bg-charcoal text-white min-h-[400px]">
       <div className="w-10 h-10 border-4 border-orange/20 border-t-orange rounded-full animate-spin" />
-      {!isUserAdmin && <p className="ml-4 text-[10px] uppercase font-black tracking-widest">Validating clearance...</p>}
+      <p className="ml-4 text-[10px] uppercase font-black tracking-widest">Validating clearance...</p>
     </div>
   )
 
@@ -148,7 +161,7 @@ export default function DriverProfilePage() {
     </div>
   )
 
-  const isPending = driver.status === 'Pending'
+  const isPending = driver.status === 'pending' || driver.status === 'Pending'
 
   return (
     <div className="space-y-8 pb-20">
@@ -210,7 +223,8 @@ export default function DriverProfilePage() {
                 <div className="text-center">
                   <p className="text-[9px] font-black text-white/30 uppercase">Rating</p>
                   <div className="flex items-center gap-1 text-orange font-black text-sm">
-                    <Star className="w-3 h-3 fill-orange" /> {driver.rating > 0 ? driver.rating.toFixed(1) : 'NEW'}
+                    <Star className={cn("w-3 h-3", (driver.rating || 0) > 0 ? "fill-orange" : "text-white/20")} /> 
+                    {driver.rating > 0 ? driver.rating.toFixed(1) : 'NEW'}
                   </div>
                 </div>
                 <div className="text-center">
@@ -218,7 +232,7 @@ export default function DriverProfilePage() {
                   <Badge className={cn(
                     "text-[8px] font-black uppercase",
                     driver.status === 'Online' ? 'bg-active/10 text-active' : 
-                    driver.status === 'Pending' ? 'bg-orange/10 text-orange' : 'bg-white/5 text-white/40'
+                    isPending ? 'bg-orange/10 text-orange' : 'bg-white/5 text-white/40'
                   )}>
                     {driver.status || 'Offline'}
                   </Badge>
@@ -296,55 +310,62 @@ export default function DriverProfilePage() {
                 ))}
               </div>
 
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                <Card className="glass-panel border-none">
-                  <CardHeader className="p-4 bg-navy/10 border-b border-white/5">
-                    <CardTitle className="text-[10px] font-black uppercase text-white/60 tracking-widest flex items-center gap-2">
-                      <TrendingUp className="w-4 h-4 text-orange" /> Earnings Pulse
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="p-6 h-[300px]">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <AreaChart data={chartData}>
-                        <defs>
-                          <linearGradient id="colorE" x1="0" y1="0" x2="0" y2="1">
-                            <stop offset="5%" stopColor="#FF8000" stopOpacity={0.3}/>
-                            <stop offset="95%" stopColor="#FF8000" stopOpacity={0}/>
-                          </linearGradient>
-                        </defs>
-                        <CartesianGrid strokeDasharray="3 3" stroke="#ffffff05" vertical={false} />
-                        <XAxis dataKey="day" stroke="#ffffff20" fontSize={10} axisLine={false} tickLine={false} />
-                        <YAxis stroke="#ffffff20" fontSize={10} axisLine={false} tickLine={false} />
-                        <Tooltip contentStyle={{ backgroundColor: '#131518', border: '1px solid #ffffff10', fontSize: '12px' }} />
-                        <Area type="monotone" dataKey="earnings" stroke="#FF8000" fillOpacity={1} fill="url(#colorE)" strokeWidth={3} />
-                      </AreaChart>
-                    </ResponsiveContainer>
-                  </CardContent>
-                </Card>
+              {chartData.length > 0 ? (
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                  <Card className="glass-panel border-none">
+                    <CardHeader className="p-4 bg-navy/10 border-b border-white/5">
+                      <CardTitle className="text-[10px] font-black uppercase text-white/60 tracking-widest flex items-center gap-2">
+                        <TrendingUp className="w-4 h-4 text-orange" /> Earnings Pulse
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="p-6 h-[300px]">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <AreaChart data={chartData}>
+                          <defs>
+                            <linearGradient id="colorE" x1="0" y1="0" x2="0" y2="1">
+                              <stop offset="5%" stopColor="#FF8000" stopOpacity={0.3}/>
+                              <stop offset="95%" stopColor="#FF8000" stopOpacity={0}/>
+                            </linearGradient>
+                          </defs>
+                          <CartesianGrid strokeDasharray="3 3" stroke="#ffffff05" vertical={false} />
+                          <XAxis dataKey="day" stroke="#ffffff20" fontSize={10} axisLine={false} tickLine={false} />
+                          <YAxis stroke="#ffffff20" fontSize={10} axisLine={false} tickLine={false} />
+                          <Tooltip contentStyle={{ backgroundColor: '#131518', border: '1px solid #ffffff10', fontSize: '12px' }} />
+                          <Area type="monotone" dataKey="earnings" stroke="#FF8000" fillOpacity={1} fill="url(#colorE)" strokeWidth={3} />
+                        </AreaChart>
+                      </ResponsiveContainer>
+                    </CardContent>
+                  </Card>
 
-                <Card className="glass-panel border-none">
-                  <CardHeader className="p-4 bg-navy/10 border-b border-white/5">
-                    <CardTitle className="text-[10px] font-black uppercase text-white/60 tracking-widest flex items-center gap-2">
-                      <Zap className="w-4 h-4 text-active" /> Operational Activity
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="p-6 h-[300px]">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <BarChart data={chartData}>
-                        <CartesianGrid strokeDasharray="3 3" stroke="#ffffff05" vertical={false} />
-                        <XAxis dataKey="day" stroke="#ffffff20" fontSize={10} axisLine={false} tickLine={false} />
-                        <YAxis stroke="#ffffff20" fontSize={10} axisLine={false} tickLine={false} />
-                        <Tooltip contentStyle={{ backgroundColor: '#131518', border: '1px solid #ffffff10', fontSize: '12px' }} />
-                        <Bar dataKey="trips" radius={[4, 4, 0, 0]}>
-                          {chartData.map((entry, index) => (
-                            <Cell key={index} fill={entry.trips > 15 ? '#00CC00' : '#FF8000'} />
-                          ))}
-                        </Bar>
-                      </BarChart>
-                    </ResponsiveContainer>
-                  </CardContent>
+                  <Card className="glass-panel border-none">
+                    <CardHeader className="p-4 bg-navy/10 border-b border-white/5">
+                      <CardTitle className="text-[10px] font-black uppercase text-white/60 tracking-widest flex items-center gap-2">
+                        <Zap className="w-4 h-4 text-active" /> Operational Activity
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="p-6 h-[300px]">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <BarChart data={chartData}>
+                          <CartesianGrid strokeDasharray="3 3" stroke="#ffffff05" vertical={false} />
+                          <XAxis dataKey="day" stroke="#ffffff20" fontSize={10} axisLine={false} tickLine={false} />
+                          <YAxis stroke="#ffffff20" fontSize={10} axisLine={false} tickLine={false} />
+                          <Tooltip contentStyle={{ backgroundColor: '#131518', border: '1px solid #ffffff10', fontSize: '12px' }} />
+                          <Bar dataKey="trips" radius={[4, 4, 0, 0]}>
+                            {chartData.map((entry, index) => (
+                              <Cell key={index} fill={entry.trips > 5 ? '#00CC00' : '#FF8000'} />
+                            ))}
+                          </Bar>
+                        </BarChart>
+                      </ResponsiveContainer>
+                    </CardContent>
+                  </Card>
+                </div>
+              ) : (
+                <Card className="glass-panel border-none p-20 text-center">
+                   <Activity className="w-12 h-12 text-white/10 mx-auto mb-4" />
+                   <p className="text-[10px] font-black uppercase text-white/40 tracking-widest">No mission performance data detected in registry</p>
                 </Card>
-              </div>
+              )}
             </TabsContent>
 
             <TabsContent value="history" className="mt-8">
@@ -370,21 +391,33 @@ export default function DriverProfilePage() {
                         <tr key={ride.id} className="hover:bg-white/5 transition-colors group">
                           <td className="p-4 font-mono tracking-tighter">{ride.id.substring(0,8)}</td>
                           <td className="p-4 max-w-[200px]">
-                             <p className="truncate text-white">{ride.pickup.address}</p>
-                             <p className="truncate text-white/40 text-[8px] mt-1">{ride.dropoff.address}</p>
+                             <p className="truncate text-white">{ride.pickup?.address}</p>
+                             <p className="truncate text-white/40 text-[8px] mt-1">{ride.dropoff?.address}</p>
                           </td>
                           <td className="p-4 font-mono text-orange">₹{ride.fare}</td>
                           <td className="p-4">
                             <Badge className={cn(
                               "text-[8px] font-black uppercase",
-                              ride.status === 'Paid' ? 'bg-active/10 text-active' : 'bg-orange/10 text-orange'
+                              ride.status === 'Paid' || ride.status === 'Completed' ? 'bg-active/10 text-active' : 'bg-orange/10 text-orange'
                             )}>
                               {ride.status}
                             </Badge>
                           </td>
-                          <td className="p-4 text-white/40">{new Date(ride.createdAt?.seconds * 1000).toLocaleString()}</td>
+                          <td className="p-4 text-white/40">{ride.createdAt?.toDate ? ride.createdAt.toDate().toLocaleString() : 'Syncing...'}</td>
                         </tr>
                       ))}
+                      {!rides?.length && !isRidesLoading && (
+                        <tr>
+                          <td colSpan={5} className="p-10 text-center text-white/20 uppercase font-black text-[10px]">No missions archived</td>
+                        </tr>
+                      )}
+                      {isRidesLoading && (
+                        <tr>
+                          <td colSpan={5} className="p-10 text-center">
+                            <Loader2 className="w-6 h-6 animate-spin mx-auto text-orange" />
+                          </td>
+                        </tr>
+                      )}
                     </tbody>
                   </table>
                 </CardContent>
@@ -397,14 +430,14 @@ export default function DriverProfilePage() {
                   { label: "Driving License", icon: User, status: driver.licenseNumber ? "Provided" : "Missing" },
                   { label: "Vehicle RC", icon: Car, status: driver.vehicleNumber ? "Provided" : "Missing" },
                   { label: "Asset Manifest", icon: FileText, status: driver.vehicleModel ? "Provided" : "Missing" },
-                ].map((doc, i) => (
+                ].map((docItem, i) => (
                   <Card key={i} className="glass-panel border-none p-6 flex flex-col items-center group relative overflow-hidden">
                     <div className="p-4 rounded-full bg-navy/40 mb-4">
-                      <doc.icon className={cn("w-8 h-8", doc.status === "Provided" ? "text-active" : "text-orange")} />
+                      <docItem.icon className={cn("w-8 h-8", docItem.status === "Provided" ? "text-active" : "text-orange")} />
                     </div>
-                    <p className="text-sm font-black text-white uppercase mb-2">{doc.label}</p>
-                    <Badge className={cn("text-[9px] font-black uppercase", doc.status === "Provided" ? "bg-active/10 text-active" : "bg-orange/10 text-orange")}>
-                      {doc.status}
+                    <p className="text-sm font-black text-white uppercase mb-2">{docItem.label}</p>
+                    <Badge className={cn("text-[9px] font-black uppercase", docItem.status === "Provided" ? "bg-active/10 text-active" : "bg-orange/10 text-orange")}>
+                      {docItem.status}
                     </Badge>
                   </Card>
                 ))}

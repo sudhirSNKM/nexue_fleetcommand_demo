@@ -39,11 +39,11 @@ export default function RegisterPage() {
       const profileData: any = {
         id: user.uid,
         name,
-        email,
+        email: email.toLowerCase(),
         role, 
         status: role === "driver" ? "pending" : "Active",
         walletBalance: role === "passenger" ? 500 : 0,
-        rating: 0, // Initialize with 0 to trigger "NEW" status UI
+        rating: 0, 
         createdAt: serverTimestamp(),
       }
 
@@ -88,7 +88,7 @@ export default function RegisterPage() {
           <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-orange mb-4 shadow-[0_0_30px_rgba(255,128,0,0.3)]">
             <UserPlus className="w-8 h-8 text-white" />
           </div>
-          <h1 className="text-3xl font-black tracking-tighter uppercase text-white">Personnel Provisioning</h1>
+          <h1 className="text-3xl font-black uppercase tracking-tighter text-white">Personnel Provisioning</h1>
           <p className="text-xs text-muted-foreground uppercase tracking-[0.2em] font-bold mt-1">Initialize New Tactical Link</p>
         </div>
 
