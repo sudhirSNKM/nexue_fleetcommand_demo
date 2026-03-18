@@ -69,6 +69,9 @@ export default function RegisterPage() {
       const userCredential = await createUserWithEmailAndPassword(auth, email, password)
       const user = userCredential.user
 
+      const newSessionId = Math.random().toString(36).substring(2) + Date.now().toString(36);
+      localStorage.setItem("nexus_terminal_session", newSessionId);
+
       const profileData: any = {
         id: user.uid,
         name,
@@ -78,6 +81,7 @@ export default function RegisterPage() {
         status: finalStatus,
         walletBalance: finalRole === "passenger" ? 500 : 0,
         rating: 0, 
+        currentSessionId: newSessionId,
         createdAt: serverTimestamp(),
       }
 

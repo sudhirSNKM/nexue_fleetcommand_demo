@@ -46,6 +46,25 @@ export default function LoginPage() {
       }
 
       await signInWithEmailAndPassword(auth, emailToUse, password)
+      const user = auth.currentUser!;
+      
+      const userDocRef = doc(db, "userProfiles", user.uid);
+      const { updateDoc, getDoc } = await import("firebase/firestore");
+      const userSnap = await getDoc(userDocRef);
+      
+      if (userSnap.exists() && userSnap.data().currentSessionId) {
+        toast({
+          title: "Session Override detected",
+          description: "An active link was detected elsewhere. Overriding for new tactical session.",
+        });
+      }
+
+      // Session Security Protocol: Generate and synchronize unique session identifier
+      const newSessionId = Math.random().toString(36).substring(2) + Date.now().toString(36);
+      localStorage.setItem("nexus_terminal_session", newSessionId);
+      
+      await updateDoc(userDocRef, { currentSessionId: newSessionId });
+
       router.push("/dashboard")
     } catch (error: any) {
       toast({

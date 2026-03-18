@@ -46,6 +46,10 @@ export default function ProfileRequestsPage() {
   
   const { data: requests, isLoading } = useCollection(requestsQuery)
 
+  const [selectedRequest, setSelectedRequest] = useState<any>(null)
+  const [isReviewing, setIsReviewing] = useState(false)
+  const [isProcessing, setIsProcessing] = useState(false)
+
   if (!isUserAdmin) {
     return (
       <div className="h-full flex flex-col items-center justify-center space-y-4 bg-charcoal text-white">
@@ -54,10 +58,6 @@ export default function ProfileRequestsPage() {
       </div>
     )
   }
-  
-  const [selectedRequest, setSelectedRequest] = useState<any>(null)
-  const [isReviewing, setIsReviewing] = useState(false)
-  const [isProcessing, setIsProcessing] = useState(false)
 
   const handleGrantAccess = async (requestId: string) => {
     if (!db) return
