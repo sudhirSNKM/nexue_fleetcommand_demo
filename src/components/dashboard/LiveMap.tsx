@@ -1,4 +1,3 @@
-
 "use client"
 
 import React, { useEffect, useState } from 'react'
@@ -14,8 +13,8 @@ const Marker = dynamic(() => import('react-leaflet').then(mod => mod.Marker), { 
 const Popup = dynamic(() => import('react-leaflet').then(mod => mod.Popup), { ssr: false })
 
 interface LiveMapProps {
-  locations?: any[] | null;
-  activeRides?: any[] | null;
+  locations: any[] | null | undefined;
+  activeRides: any[] | null | undefined;
 }
 
 export default function LiveMap({ locations = [], activeRides = [] }: LiveMapProps) {

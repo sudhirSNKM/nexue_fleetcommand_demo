@@ -348,7 +348,9 @@ export default function PassengerApp() {
                          <p className="text-base font-black uppercase text-slate-900">{driverProfile.name}</p>
                          <div className="flex items-center justify-center gap-1 mt-0.5">
                            <Star className="w-3 h-3 text-orange fill-orange" />
-                           <span className="text-[10px] text-slate-500 uppercase font-black">{driverProfile.rating || '5.0'} Rating</span>
+                           <span className="text-[10px] text-slate-500 uppercase font-black">
+                             {driverProfile.rating > 0 ? driverProfile.rating.toFixed(1) : 'NEW'} Rating
+                           </span>
                          </div>
                        </div>
                      </div>
