@@ -1,12 +1,11 @@
 
 "use client"
 
-import React, { useEffect, useState, useMemo } from 'react'
+import React, { useEffect, useState } from 'react'
 import dynamic from 'next/dynamic'
-import { motion, AnimatePresence } from 'framer-motion'
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card"
+import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Maximize2, RefreshCw, Navigation, Zap, Info } from "lucide-react"
+import { Info } from "lucide-react"
 
 // Dynamic import to avoid SSR issues with Leaflet
 const MapContainer = dynamic(() => import('react-leaflet').then(mod => mod.MapContainer), { ssr: false })
@@ -28,7 +27,7 @@ export default function LiveMap({ locations = [], activeRides = [] }: LiveMapPro
     })
   }, [])
 
-  const getMarkerIcon = (status: string, vehicleType?: string) => {
+  const getMarkerIcon = (status: string) => {
     if (!L) return null
     
     let color = "#00CC00" // active
@@ -74,7 +73,7 @@ export default function LiveMap({ locations = [], activeRides = [] }: LiveMapPro
               <Marker 
                 key={loc.id} 
                 position={[loc.lat, loc.lng]} 
-                icon={getMarkerIcon(loc.status || 'Active', loc.vehicleType)}
+                icon={getMarkerIcon(loc.status || 'Active')}
               >
                 <Popup className="custom-popup">
                   <div className="p-3 bg-charcoal text-white rounded-lg border border-white/10 shadow-2xl min-w-[180px]">
@@ -108,7 +107,7 @@ export default function LiveMap({ locations = [], activeRides = [] }: LiveMapPro
               </Marker>
             ))}
 
-            {/* RENDER ACTIVE RIDE PICKUP/DROPOFF MARKERS IF NEEDED */}
+            {/* RENDER ACTIVE RIDE PICKUP MARKERS */}
             {safeActiveRides.map(ride => (
               <React.Fragment key={ride.id}>
                 {ride.pickup && (
