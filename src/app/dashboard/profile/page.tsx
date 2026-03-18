@@ -23,7 +23,8 @@ import {
   ChevronRight,
   Eye,
   RefreshCw,
-  XCircle
+  XCircle,
+  MessageSquare
 } from "lucide-react"
 import { 
   Tabs, 
@@ -69,6 +70,7 @@ export default function UniversalProfilePage() {
   const activeRequest = requests?.[0]
 
   const [isEditing, setIsEditing] = useState(false)
+  const [requestReason, setRequestReason] = useState("")
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -101,6 +103,15 @@ export default function UniversalProfilePage() {
 
   const handleRequestAccess = async () => {
     if (!user || !db) return
+    if (!requestReason.trim()) {
+      toast({
+        variant: "destructive",
+        title: "Justification Required",
+        description: "Please specify what you intend to update and why.",
+      })
+      return
+    }
+
     setIsSubmitting(true)
     try {
       await addDoc(collection(db, "profileUpdateRequests"), {
@@ -108,12 +119,14 @@ export default function UniversalProfilePage() {
         userName: profile?.name || "Unknown Identity",
         role: role,
         status: "pending",
+        initialReason: requestReason,
         requestedAt: serverTimestamp(),
       })
       toast({
         title: "Request Sent",
         description: "Your request to authorize profile modifications has been logged.",
       })
+      setRequestReason("")
     } catch (error: any) {
       toast({
         variant: "destructive",
@@ -269,7 +282,7 @@ export default function UniversalProfilePage() {
            ) : (
              <div className="flex items-center gap-2 bg-orange/10 border border-orange/20 px-4 py-2 rounded-full">
                 <ShieldCheck className="w-4 h-4 text-orange" />
-                <span className="text-[9px] font-black text-orange uppercase tracking-[0.2em]">High Command Clearance</span>
+                <span className="text-[9px] font-black text-orange uppercase tracking-widest">High Command Clearance</span>
              </div>
            )}
         </div>
@@ -363,7 +376,6 @@ export default function UniversalProfilePage() {
                   </CardHeader>
                   <CardContent className="p-8 space-y-6">
                      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                        {/* ... Existing Fields ... */}
                         <div className="space-y-2">
                            <Label className={cn("text-[10px] font-black uppercase tracking-widest", isMobilityUser ? "text-slate-500" : "text-white/50")}>Full Legal Identity</Label>
                            <Input 
@@ -429,6 +441,25 @@ export default function UniversalProfilePage() {
                         )}
                      </div>
 
+                     {!isEditing && (!activeRequest || activeRequest.status === 'approved') && (
+                       <div className="space-y-4 pt-6 border-t border-dashed border-white/10">
+                          <div className="space-y-2">
+                             <Label className="text-[10px] font-black uppercase text-orange flex items-center gap-2">
+                               <MessageSquare className="w-4 h-4" /> Tactical Justification (What are you changing?)
+                             </Label>
+                             <Textarea 
+                                value={requestReason}
+                                onChange={(e) => setRequestReason(e.target.value)}
+                                placeholder="State clearly what needs to be updated (e.g., Change Phone Number, Update Vehicle class to Cab...)"
+                                className={cn(
+                                  "min-h-[80px] text-xs font-medium focus:ring-orange/50",
+                                  isMobilityUser ? "bg-slate-50 border-slate-200 text-slate-900" : "bg-navy/40 border-white/10 text-white"
+                                )}
+                             />
+                          </div>
+                       </div>
+                     )}
+
                      <AnimatePresence>
                         {isEditing && (
                           <motion.div 
@@ -469,7 +500,7 @@ export default function UniversalProfilePage() {
                               <Button 
                                 onClick={handleRequestAccess}
                                 disabled={isSubmitting}
-                                className="bg-orange hover:bg-orange/90 text-white font-black uppercase text-[10px] h-12 px-10 shadow-lg shadow-orange/20 border-none"
+                                className="bg-orange hover:bg-orange/90 text-white font-black uppercase text-[10px] h-12 px-10 shadow-lg shadow-orange/20 border-none w-full"
                               >
                                 <Send className="w-4 h-4 mr-3" /> Initiate Protocol Update
                               </Button>
@@ -477,7 +508,7 @@ export default function UniversalProfilePage() {
                             {activeRequest?.status === 'granted' && (
                                <Button 
                                 onClick={() => setIsEditing(true)}
-                                className="bg-active hover:bg-active/90 text-white font-black uppercase text-[10px] h-12 px-10 shadow-lg shadow-active/20 border-none"
+                                className="bg-active hover:bg-active/90 text-white font-black uppercase text-[10px] h-12 px-10 shadow-lg shadow-active/20 border-none w-full"
                               >
                                  <Edit3 className="w-4 h-4 mr-3" /> Authorize Modifications
                                </Button>

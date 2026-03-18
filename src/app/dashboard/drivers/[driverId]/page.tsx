@@ -28,7 +28,7 @@ import {
   History,
   Activity,
   Zap,
-  CheckCircle2,
+  CircleCheck,
   Loader2,
   MessageSquare
 } from "lucide-react"
@@ -289,7 +289,7 @@ export default function DriverProfilePage(props: PageProps) {
                           <div className="flex justify-between items-center">
                             <div className="flex gap-1">
                               {[...Array(5)].map((_, idx) => (
-                                <Star key={idx} className={cn("w-2 h-2", idx < (f.rating || 0) ? "text-orange fill-orange" : "text-white/10")} />
+                                <Star key={idx} className={cn("w-2.5 h-2.5", idx < (f.rating || 0) ? "text-orange fill-orange" : "text-white/10")} />
                               ))}
                             </div>
                             <span className="text-[8px] text-white/20 font-mono">RID_{f.id.substring(0,6)}</span>

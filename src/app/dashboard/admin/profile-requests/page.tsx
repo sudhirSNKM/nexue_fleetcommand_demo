@@ -14,7 +14,9 @@ import {
   ShieldCheck,
   AlertCircle,
   Eye,
-  Loader2
+  Loader2,
+  MessageSquare,
+  FileSearch
 } from "lucide-react"
 import { useUser, useFirestore, useCollection, useMemoFirebase, useDoc } from "@/firebase"
 import { collection, query, orderBy, doc, updateDoc, serverTimestamp } from "firebase/firestore"
@@ -36,7 +38,7 @@ export default function ProfileRequestsPage() {
   const { user } = useUser()
   const { toast } = useToast()
   
-  // Hooks must be at the top level
+  // Hooks must always be at the top level
   const [selectedRequest, setSelectedRequest] = useState<any>(null)
   const [isReviewing, setIsReviewing] = useState(false)
   const [isProcessing, setIsProcessing] = useState(false)
@@ -181,8 +183,8 @@ export default function ProfileRequestsPage() {
               <div className="divide-y divide-white/5">
                 {requests?.map((req: any) => (
                   <div key={req.id} className="p-4 hover:bg-white/5 transition-all flex flex-col md:flex-row md:items-center justify-between gap-4">
-                    <div className="flex items-center gap-4">
-                      <div className="w-10 h-10 rounded-lg bg-navy/40 flex items-center justify-center border border-white/5">
+                    <div className="flex items-start gap-4">
+                      <div className="w-10 h-10 rounded-lg bg-navy/40 flex items-center justify-center border border-white/5 shrink-0">
                         <User className="w-5 h-5 text-orange" />
                       </div>
                       <div>
@@ -191,6 +193,16 @@ export default function ProfileRequestsPage() {
                           {renderStatusBadge(req.status)}
                         </div>
                         <p className="text-[9px] text-white/40 font-mono uppercase mt-0.5">ID: {req.userId?.substring(0, 12)}... • Role: {req.role}</p>
+                        
+                        {req.initialReason && (
+                          <div className="mt-3 p-3 bg-white/5 rounded-lg border border-white/5 max-w-md">
+                             <div className="flex items-center gap-2 mb-1">
+                                <MessageSquare className="w-3 h-3 text-orange" />
+                                <span className="text-[8px] font-black uppercase text-orange/60">Update Intent</span>
+                             </div>
+                             <p className="text-[10px] text-white/70 italic">"{req.initialReason}"</p>
+                          </div>
+                        )}
                       </div>
                     </div>
 
@@ -244,7 +256,7 @@ export default function ProfileRequestsPage() {
               <Eye className="w-5 h-5 text-orange" /> Review Identity Update
             </DialogTitle>
             <DialogDescription className="text-xs uppercase font-bold text-white/40 tracking-wider">
-              Verify operator credentials and commits changes to core database.
+              Verify operator credentials and commit changes to core database.
             </DialogDescription>
           </DialogHeader>
 
