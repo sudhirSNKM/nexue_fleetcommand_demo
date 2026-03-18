@@ -17,23 +17,16 @@ service cloud.firestore {
     }
 
     function getRole() {
-      // Safely fetch role, defaulting to passenger if profile missing
       return hasProfile() ? getProfile().data.role : "passenger";
     }
 
-    function isSuperAdmin() {
-      return signedIn() && getRole() == "super-admin";
-    }
-
     function isAdmin() {
-      // Match both admin and super-admin for hierarchical access
       return signedIn() && (getRole() == "admin" || getRole() == "super-admin");
     }
 
     // USER PROFILES
     match /userProfiles/{userId} {
       allow read: if signedIn();
-      // Allow users to manage their own profile, or admins to manage all (for provisioning)
       allow write: if signedIn() && (request.auth.uid == userId || isAdmin());
     }
 
@@ -74,7 +67,6 @@ service cloud.firestore {
 
     // DRIVER STATS
     match /driverStats/{statsId} {
-      // statsId is structured as {driverId}_{date}
       allow read: if isAdmin() || (signedIn() && statsId.split('_')[0] == request.auth.uid);
       allow write: if isAdmin() || (signedIn() && statsId.split('_')[0] == request.auth.uid);
     }
