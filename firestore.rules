@@ -17,17 +17,17 @@ service cloud.firestore {
     }
 
     function getRole() {
-      // Safely fetch role, defaulting to passenger if profile missing
-      return hasProfile() ? getProfile().data.role : "passenger";
-    }
-
-    function isSuperAdmin() {
-      return signedIn() && getRole() == "super-admin";
+      return get(/databases/$(database)/documents/userProfiles/$(request.auth.uid)).data.role;
     }
 
     function isAdmin() {
-      // Match both admin and super-admin for hierarchical access
-      return signedIn() && (getRole() == "admin" || getRole() == "super-admin");
+      // Direct role validation from centralized identity document
+      return signedIn() && (
+        getRole() == "admin" || 
+        getRole() == "super-admin" || 
+        getRole() == "Admin" || 
+        getRole() == "Super Admin"
+      );
     }
 
     // USER PROFILES

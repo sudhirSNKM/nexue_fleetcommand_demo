@@ -190,26 +190,26 @@ export default function DriverMobileApp() {
         <motion.div 
           initial={{ opacity: 0, x: 20 }}
           animate={{ opacity: 1, x: 0 }}
-          className="z-10 relative space-y-8"
+          className="z-10 relative space-y-6"
         >
           {/* Earnings Metrics */}
-          <div className="grid grid-cols-1 gap-4">
-             <Card className="glass-panel border-none p-6 bg-navy/20 flex items-center justify-between">
+          <div className="grid grid-cols-1 gap-3">
+             <Card className="glass-panel border-none p-5 bg-navy/20 flex items-center justify-between shadow-xl">
                 <div>
                    <p className="text-[10px] font-black uppercase text-white/40 mb-1 tracking-widest">Tactical Credits (MTD)</p>
-                   <p className="text-4xl font-black text-active">₹{earnings.monthly}</p>
+                   <p className="text-3xl font-black text-active">₹{earnings.monthly}</p>
                 </div>
-                <TrendingUp className="w-12 h-12 text-active opacity-20" />
+                <TrendingUp className="w-10 h-10 text-active opacity-20" />
              </Card>
              
-             <div className="grid grid-cols-2 gap-4">
-                <Card className="glass-panel border-none p-4 bg-navy/20">
+             <div className="grid grid-cols-2 gap-3">
+                <Card className="glass-panel border-none p-4 bg-navy/20 shadow-lg">
                     <p className="text-[9px] font-black uppercase text-white/40 mb-1 tracking-widest">Today</p>
-                    <p className="text-xl font-black text-white">₹{earnings.daily}</p>
+                    <p className="text-lg font-black text-white">₹{earnings.daily}</p>
                 </Card>
-                <Card className="glass-panel border-none p-4 bg-navy/20">
-                    <p className="text-[9px] font-black uppercase text-white/40 mb-1 tracking-widest">This Week</p>
-                    <p className="text-xl font-black text-orange">₹{earnings.weekly}</p>
+                <Card className="glass-panel border-none p-4 bg-navy/20 shadow-lg">
+                    <p className="text-[9px] font-black uppercase text-white/40 mb-1 tracking-widest">Weekly</p>
+                    <p className="text-lg font-black text-orange">₹{earnings.weekly}</p>
                 </Card>
              </div>
           </div>
@@ -217,34 +217,34 @@ export default function DriverMobileApp() {
           <Button 
             onClick={() => setIsPayslipOpen(true)}
             variant="outline" 
-            className="w-full h-14 border-dashed border-white/10 bg-white/5 font-black uppercase text-[10px] tracking-widest hover:bg-white/10 transition-all"
+            className="w-full h-14 border-dashed border-white/20 bg-white/5 font-black uppercase text-[10px] tracking-widest hover:bg-white/10 transition-all rounded-2xl"
           >
             <FileText className="w-5 h-5 mr-3 text-orange" /> Generate Monthly Manifest
           </Button>
 
           {/* Recent Activity */}
-          <section>
-            <div className="flex items-center justify-between mb-6">
+          <section className="space-y-4">
+            <div className="flex items-center justify-between px-1">
               <h3 className="text-[10px] font-black uppercase tracking-[0.3em] text-white/40">Payout Log</h3>
               <ArrowRight className="w-4 h-4 text-white/20" />
             </div>
             <div className="space-y-3">
               {rides && rides.length > 0 ? (
-                rides.slice(0, 10).map((ride: any) => (
-                  <div key={ride.id} className="glass-panel p-4 rounded-2xl flex items-center justify-between border-white/5 bg-navy/20 hover:bg-navy/30 transition-all cursor-pointer">
+                rides.slice(0, 8).map((ride: any) => (
+                  <div key={ride.id} className="glass-panel p-4 rounded-2xl flex items-center justify-between border-white/5 bg-navy/20 active:bg-navy/30 transition-all cursor-pointer shadow-sm">
                     <div className="flex items-center gap-4">
-                      <div className="w-12 h-12 rounded-xl bg-navy/40 flex items-center justify-center border border-white/5">
-                        <Wallet className="w-5 h-5 text-orange" />
+                      <div className="w-10 h-10 rounded-xl bg-navy/40 flex items-center justify-center border border-white/5 shrink-0">
+                        <Wallet className="w-4 h-4 text-orange" />
                       </div>
-                      <div>
-                        <p className="text-[10px] font-black uppercase text-white tracking-widest">Mission ID: {ride.id.substring(0,8)}</p>
-                        <p className="text-[9px] text-white/40 font-bold uppercase mt-1">
-                          {ride.createdAt?.toDate ? ride.createdAt.toDate().toLocaleDateString() : (ride.createdAt?.seconds ? new Date(ride.createdAt.seconds * 1000).toLocaleDateString() : 'Syncing...')} • ₹{ride.fare}
+                      <div className="min-w-0">
+                        <p className="text-[10px] font-black uppercase text-white tracking-widest truncate">Mission: {ride.id.substring(0,8)}</p>
+                        <p className="text-[8px] text-white/40 font-bold uppercase mt-1">
+                          {ride.createdAt?.toDate ? ride.createdAt.toDate().toLocaleDateString(undefined, { day: 'numeric', month: 'short' }) : 'Syncing...'} • ₹{ride.fare}
                         </p>
                       </div>
                     </div>
                     <Badge variant="outline" className={cn(
-                      "text-[8px] font-black uppercase tracking-widest p-1 px-3 border-none",
+                      "text-[7px] font-black uppercase tracking-widest px-2 py-0.5 border-none shrink-0",
                       ride.status === 'Completed' || ride.status === 'Paid' ? 'bg-active/10 text-active' : 'bg-orange/10 text-orange'
                     )}>
                       {ride.status === 'Paid' ? 'Audited' : 'Verified'}
@@ -253,7 +253,7 @@ export default function DriverMobileApp() {
                 ))
               ) : (
                 <div className="p-8 text-center bg-navy/20 rounded-2xl border border-dashed border-white/10">
-                  <p className="text-[9px] font-black uppercase text-white/20">No missions logged in archive</p>
+                  <p className="text-[9px] font-black uppercase text-white/20">No missions logged</p>
                 </div>
               )}
             </div>
