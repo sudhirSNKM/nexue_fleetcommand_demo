@@ -1,3 +1,4 @@
+
 "use client"
 
 import React, { useState } from "react"
@@ -40,9 +41,9 @@ export default function RegisterPage() {
         name,
         email,
         role, 
-        status: role === "driver" ? "pending" : "active",
+        status: role === "driver" ? "pending" : "Active",
         walletBalance: role === "passenger" ? 500 : 0,
-        rating: 0, // Initialize with 0 to trigger "NEW" status
+        rating: 0, // Initialize with 0 to trigger "NEW" status instead of default 5
         createdAt: serverTimestamp(),
       }
 

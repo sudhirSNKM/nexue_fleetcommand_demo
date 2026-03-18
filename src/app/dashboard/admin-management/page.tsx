@@ -1,7 +1,7 @@
 
 "use client"
 
-import React from "react"
+import React, { useState } from "react"
 import { motion } from "framer-motion"
 import { 
   ShieldCheck, 
@@ -12,14 +12,18 @@ import {
   MoreVertical,
   Mail,
   MapPin,
-  ShieldAlert
+  ShieldAlert,
+  Loader2
 } from "lucide-react"
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog"
 import { useUser, useFirestore, useCollection, useMemoFirebase, updateDocumentNonBlocking, useDoc } from "@/firebase"
-import { collection, query, where, doc } from "firebase/firestore"
+import { collection, query, where, doc, setDoc, serverTimestamp } from "firebase/firestore"
 import { cn } from "@/lib/utils"
 import { useToast } from "@/hooks/use-toast"
 
@@ -28,6 +32,10 @@ export default function AdminManagementPage() {
   const db = useFirestore()
   const { toast } = useToast()
   
+  const [isProvisioning, setIsProvisioning] = useState(false)
+  const [newAdmin, setNewAdmin] = useState({ name: "", email: "", zone: "Global" })
+  const [isSubmitting, setIsSubmitting] = useState(false)
+
   const userProfileRef = useMemoFirebase(() => user && db ? doc(db, "userProfiles", user.uid) : null, [user, db])
   const { data: profile } = useDoc(userProfileRef)
   const isUserAdmin = profile?.role === "admin" || profile?.role === "super-admin"
@@ -57,6 +65,33 @@ export default function AdminManagementPage() {
     })
   }
 
+  const handleProvisionAdmin = async () => {
+    if (!db || !newAdmin.email || !newAdmin.name) return
+    setIsSubmitting(true)
+    try {
+      // NOTE: In a real app, this would use a cloud function to create the Auth user
+      // For this prototype, we simulate provisioning by adding to the registry
+      const mockId = `admin_${Math.random().toString(36).substring(7)}`
+      await setDoc(doc(db, "userProfiles", mockId), {
+        id: mockId,
+        name: newAdmin.name,
+        email: newAdmin.email,
+        role: "admin",
+        status: "Active",
+        zone: newAdmin.zone,
+        createdAt: serverTimestamp(),
+        rating: 0
+      })
+      toast({ title: "Designation Authorized", description: `${newAdmin.name} added to administrative registry.` })
+      setIsProvisioning(false)
+      setNewAdmin({ name: "", email: "", zone: "Global" })
+    } catch (error: any) {
+      toast({ variant: "destructive", title: "Provisioning Failed", description: error.message })
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
+
   return (
     <div className="space-y-8">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
@@ -65,7 +100,7 @@ export default function AdminManagementPage() {
           <p className="text-[10px] text-white/40 uppercase font-black tracking-[0.4em] mt-1">Operations Admin & Access Controls</p>
         </div>
         <div className="flex gap-4">
-          <Button className="bg-orange text-white font-black uppercase text-[10px] h-11 px-6 shadow-lg shadow-orange/20 border-none">
+          <Button onClick={() => setIsProvisioning(true)} className="bg-orange text-white font-black uppercase text-[10px] h-11 px-6 shadow-lg shadow-orange/20 border-none">
             <UserPlus className="w-4 h-4 mr-2" /> Provision New Admin
           </Button>
         </div>
@@ -153,6 +188,50 @@ export default function AdminManagementPage() {
           </Button>
         </aside>
       </div>
+
+      <Dialog open={isProvisioning} onOpenChange={setIsProvisioning}>
+        <DialogContent className="bg-charcoal border-white/10 text-white">
+          <DialogHeader>
+            <DialogTitle className="text-xl font-black uppercase tracking-tighter">Authorize New Admin</DialogTitle>
+            <DialogDescription className="text-[10px] uppercase font-bold text-white/40">Initialize administrative credentials for the fleet mesh.</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label className="text-[10px] uppercase font-black">Designation Name</Label>
+              <Input 
+                value={newAdmin.name} 
+                onChange={e => setNewAdmin({...newAdmin, name: e.target.value})}
+                placeholder="Full Name" 
+                className="bg-navy/40 border-white/10 text-white font-bold" 
+              />
+            </div>
+            <div className="space-y-2">
+              <Label className="text-[10px] uppercase font-black">Terminal Email</Label>
+              <Input 
+                value={newAdmin.email} 
+                onChange={e => setNewAdmin({...newAdmin, email: e.target.value})}
+                placeholder="email@nexus-fleet.com" 
+                className="bg-navy/40 border-white/10 text-white font-mono" 
+              />
+            </div>
+            <div className="space-y-2">
+              <Label className="text-[10px] uppercase font-black">Assigned Sector</Label>
+              <Input 
+                value={newAdmin.zone} 
+                onChange={e => setNewAdmin({...newAdmin, zone: e.target.value})}
+                placeholder="e.g. Sector 4 / Global" 
+                className="bg-navy/40 border-white/10 text-white font-bold" 
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsProvisioning(false)} className="border-white/10 text-white font-black uppercase text-[10px]">Cancel</Button>
+            <Button onClick={handleProvisionAdmin} disabled={isSubmitting} className="bg-orange text-white font-black uppercase text-[10px] shadow-lg">
+              {isSubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : "Confirm Designation"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
