@@ -3,29 +3,49 @@
 
 import React, { useState } from "react"
 import { motion } from "framer-motion"
-import { Truck, ShieldCheck, Lock, Mail } from "lucide-react"
+import { Truck, ShieldCheck, Lock, Mail, Phone, User } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
-import { useAuth } from "@/firebase"
+import { useAuth, useFirestore } from "@/firebase"
 import { signInWithEmailAndPassword } from "firebase/auth"
+import { collection, query, where, getDocs, limit } from "firebase/firestore"
 import { useRouter } from "next/navigation"
 import { useToast } from "@/hooks/use-toast"
 import Link from "next/link"
 
 export default function LoginPage() {
-  const [email, setEmail] = useState("")
+  const [identifier, setIdentifier] = useState("")
   const [password, setPassword] = useState("")
   const [isLoading, setIsLoading] = useState(false)
   const auth = useAuth()
+  const db = useFirestore()
   const router = useRouter()
   const { toast } = useToast()
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsLoading(true)
+    
     try {
-      await signInWithEmailAndPassword(auth, email, password)
+      let emailToUse = identifier.toLowerCase()
+
+      // Unified Auth Strategy: Check if identifier is email or phone
+      const isEmail = /^\S+@\S+\.\S+$/.test(identifier)
+      
+      if (!isEmail) {
+        // Resolve Identity via Phone Registry
+        const q = query(collection(db, "userProfiles"), where("phone", "==", identifier.trim()), limit(1))
+        const querySnapshot = await getDocs(q)
+        
+        if (querySnapshot.empty) {
+          throw new Error("Comms link not found in personnel registry.")
+        }
+        
+        emailToUse = querySnapshot.docs[0].data().email
+      }
+
+      await signInWithEmailAndPassword(auth, emailToUse, password)
       router.push("/dashboard")
     } catch (error: any) {
       toast({
@@ -65,12 +85,12 @@ export default function LoginPage() {
             <form onSubmit={handleLogin} className="space-y-4">
               <div className="space-y-2">
                 <div className="relative">
-                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                  <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                   <Input 
-                    type="email" 
-                    placeholder="Terminal ID (Email)" 
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
+                    type="text" 
+                    placeholder="Email or Phone Number" 
+                    value={identifier}
+                    onChange={(e) => setIdentifier(e.target.value)}
                     required
                     className="pl-10 bg-navy/20 border-navy/50 h-12 text-sm font-medium focus:ring-orange/50"
                   />

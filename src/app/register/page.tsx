@@ -2,8 +2,8 @@
 "use client"
 
 import React, { useState } from "react"
-import { motion } from "framer-motion"
-import { ShieldCheck, Lock, Mail, User, UserPlus, Truck } from "lucide-react"
+import { motion, AnimatePresence } from "framer-motion"
+import { ShieldCheck, Lock, Mail, User, UserPlus, Phone, Key, ArrowRight, ChevronLeft } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
@@ -17,11 +17,14 @@ import { useToast } from "@/hooks/use-toast"
 import Link from "next/link"
 
 export default function RegisterPage() {
+  const [step, setStep] = useState<'info' | 'otp'>('form')
   const [email, setEmail] = useState("")
+  const [phone, setPhone] = useState("")
   const [password, setPassword] = useState("")
   const [name, setName] = useState("")
   const [role, setRole] = useState("passenger")
   const [vehicleType, setVehicleType] = useState("Bike")
+  const [otp, setOtp] = useState("")
   const [isLoading, setIsLoading] = useState(false)
   
   const auth = useAuth()
@@ -29,8 +32,23 @@ export default function RegisterPage() {
   const router = useRouter()
   const { toast } = useToast()
 
+  const handleSendOtp = (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!name || !email || !phone || !password) {
+      toast({ variant: "destructive", title: "Incomplete Data", description: "All identity parameters are required." })
+      return
+    }
+    setStep('otp')
+    toast({ title: "OTP Transmitted", description: "Verification code sent to your comms link. (Use 1234)" })
+  }
+
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault()
+    if (otp !== "1234") {
+      toast({ variant: "destructive", title: "Invalid Protocol", description: "Incorrect verification code." })
+      return
+    }
+
     setIsLoading(true)
     try {
       const userCredential = await createUserWithEmailAndPassword(auth, email, password)
@@ -40,10 +58,11 @@ export default function RegisterPage() {
         id: user.uid,
         name,
         email: email.toLowerCase(),
+        phone: phone.trim(),
         role, 
         status: role === "driver" ? "pending" : "Active",
         walletBalance: role === "passenger" ? 500 : 0,
-        rating: 0, // Initial calibration
+        rating: 0, 
         createdAt: serverTimestamp(),
       }
 
@@ -94,105 +113,168 @@ export default function RegisterPage() {
 
         <Card className="glass-panel border-navy/30">
           <CardHeader className="text-center">
-            <CardTitle className="text-lg font-bold uppercase tracking-tight">Access Initialization</CardTitle>
-            <CardDescription className="text-[10px] uppercase font-bold text-muted-foreground">Define identity and operational clearance</CardDescription>
+            <CardTitle className="text-lg font-bold uppercase tracking-tight">
+              {step === 'form' ? 'Access Initialization' : 'Identify Verification'}
+            </CardTitle>
+            <CardDescription className="text-[10px] uppercase font-bold text-muted-foreground">
+              {step === 'form' ? 'Define identity and operational clearance' : 'Enter the tactical code sent to your link'}
+            </CardDescription>
           </CardHeader>
           <CardContent>
-            <form onSubmit={handleRegister} className="space-y-4">
-              <div className="space-y-2">
-                <Label className="text-[10px] uppercase font-black text-muted-foreground ml-1">Full Name</Label>
-                <div className="relative">
-                  <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                  <Input 
-                    placeholder="Operator Designation" 
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                    required
-                    className="pl-10 bg-navy/20 border-navy/50 h-11 text-sm font-medium focus:ring-orange/50"
-                  />
-                </div>
-              </div>
+            <AnimatePresence mode="wait">
+              {step === 'form' ? (
+                <motion.form 
+                  key="form"
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: 20 }}
+                  onSubmit={handleSendOtp} 
+                  className="space-y-4"
+                >
+                  <div className="space-y-2">
+                    <Label className="text-[10px] uppercase font-black text-muted-foreground ml-1">Full Name</Label>
+                    <div className="relative">
+                      <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                      <Input 
+                        placeholder="Operator Designation" 
+                        value={name}
+                        onChange={(e) => setName(e.target.value)}
+                        required
+                        className="pl-10 bg-navy/20 border-navy/50 h-11 text-sm font-medium focus:ring-orange/50"
+                      />
+                    </div>
+                  </div>
 
-              <div className="space-y-2">
-                <Label className="text-[10px] uppercase font-black text-muted-foreground ml-1">Terminal ID (Email)</Label>
-                <div className="relative">
-                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                  <Input 
-                    type="email" 
-                    placeholder="email@nexus-fleet.com" 
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    required
-                    className="pl-10 bg-navy/20 border-navy/50 h-11 text-sm font-medium focus:ring-orange/50"
-                  />
-                </div>
-              </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label className="text-[10px] uppercase font-black text-muted-foreground ml-1">Email Link</Label>
+                      <div className="relative">
+                        <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                        <Input 
+                          type="email" 
+                          placeholder="email@nexus.com" 
+                          value={email}
+                          onChange={(e) => setEmail(e.target.value)}
+                          required
+                          className="pl-10 bg-navy/20 border-navy/50 h-11 text-sm font-medium focus:ring-orange/50"
+                        />
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      <Label className="text-[10px] uppercase font-black text-muted-foreground ml-1">Phone Link</Label>
+                      <div className="relative">
+                        <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                        <Input 
+                          type="tel" 
+                          placeholder="+91 XXXXX XXXXX" 
+                          value={phone}
+                          onChange={(e) => setPhone(e.target.value)}
+                          required
+                          className="pl-10 bg-navy/20 border-navy/50 h-11 text-sm font-medium focus:ring-orange/50"
+                        />
+                      </div>
+                    </div>
+                  </div>
 
-              <div className="space-y-2">
-                <Label className="text-[10px] uppercase font-black text-muted-foreground ml-1">Security Key (Password)</Label>
-                <div className="relative">
-                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                  <Input 
-                    type="password" 
-                    placeholder="••••••••" 
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    required
-                    className="pl-10 bg-navy/20 border-navy/50 h-11 text-sm font-medium focus:ring-orange/50"
-                  />
-                </div>
-              </div>
+                  <div className="space-y-2">
+                    <Label className="text-[10px] uppercase font-black text-muted-foreground ml-1">Security Key (Password)</Label>
+                    <div className="relative">
+                      <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                      <Input 
+                        type="password" 
+                        placeholder="••••••••" 
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        required
+                        className="pl-10 bg-navy/20 border-navy/50 h-11 text-sm font-medium focus:ring-orange/50"
+                      />
+                    </div>
+                  </div>
 
-              <div className="space-y-2">
-                <Label className="text-[10px] uppercase font-black text-muted-foreground ml-1">Operational Role</Label>
-                <Select value={role} onValueChange={setRole}>
-                  <SelectTrigger className="bg-navy/20 border-navy/50 h-11 text-sm font-medium">
-                    <SelectValue placeholder="Select Clearance Level" />
-                  </SelectTrigger>
-                  <SelectContent className="bg-charcoal border-navy text-white">
-                    <SelectItem value="passenger">Passenger</SelectItem>
-                    <SelectItem value="driver">Operator (Driver)</SelectItem>
-                    <SelectItem value="admin">Logistics Admin</SelectItem>
-                    <SelectItem value="super-admin">Command High Staff (Super Admin)</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+                  <div className="space-y-2">
+                    <Label className="text-[10px] uppercase font-black text-muted-foreground ml-1">Operational Role</Label>
+                    <Select value={role} onValueChange={setRole}>
+                      <SelectTrigger className="bg-navy/20 border-navy/50 h-11 text-sm font-medium">
+                        <SelectValue placeholder="Select Clearance Level" />
+                      </SelectTrigger>
+                      <SelectContent className="bg-charcoal border-navy text-white">
+                        <SelectItem value="passenger">Passenger</SelectItem>
+                        <SelectItem value="driver">Operator (Driver)</SelectItem>
+                        <SelectItem value="admin">Logistics Admin</SelectItem>
+                        <SelectItem value="super-admin">Command High Staff</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
 
-              {role === "driver" && (
-                <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} className="space-y-2">
-                  <Label className="text-[10px] uppercase font-black text-muted-foreground ml-1">Initial Vehicle Class</Label>
-                  <Select value={vehicleType} onValueChange={setVehicleType}>
-                    <SelectTrigger className="bg-navy/20 border-navy/50 h-11 text-sm font-medium">
-                      <SelectValue placeholder="Select Unit Class" />
-                    </SelectTrigger>
-                    <SelectContent className="bg-charcoal border-navy text-white">
-                      <SelectItem value="Bike">Bike (Unit Scout)</SelectItem>
-                      <SelectItem value="Auto">Auto (Unit Pulse)</SelectItem>
-                      <SelectItem value="Cab">Cab (Unit Prime)</SelectItem>
-                      <SelectItem value="Truck">Truck (Heavy Transport)</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </motion.div>
+                  {role === "driver" && (
+                    <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} className="space-y-2">
+                      <Label className="text-[10px] uppercase font-black text-muted-foreground ml-1">Initial Vehicle Class</Label>
+                      <Select value={vehicleType} onValueChange={setVehicleType}>
+                        <SelectTrigger className="bg-navy/20 border-navy/50 h-11 text-sm font-medium">
+                          <SelectValue placeholder="Select Unit Class" />
+                        </SelectTrigger>
+                        <SelectContent className="bg-charcoal border-navy text-white">
+                          <SelectItem value="Bike">Bike (Unit Scout)</SelectItem>
+                          <SelectItem value="Auto">Auto (Unit Pulse)</SelectItem>
+                          <SelectItem value="Cab">Cab (Unit Prime)</SelectItem>
+                          <SelectItem value="Truck">Truck (Heavy Transport)</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </motion.div>
+                  )}
+
+                  <Button 
+                    type="submit" 
+                    className="w-full h-12 bg-orange hover:bg-orange/90 text-white font-black uppercase tracking-widest text-xs transition-all shadow-[0_0_15px_rgba(255,128,0,0.2)]"
+                  >
+                    Send Verification OTP <ArrowRight className="ml-2 w-4 h-4" />
+                  </Button>
+                </motion.form>
+              ) : (
+                <motion.form 
+                  key="otp"
+                  initial={{ opacity: 0, x: 20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -20 }}
+                  onSubmit={handleRegister} 
+                  className="space-y-6"
+                >
+                  <div className="space-y-2">
+                    <Label className="text-[10px] uppercase font-black text-muted-foreground ml-1">Verification Code</Label>
+                    <div className="relative">
+                      <Key className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                      <Input 
+                        placeholder="XXXX" 
+                        value={otp}
+                        onChange={(e) => setOtp(e.target.value)}
+                        required
+                        maxLength={4}
+                        className="pl-10 bg-navy/20 border-navy/50 h-14 text-2xl tracking-[1em] text-center font-black focus:ring-orange/50"
+                      />
+                    </div>
+                    <p className="text-[9px] text-orange font-bold uppercase text-center mt-2">Default debugging code: 1234</p>
+                  </div>
+
+                  <Button 
+                    type="submit" 
+                    disabled={isLoading}
+                    className="w-full h-12 bg-orange hover:bg-orange/90 text-white font-black uppercase tracking-widest text-xs shadow-lg"
+                  >
+                    {isLoading ? "Provisioning..." : "Finalize Identity"}
+                  </Button>
+
+                  <Button 
+                    type="button" 
+                    variant="ghost" 
+                    onClick={() => setStep('form')}
+                    className="w-full text-[10px] font-black uppercase text-white/40 hover:text-white"
+                  >
+                    <ChevronLeft className="w-3 h-3 mr-1" /> Re-enter Parameters
+                  </Button>
+                </motion.form>
               )}
+            </AnimatePresence>
 
-              <Button 
-                type="submit" 
-                disabled={isLoading}
-                className="w-full h-12 bg-orange hover:bg-orange/90 text-white font-black uppercase tracking-widest text-xs transition-all shadow-[0_0_15px_rgba(255,128,0,0.2)]"
-              >
-                {isLoading ? (
-                  <div className="flex items-center gap-2">
-                    <div className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                    Initializing...
-                  </div>
-                ) : (
-                  <div className="flex items-center gap-2">
-                    <ShieldCheck className="w-4 h-4" />
-                    Finalize Identity
-                  </div>
-                )}
-              </Button>
-            </form>
             <div className="mt-6 text-center">
               <Link href="/login" className="text-[10px] uppercase font-bold text-orange hover:underline underline-offset-4">
                 Already registered? Return to login
