@@ -9,8 +9,9 @@ import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { useUser, useFirestore, useDoc, useMemoFirebase, updateDocumentNonBlocking } from "@/firebase"
-import { doc } from "firebase/firestore"
+import { useUser, useFirestore, useDoc, useMemoFirebase, useStorage } from "@/firebase"
+import { doc, updateDoc, serverTimestamp } from "firebase/firestore"
+import { ref, uploadBytes, getDownloadURL } from "firebase/storage"
 import { useRouter } from "next/navigation"
 import { useToast } from "@/hooks/use-toast"
 
@@ -27,6 +28,40 @@ export default function VehicleOnboardingPage() {
 
   const profileRef = useMemoFirebase(() => user && db ? doc(db, "userProfiles", user.uid) : null, [user, db])
   const { data: profile, isLoading: isProfileLoading } = useDoc(profileRef)
+  const storage = useStorage()
+
+  const [uploads, setUploads] = useState<Record<string, { url: string, fileName: string }>>({})
+  const [isUploading, setIsUploading] = useState<Record<string, boolean>>({})
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>, docType: string) => {
+    const file = e.target.files?.[0]
+    if (!file || !user || !storage) return
+
+    setIsUploading(prev => ({ ...prev, [docType]: true }))
+    try {
+      const fileRef = ref(storage, `documents/${user.uid}/${docType}`)
+      await uploadBytes(fileRef, file)
+      const downloadURL = await getDownloadURL(fileRef)
+      
+      setUploads(prev => ({ 
+        ...prev, 
+        [docType]: { url: downloadURL, fileName: file.name } 
+      }))
+      
+      toast({
+        title: "Credential Logged",
+        description: `${docType.toUpperCase()} successfully uploaded to encrypted storage.`
+      })
+    } catch (error: any) {
+      toast({
+        variant: "destructive",
+        title: "Link Failed",
+        description: error.message
+      })
+    } finally {
+      setIsUploading(prev => ({ ...prev, [docType]: false }))
+    }
+  }
 
   useEffect(() => {
     if (!isUserLoading && !user) router.push("/login")
@@ -39,20 +74,40 @@ export default function VehicleOnboardingPage() {
     if (!profileRef) return
     setIsLoading(true)
     
-    updateDocumentNonBlocking(profileRef, {
-      vehicleModel,
-      vehicleNumber,
-      licenseNumber,
-      detailsSubmitted: true,
-      onboardingAt: new Date().toISOString()
-    })
+    try {
+      const docs: any = {}
+      if (uploads.license) {
+        docs.license = { ...uploads.license, status: 'pending', uploadedAt: serverTimestamp() }
+      }
+      if (uploads.rc) {
+        docs.rc = { ...uploads.rc, status: 'pending', uploadedAt: serverTimestamp() }
+      }
 
-    toast({
-      title: "Tactical Manifest Submitted",
-      description: "Data sent to Admin Command. Verification in progress.",
-    })
-    
-    setTimeout(() => router.push("/dashboard"), 1000)
+      await updateDoc(profileRef, {
+        vehicleModel,
+        vehicleNumber,
+        licenseNumber,
+        docs,
+        detailsSubmitted: true,
+        onboardingAt: serverTimestamp(),
+        status: "pending"
+      })
+
+      toast({
+        title: "Tactical Manifest Submitted",
+        description: "Data sent to Admin Command. Verification in progress.",
+      })
+      
+      router.push("/dashboard")
+    } catch (error: any) {
+      toast({
+        variant: "destructive",
+        title: "Transmission Error",
+        description: error.message
+      })
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   if (isUserLoading || isProfileLoading) {
@@ -126,6 +181,54 @@ export default function VehicleOnboardingPage() {
                 </div>
               </div>
 
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                 <div className="space-y-4">
+                    <Label className="text-[10px] uppercase font-black text-white/40 ml-1">License Scan</Label>
+                    <div className={cn(
+                      "p-4 rounded-xl border-2 border-dashed flex flex-col items-center justify-center transition-all",
+                      uploads.license ? "bg-active/10 border-active/50" : "bg-navy/20 border-navy/50 hover:bg-navy/30"
+                    )}>
+                       {isUploading.license ? (
+                         <div className="w-6 h-6 border-2 border-orange/40 border-t-orange rounded-full animate-spin" />
+                       ) : uploads.license ? (
+                         <ShieldCheck className="w-8 h-8 text-active" />
+                       ) : (
+                         <FileText className="w-8 h-8 text-white/10" />
+                       )}
+                       <p className="text-[9px] font-black uppercase text-white/20 mt-2">{uploads.license ? "Credential Logged" : "Select License File"}</p>
+                       <input 
+                         type="file" 
+                         className="absolute inset-0 opacity-0 cursor-pointer"
+                         onChange={(e) => handleFileUpload(e, 'license')}
+                         disabled={isUploading.license}
+                       />
+                    </div>
+                 </div>
+
+                 <div className="space-y-4">
+                    <Label className="text-[10px] uppercase font-black text-white/40 ml-1">Vehicle RC Scan</Label>
+                    <div className={cn(
+                      "p-4 rounded-xl border-2 border-dashed flex flex-col items-center justify-center transition-all",
+                      uploads.rc ? "bg-active/10 border-active/50" : "bg-navy/20 border-navy/50 hover:bg-navy/30"
+                    )}>
+                       {isUploading.rc ? (
+                         <div className="w-6 h-6 border-2 border-orange/40 border-t-orange rounded-full animate-spin" />
+                       ) : uploads.rc ? (
+                         <ShieldCheck className="w-8 h-8 text-active" />
+                       ) : (
+                         <Truck className="w-8 h-8 text-white/10" />
+                       )}
+                       <p className="text-[9px] font-black uppercase text-white/20 mt-2">{uploads.rc ? "Credential Logged" : "Select RC File"}</p>
+                       <input 
+                         type="file" 
+                         className="absolute inset-0 opacity-0 cursor-pointer"
+                         onChange={(e) => handleFileUpload(e, 'rc')}
+                         disabled={isUploading.rc}
+                       />
+                    </div>
+                 </div>
+              </div>
+
               <div className="p-4 rounded-xl bg-orange/5 border border-orange/20">
                 <p className="text-[10px] font-bold text-orange uppercase flex items-center gap-2">
                   <ShieldCheck className="w-4 h-4" /> Final Step
@@ -137,7 +240,7 @@ export default function VehicleOnboardingPage() {
 
               <Button 
                 type="submit" 
-                disabled={isLoading}
+                disabled={isLoading || isUploading.license || isUploading.rc}
                 className="w-full h-12 bg-orange hover:bg-orange/90 text-white font-black uppercase tracking-widest text-xs shadow-lg"
               >
                 {isLoading ? "Transmitting..." : "Submit for Verification"}
