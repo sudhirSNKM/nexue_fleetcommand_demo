@@ -220,7 +220,10 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               )}
             </Link>
 
-            <div className={cn("flex items-center gap-3 border-l pl-4 lg:pl-6", isMobilityUser ? "border-slate-100" : "border-white/5")}>
+            <Link 
+              href="/dashboard/profile"
+              className={cn("flex items-center gap-3 border-l pl-4 lg:pl-6 transition-all hover:opacity-80 active:scale-95", isMobilityUser ? "border-slate-100" : "border-white/5")}
+            >
               <div className="text-right hidden sm:block">
                 <p className={cn("text-xs font-black uppercase tracking-tighter", isMobilityUser ? "text-slate-900" : "text-white")}>{profile?.name || "Member"}</p>
                 <p className="text-[9px] text-orange uppercase font-bold tracking-widest">{role}</p>
@@ -229,7 +232,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 <AvatarImage src={`https://picsum.photos/seed/${user.uid}/100/100`} />
                 <AvatarFallback className="font-black">U</AvatarFallback>
               </Avatar>
-            </div>
+            </Link>
           </div>
         </header>
 
