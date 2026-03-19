@@ -1,3 +1,4 @@
+
 "use client"
 
 import React, { useEffect, useState, useMemo } from "react"
@@ -92,6 +93,13 @@ export default function AdminOperationsCenter() {
 
   const criticalAlerts = recentRides?.filter(r => r.status === "Cancelled" || r.status === "Rejected") || []
 
+  const stats = [
+    { label: "Active Deployments", value: statsSummary.activeTrips.toString(), trend: "Live", icon: Zap, color: "text-active", barColor: "bg-active", progress: 70 },
+    { label: "Safety Compliance", value: "99.2%", trend: "Optimal", icon: ShieldCheck, color: "text-active", barColor: "bg-active", progress: 99 },
+    { label: "Operator Avg Rating", value: statsSummary.avgRating.toString(), trend: "Stable", icon: Star, color: "text-orange", barColor: "bg-orange", progress: 85 },
+    { label: "Active Drivers", value: statsSummary.onlineDrivers.toString(), trend: "Sync", icon: Users, color: "text-white", barColor: "bg-white", progress: 60 },
+  ]
+
   return (
     <div className="space-y-6 pb-20">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -111,23 +119,45 @@ export default function AdminOperationsCenter() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        {[
-          { label: "Active Deployments", value: statsSummary.activeTrips.toString(), trend: "Live", icon: Zap, color: "text-active" },
-          { label: "Safety Compliance", value: "99.2%", trend: "Optimal", icon: ShieldCheck, color: "text-active" },
-          { label: "Operator Avg Rating", value: statsSummary.avgRating.toString(), trend: "Stable", icon: Star, color: "text-orange" },
-          { label: "Active Drivers", value: statsSummary.onlineDrivers.toString(), trend: "Sync", icon: Users, color: "text-white" },
-        ].map((stat, i) => (
-          <Card key={i} className="glass-panel admin-card p-6 bg-navy/20 border-none relative overflow-hidden group">
-            <stat.icon className="absolute -right-4 -bottom-4 w-20 h-20 opacity-5 group-hover:opacity-10 transition-opacity text-white" />
-            <p className="text-[10px] font-black uppercase text-white/40 tracking-widest mb-1">{stat.label}</p>
-            <h4 className={cn("text-2xl font-black font-mono", stat.color)}>{stat.value}</h4>
-            <Badge variant="outline" className="mt-2 text-[8px] border-white/10 text-white/40 font-black">{stat.trend}</Badge>
-          </Card>
+        {stats.map((stat, i) => (
+          <motion.div
+            key={stat.label}
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ delay: i * 0.1 }}
+          >
+            <Card className="glass-panel admin-card border-none overflow-hidden relative group bg-card/40 backdrop-blur-md">
+              <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
+                <stat.icon className="w-16 h-16 text-white" />
+              </div>
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <div className={cn("p-2 rounded-lg bg-white/5 border border-white/5", stat.color)}>
+                    <stat.icon className="w-5 h-5" />
+                  </div>
+                  <span className={cn("text-[10px] font-black uppercase tracking-widest text-active")}>
+                    {stat.trend}
+                  </span>
+                </div>
+                <div>
+                  <h3 className="text-3xl font-black font-mono tracking-tighter text-white">{stat.value}</h3>
+                  <p className="text-[10px] text-white/40 font-black uppercase tracking-widest mt-1">{stat.label}</p>
+                </div>
+                <div className="mt-4 h-1 w-full bg-white/5 rounded-full overflow-hidden">
+                   <motion.div 
+                     initial={{ width: 0 }}
+                     animate={{ width: `${stat.progress}%` }}
+                     className={cn("h-full", stat.barColor, "shadow-[0_0_8px_currentColor]")}
+                   />
+                </div>
+              </CardContent>
+            </Card>
+          </motion.div>
         ))}
       </div>
 
       <div className="grid grid-cols-1 xl:grid-cols-4 gap-6">
-        <div className="xl:col-span-3 h-[300px] lg:h-[450px] border border-white/5 rounded-2xl overflow-hidden shadow-2xl relative bg-card/20">
+        <div className="xl:col-span-3 h-[250px] lg:h-[450px] border border-white/5 rounded-2xl overflow-hidden shadow-2xl relative bg-card/20">
           <LiveMap locations={liveLocations} activeRides={activeMissions} />
           <div className="absolute top-4 left-4 z-[1000]">
             <button className="px-3 py-1.5 text-[9px] font-black uppercase rounded-lg border bg-orange border-orange text-white backdrop-blur-md">
@@ -175,7 +205,7 @@ export default function AdminOperationsCenter() {
             </CardHeader>
             <CardContent className="p-4 space-y-3">
               {pendingRequests?.length === 0 ? (
-                <p className="text-[10px] text-white/40 uppercase font-black text-center py-4">No Pending Actions</p>
+                <p className="text-[10px] text-muted-foreground uppercase font-black text-center py-4">No Pending Actions</p>
               ) : (
                 pendingRequests?.map(req => (
                   <div key={req.id} className="p-3 bg-white/5 rounded border border-white/5 flex items-center justify-between">

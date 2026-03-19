@@ -181,7 +181,7 @@ export default function RideHistoryPage() {
                 <HistoryIcon className={cn("w-8 h-8 sm:w-10 sm:h-10", isMobilityUser ? "text-slate-300" : "text-muted-foreground")} />
               </div>
               <h2 className={cn("text-lg sm:text-xl font-black uppercase mb-2", isMobilityUser ? "text-slate-900" : "text-white")}>Archive Empty</h2>
-              <p className={cn("text-[10px] sm:text-xs font-bold uppercase tracking-widest", isMobilityUser ? "text-slate-400" : "text-muted-foreground")}>No historical missions detected in current sector.</p>
+              <p className={cn("text-[10px] sm:text-xs font-bold uppercase tracking-widest text-muted-foreground")}>No historical missions detected in current sector.</p>
             </Card>
           )}
         </div>
@@ -205,7 +205,7 @@ export default function RideHistoryPage() {
                       </div>
                    </div>
                    <div className={cn("p-3 sm:p-4 rounded-xl", isMobilityUser ? "bg-slate-50" : "bg-navy/10")}>
-                     <p className={cn("text-[8px] sm:text-[10px] font-black uppercase leading-relaxed text-center", isMobilityUser ? "text-slate-500" : "text-muted-foreground")}>
+                     <p className={cn("text-[8px] sm:text-[10px] font-black uppercase leading-relaxed text-center text-muted-foreground")}>
                        All systems nominal. Operational parameters within safety threshold.
                      </p>
                    </div>

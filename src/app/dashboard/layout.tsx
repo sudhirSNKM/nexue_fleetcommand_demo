@@ -53,7 +53,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
   const { data: profile, isLoading: isProfileLoading } = useDoc(userProfileRef)
 
-  // Real-time Alert Count for the Bell Icon - Gated by User Auth
+  // Real-time Alert Count for the Bell Icon - Gated by User Auth to prevent permission errors
   const alertsQuery = useMemoFirebase(() => (db && user) ? query(collection(db, "alerts"), where("status", "==", "active")) : null, [db, user])
   const { data: activeAlerts } = useCollection(alertsQuery)
   const alertCount = activeAlerts?.length || 0
@@ -222,13 +222,13 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
             <Link 
               href="/dashboard/profile"
-              className={cn("flex items-center gap-3 border-l pl-4 lg:pl-6 transition-all hover:opacity-80 active:scale-95", isMobilityUser ? "border-slate-100" : "border-white/5")}
+              className={cn("flex items-center gap-3 border-l pl-4 lg:pl-6 transition-all hover:opacity-80 active:scale-95 group", isMobilityUser ? "border-slate-100" : "border-white/5")}
             >
               <div className="text-right hidden sm:block">
-                <p className={cn("text-xs font-black uppercase tracking-tighter", isMobilityUser ? "text-slate-900" : "text-white")}>{profile?.name || "Member"}</p>
+                <p className={cn("text-xs font-black uppercase tracking-tighter group-hover:text-orange transition-colors", isMobilityUser ? "text-slate-900" : "text-white")}>{profile?.name || "Member"}</p>
                 <p className="text-[9px] text-orange uppercase font-bold tracking-widest">{role}</p>
               </div>
-              <Avatar className="h-8 w-8 ring-2 ring-orange/20 shadow-lg">
+              <Avatar className="h-8 w-8 ring-2 ring-orange/20 shadow-lg group-hover:scale-110 transition-transform">
                 <AvatarImage src={`https://picsum.photos/seed/${user.uid}/100/100`} />
                 <AvatarFallback className="font-black">U</AvatarFallback>
               </Avatar>
