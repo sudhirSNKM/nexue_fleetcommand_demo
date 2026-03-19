@@ -1,3 +1,4 @@
+
 "use client"
 
 import React, { useMemo } from "react"
@@ -79,7 +80,7 @@ export default function AlertsPage() {
             </Card>
           ))}
           {(!activeAlerts || activeAlerts.length === 0) && !isAlertsLoading && (
-            <div className="p-10 text-center border border-dashed border-white/5 rounded-2xl">
+            <div className="p-10 text-center border border-dashed border-white/10 rounded-2xl bg-white/5">
                <CheckCircle2 className="w-10 h-10 text-active opacity-40 mx-auto mb-4" />
                <p className="text-[10px] font-black uppercase text-muted-foreground tracking-widest">No Active Incidents Detected</p>
             </div>
@@ -101,7 +102,7 @@ export default function AlertsPage() {
                     <CheckCircle2 className="w-4 h-4 text-active opacity-50" />
                     <div>
                       <p className="text-[11px] font-bold text-muted-foreground truncate max-w-[150px]">{log.type || 'Event Logs'}</p>
-                      <p className="text-[9px] uppercase font-medium">{log.action || 'Operations Nominal'}</p>
+                      <p className="text-[9px] uppercase font-medium text-white/60">{log.action || 'Operations Nominal'}</p>
                     </div>
                   </div>
                 ))}

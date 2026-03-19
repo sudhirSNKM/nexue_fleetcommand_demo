@@ -32,11 +32,10 @@ export default function AdministrativeChatPage() {
   const userProfileRef = useMemoFirebase(() => user && db ? doc(db, "userProfiles", user.uid) : null, [user, db])
   const { data: profile } = useDoc(userProfileRef)
   
-  // Normalize role check
-  const role = (profile?.role || "").toLowerCase().replace(/\s+/g, '-')
+  const rawRole = (profile?.role || "").toLowerCase().trim()
+  const role = rawRole.replace(/[\s_-]+/g, '-')
   const isAdmin = role === "admin" || role === "super-admin"
 
-  // Tactical Chat Feed: Global Admin Channel
   const chatQuery = useMemoFirebase(() => db ? query(
     collection(db, "adminChats", "global_command", "messages"),
     orderBy("timestamp", "asc"),
@@ -84,15 +83,15 @@ export default function AdministrativeChatPage() {
   return (
     <div className="h-full flex flex-col space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div className="flex items-start gap-4">
-          <div className="w-12 h-12 rounded-2xl bg-orange/10 flex items-center justify-center border border-orange/20 shrink-0 mt-1">
+        <div className="flex items-center gap-4">
+          <div className="w-12 h-12 rounded-2xl bg-orange/10 flex items-center justify-center border border-orange/20 shrink-0">
             <MessageSquare className="w-6 h-6 text-orange" />
           </div>
           <div>
-            <h1 className="text-2xl sm:text-3xl font-black uppercase tracking-tighter text-white leading-tight">
+            <h1 className="text-2xl sm:text-3xl font-black uppercase tracking-tighter text-white leading-none">
               Tactical Comms Link
             </h1>
-            <p className="text-[8px] sm:text-[10px] text-white/40 uppercase font-black tracking-[0.4em] mt-1">Direct Secure Communication Layer</p>
+            <p className="text-[8px] sm:text-[10px] text-white/40 uppercase font-black tracking-[0.4em] mt-1.5">Direct Secure Communication Layer</p>
           </div>
         </div>
         <div className="flex items-center gap-2 bg-orange/10 border border-orange/20 px-3 py-1.5 sm:px-4 sm:py-2 rounded-full w-fit self-start sm:self-center">
@@ -104,7 +103,7 @@ export default function AdministrativeChatPage() {
       <div className="grid grid-cols-1 xl:grid-cols-4 gap-6 flex-1 overflow-hidden">
         <div className="xl:col-span-3 flex flex-col overflow-hidden">
           <Card className="glass-panel border-none flex-1 flex flex-col overflow-hidden shadow-2xl">
-            <CardHeader className="p-3 sm:p-4 bg-navy/20 border-b border-white/5 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <CardHeader className="p-3 sm:p-4 bg-navy/20 border-b border-white/5 flex flex-row items-center justify-between gap-3">
               <div className="flex items-center gap-3">
                 <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-orange/10 flex items-center justify-center border border-orange/20">
                   <Hash className="w-4 h-4 sm:w-5 sm:h-5 text-orange" />
@@ -114,7 +113,7 @@ export default function AdministrativeChatPage() {
                   <p className="text-[7px] sm:text-[8px] text-active font-black uppercase">Fleet Command Center Active</p>
                 </div>
               </div>
-              <div className="flex items-center gap-4 self-end sm:self-auto">
+              <div className="flex items-center gap-4">
                 <div className="relative hidden md:block">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-white/20" />
                   <input placeholder="Search archives..." className="bg-navy/40 border border-white/5 rounded-lg pl-9 pr-4 py-1.5 text-[10px] text-white focus:outline-none" />
@@ -129,9 +128,9 @@ export default function AdministrativeChatPage() {
                   <Activity className="w-8 h-8 animate-spin" />
                 </div>
               ) : messages?.length === 0 ? (
-                <div className="h-full flex flex-col items-center justify-center opacity-20 space-y-4">
-                  <MessageSquare className="w-12 h-12 sm:w-16 sm:h-16" />
-                  <p className="text-[10px] sm:text-xs font-black uppercase tracking-widest text-center">No signals detected in this sector</p>
+                <div className="h-full flex flex-col items-center justify-center space-y-4">
+                  <MessageSquare className="w-12 h-12 sm:w-16 sm:h-16 text-muted-foreground opacity-20" />
+                  <p className="text-[10px] sm:text-xs font-black uppercase tracking-widest text-muted-foreground">No signals detected in this sector</p>
                 </div>
               ) : (
                 messages?.map((msg, i) => {
@@ -210,7 +209,7 @@ export default function AdministrativeChatPage() {
                <ShieldCheck className="w-4 h-4 text-orange" />
                <span className="text-[10px] font-black uppercase text-white">Comms Protocol</span>
              </div>
-             <p className="text-[9px] text-white/40 font-bold uppercase leading-relaxed">
+             <p className="text-[9px] text-white/60 font-bold uppercase leading-relaxed">
                All message logs are immutable and archived for audit. Unauthorized data leakage will trigger immediate unit suspension.
              </p>
           </div>

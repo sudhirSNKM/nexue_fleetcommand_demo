@@ -41,22 +41,11 @@ export default function LoginPage() {
         emailToUse = snap.docs[0].data().email
       }
 
-<<<<<<< HEAD
-      await signInWithEmailAndPassword(auth, emailToUse, password)
-      const user = auth.currentUser!;
-      
-      const userDocRef = doc(db, "userProfiles", user.uid);
-      const userSnap = await getDoc(userDocRef);
-      
-      if (userSnap.exists() && userSnap.data().currentSessionId) {
-        // Log trace of override but proceed with new session
-=======
-      // Direct Firebase Auth handshake — no pre-auth Firestore lookup needed for email
+      // Direct Firebase Auth handshake
       const userCredential = await signInWithEmailAndPassword(auth, emailToUse, password)
       const user = userCredential.user
 
       // Session Security Protocol: Generate and synchronize unique session identifier
-      const { updateDoc, getDoc } = await import("firebase/firestore")
       const userDocRef = doc(db, "userProfiles", user.uid)
       const userSnap = await getDoc(userDocRef)
 
@@ -65,7 +54,6 @@ export default function LoginPage() {
           title: "Session Override detected",
           description: "An active link was detected elsewhere. Overriding for new tactical session.",
         })
->>>>>>> 0c7c111fd6dd7bdffda3ed2ac380e9980d318cef
       }
 
       const newSessionId = Math.random().toString(36).substring(2) + Date.now().toString(36)

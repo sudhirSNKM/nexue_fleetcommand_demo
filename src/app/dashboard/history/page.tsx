@@ -1,3 +1,4 @@
+
 "use client"
 
 import React, { useState } from "react"
@@ -30,17 +31,13 @@ export default function RideHistoryPage() {
   const userProfileRef = useMemoFirebase(() => user && db ? doc(db, "userProfiles", user.uid) : null, [user, db])
   const { data: profile } = useDoc(userProfileRef)
   
-  // Normalize Role for robust clearance checking
   const rawRole = (profile?.role || "passenger").toLowerCase().trim()
   const role = rawRole.replace(/[\s_-]+/g, '-')
   const isAdmin = role === "admin" || role === "super-admin"
   const isMobilityUser = !isAdmin
 
-  // Filter query logic: Mobility users see own rides, Admins see all recent rides
   const ridesQuery = useMemoFirebase(() => {
     if (!user || !db || !profile) return null
-    
-    // Admins gain visibility into the Global Manifest
     if (isAdmin) {
       return query(
         collection(db, "rides"),
@@ -48,8 +45,6 @@ export default function RideHistoryPage() {
         limit(100)
       )
     }
-
-    // Drivers/Passengers restricted to personal logs
     const filterKey = role === "driver" ? "driverId" : "passengerId"
     return query(
       collection(db, "rides"),
@@ -181,8 +176,8 @@ export default function RideHistoryPage() {
               </Card>
             ))
           ) : (
-            <Card className={cn("p-12 sm:p-20 text-center border-2 border-dashed rounded-3xl", isMobilityUser ? "bg-white border-slate-200" : "glass-panel border-white/10")}>
-              <div className="w-16 h-16 sm:w-20 sm:h-20 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-6">
+            <Card className={cn("p-12 sm:p-20 text-center border-2 border-dashed rounded-3xl", isMobilityUser ? "bg-white border-slate-200" : "glass-panel border-white/10 bg-white/5")}>
+              <div className="w-16 h-16 sm:w-20 sm:h-20 bg-slate-100/10 rounded-full flex items-center justify-center mx-auto mb-6">
                 <HistoryIcon className={cn("w-8 h-8 sm:w-10 sm:h-10", isMobilityUser ? "text-slate-300" : "text-muted-foreground")} />
               </div>
               <h2 className={cn("text-lg sm:text-xl font-black uppercase mb-2", isMobilityUser ? "text-slate-900" : "text-white")}>Archive Empty</h2>
