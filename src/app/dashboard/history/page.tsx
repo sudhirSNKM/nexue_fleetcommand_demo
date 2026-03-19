@@ -66,9 +66,9 @@ export default function RideHistoryPage() {
     setAnalyzingRideId(ride.id)
     try {
       const result = await analyzeRoute({
-        pickup: ride.pickup.address,
-        dropoff: ride.dropoff.address,
-        vehicleType: ride.vehicleType
+        pickup: ride.pickup?.address || "Unknown Origin",
+        dropoff: ride.dropoff?.address || "Unknown Target",
+        vehicleType: ride.vehicleType || "Scout"
       })
       setAiAnalysis(prev => ({ ...prev, [ride.id]: result }))
     } catch (error) {
@@ -81,7 +81,7 @@ export default function RideHistoryPage() {
   const totalEarnings = rides?.reduce((sum, ride) => sum + (Number(ride.fare) || 0), 0) || 0
 
   return (
-    <div className="space-y-8 max-w-7xl mx-auto pb-20 sm:pb-8">
+    <div className="space-y-6 sm:space-y-8 max-w-7xl mx-auto pb-20 sm:pb-8">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div>
           <h1 className={cn("text-2xl sm:text-3xl font-black uppercase tracking-tighter flex items-center gap-3", isMobilityUser ? "text-slate-900" : "text-white")}>
@@ -105,7 +105,7 @@ export default function RideHistoryPage() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 xl:grid-cols-4 gap-8">
+      <div className="grid grid-cols-1 xl:grid-cols-4 gap-6 sm:gap-8">
         <div className="xl:col-span-3 space-y-4">
           {isLoading ? (
             [1, 2, 3].map(i => <Skeleton key={i} className={cn("h-40 w-full rounded-2xl", isMobilityUser ? "bg-slate-200" : "bg-navy/20")} />)
@@ -114,16 +114,16 @@ export default function RideHistoryPage() {
               <Card key={ride.id} className={cn("border-none shadow-xl hover:shadow-2xl transition-all duration-300 overflow-hidden", isMobilityUser ? "bg-white border-slate-200" : "glass-panel bg-card/80")}>
                 <CardContent className="p-0">
                   <div className={cn("p-4 sm:p-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-4", isMobilityUser ? "bg-slate-50 border-b border-slate-100" : "bg-navy/20 border-b border-white/5")}>
-                    <div className="flex items-center gap-4">
-                      <div className={cn("w-10 h-10 sm:w-12 sm:h-12 rounded-xl flex items-center justify-center text-orange shadow-inner", isMobilityUser ? "bg-white" : "bg-navy/40")}>
+                    <div className="flex items-center gap-4 min-w-0">
+                      <div className={cn("w-10 h-10 sm:w-12 sm:h-12 rounded-xl flex items-center justify-center text-orange shadow-inner shrink-0", isMobilityUser ? "bg-white" : "bg-navy/40")}>
                         <Zap className="w-5 h-5 sm:w-6 sm:h-6" />
                       </div>
-                      <div>
-                        <p className="text-[8px] sm:text-[10px] font-black uppercase text-orange tracking-widest">{ride.vehicleType} PROTOCOL</p>
-                        <p className={cn("text-xs sm:text-sm font-bold", isMobilityUser ? "text-slate-900" : "text-white")}>MISSION ID: {ride.id.substring(0, 8).toUpperCase()}</p>
+                      <div className="min-w-0">
+                        <p className="text-[8px] sm:text-[10px] font-black uppercase text-orange tracking-widest">{(ride.vehicleType || "Scout").toUpperCase()} PROTOCOL</p>
+                        <p className={cn("text-[10px] sm:text-sm font-bold truncate", isMobilityUser ? "text-slate-900" : "text-white")}>MISSION ID: {ride.id.substring(0, 8).toUpperCase()}</p>
                       </div>
                     </div>
-                    <div className="text-right w-full md:w-auto">
+                    <div className="text-right w-full md:w-auto flex flex-row md:flex-col justify-between md:justify-center items-center md:items-end gap-2">
                        <p className={cn("text-xl sm:text-2xl font-black", isMobilityUser ? "text-slate-900" : "text-white")}>₹{ride.fare}</p>
                        <Badge className={cn("text-[8px] sm:text-[10px] font-black uppercase tracking-widest", ride.status === 'Completed' || ride.status === 'Paid' ? 'bg-green-500/10 text-green-600' : 'bg-orange/10 text-orange')}>
                          {ride.status} {ride.status === 'Paid' && ride.paymentMethod ? `• ${ride.paymentMethod.toUpperCase()}` : ''}
@@ -133,19 +133,19 @@ export default function RideHistoryPage() {
 
                   <div className="p-4 sm:p-6 grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8">
                     <div className="flex gap-4">
-                      <div className="flex flex-col items-center">
+                      <div className="flex flex-col items-center shrink-0">
                         <div className="w-3 h-3 sm:w-4 sm:h-4 rounded-full bg-active ring-4 ring-active/10" />
                         <div className="w-0.5 h-10 sm:h-12 bg-slate-200 my-1" />
                         <div className="w-3 h-3 sm:w-4 sm:h-4 rounded-full bg-orange ring-4 ring-orange/10" />
                       </div>
-                      <div className="space-y-4 sm:space-y-6 min-w-0">
+                      <div className="space-y-4 sm:space-y-6 min-w-0 flex-1">
                         <div className="min-w-0">
                           <p className={cn("text-[8px] sm:text-[10px] font-black uppercase tracking-widest", isMobilityUser ? "text-slate-400" : "text-white/40")}>Origin Point</p>
-                          <p className={cn("text-xs sm:text-sm font-bold truncate", isMobilityUser ? "text-slate-900" : "text-white/90")}>{ride.pickup?.address}</p>
+                          <p className={cn("text-[11px] sm:text-sm font-bold truncate", isMobilityUser ? "text-slate-900" : "text-white/90")}>{ride.pickup?.address || "Calibrating..."}</p>
                         </div>
                         <div className="min-w-0">
                           <p className={cn("text-[8px] sm:text-[10px] font-black uppercase tracking-widest", isMobilityUser ? "text-slate-400" : "text-white/40")}>Target Destination</p>
-                          <p className={cn("text-xs sm:text-sm font-bold truncate", isMobilityUser ? "text-slate-900" : "text-white/90")}>{ride.dropoff?.address}</p>
+                          <p className={cn("text-[11px] sm:text-sm font-bold truncate", isMobilityUser ? "text-slate-900" : "text-white/90")}>{ride.dropoff?.address || "Calibrating..."}</p>
                         </div>
                       </div>
                     </div>

@@ -39,7 +39,8 @@ export default function AdminManagementPage() {
 
   const userProfileRef = useMemoFirebase(() => user && db ? doc(db, "userProfiles", user.uid) : null, [user, db])
   const { data: profile } = useDoc(userProfileRef)
-  const role = (profile?.role || "").toLowerCase().replace(/\s+/g, '-')
+  
+  const role = (profile?.role || "").toLowerCase().trim().replace(/[\s_-]+/g, '-')
   const isUserAdmin = role === "admin" || role === "super-admin"
 
   const adminsQuery = useMemoFirebase(() => (db && isUserAdmin) ? query(
@@ -76,12 +77,10 @@ export default function AdminManagementPage() {
     }
     setIsSubmitting(true)
     try {
-      // 1. Search for existing profile by email
       const q = query(collection(db, "userProfiles"), where("email", "==", newAdmin.email.toLowerCase()))
       const querySnapshot = await getDocs(q)
       
       if (!querySnapshot.empty) {
-        // 2. Update existing user's role to Admin
         const userDoc = querySnapshot.docs[0]
         await updateDoc(doc(db, "userProfiles", userDoc.id), {
           role: "admin",
@@ -90,7 +89,6 @@ export default function AdminManagementPage() {
         })
         toast({ title: "Designation Authorized", description: `Existing profile for ${newAdmin.email} promoted to Admin status.` })
       } else {
-        // 3. Provision a new administrative identity (placeholder)
         const mockId = `admin_${Math.random().toString(36).substring(7)}`
         await setDoc(doc(db, "userProfiles", mockId), {
           id: mockId,
@@ -102,7 +100,7 @@ export default function AdminManagementPage() {
           createdAt: serverTimestamp(),
           rating: 0
         })
-        toast({ title: "Designation Authorized", description: `New administrative terminal initialized for ${newAdmin.name}. User must register with this email.` })
+        toast({ title: "Designation Authorized", description: `New administrative terminal initialized for ${newAdmin.name}.` })
       }
       setIsProvisioning(false)
       setNewAdmin({ name: "", email: "", zone: "Global" })
@@ -114,22 +112,22 @@ export default function AdminManagementPage() {
   }
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6 sm:space-y-8">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div>
-          <h1 className="text-3xl font-black uppercase tracking-tighter text-white">Staff Provisioning</h1>
-          <p className="text-[10px] text-white/40 uppercase font-black tracking-[0.4em] mt-1">Operations Admin & Access Controls</p>
+          <h1 className="text-2xl sm:text-3xl font-black uppercase tracking-tighter text-white">Staff Provisioning</h1>
+          <p className="text-[8px] sm:text-[10px] text-white/40 uppercase font-black tracking-[0.2em] sm:tracking-[0.4em] mt-1">Operations Admin & Access Controls</p>
         </div>
         <div className="flex gap-4">
-          <Button onClick={() => setIsProvisioning(true)} className="bg-orange text-white font-black uppercase text-[10px] h-11 px-6 shadow-lg shadow-orange/20 border-none">
+          <Button onClick={() => setIsProvisioning(true)} className="w-full sm:w-auto bg-orange text-white font-black uppercase text-[10px] h-11 px-6 shadow-lg shadow-orange/20 border-none">
             <UserPlus className="w-4 h-4 mr-2" /> Provision New Admin
           </Button>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
+      <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 sm:gap-8">
         <div className="xl:col-span-2 space-y-4">
-          <Card className="glass-panel border-none shadow-2xl">
+          <Card className="glass-panel border-none shadow-2xl overflow-hidden">
             <CardHeader className="p-4 bg-navy/20 border-b border-white/5">
               <CardTitle className="text-[10px] font-black uppercase text-white/60 flex items-center gap-2">
                 <ShieldCheck className="w-4 h-4 text-orange" /> Operational Administrators
@@ -140,24 +138,24 @@ export default function AdminManagementPage() {
                 {isLoading ? (
                   <div className="p-10 text-center text-white/20 animate-pulse font-black uppercase text-xs">Accessing Personnel Files...</div>
                 ) : admins?.map((admin) => (
-                  <div key={admin.id} className="p-6 flex items-center justify-between hover:bg-white/5 transition-all group">
-                    <div className="flex items-center gap-4">
-                      <Avatar className="h-12 w-12 ring-2 ring-white/5 shadow-2xl">
+                  <div key={admin.id} className="p-4 sm:p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:bg-white/5 transition-all group">
+                    <div className="flex items-center gap-4 min-w-0">
+                      <Avatar className="h-10 w-10 sm:h-12 sm:w-12 ring-2 ring-white/5 shadow-2xl shrink-0">
                         <AvatarImage src={`https://picsum.photos/seed/${admin.id}/100/100`} />
                         <AvatarFallback className="bg-navy text-white font-black">{admin.name ? admin.name[0] : 'A'}</AvatarFallback>
                       </Avatar>
-                      <div>
-                        <h4 className="text-sm font-black text-white uppercase">{admin.name || 'Unnamed Admin'}</h4>
-                        <div className="flex items-center gap-3 mt-1 text-[9px] font-black uppercase text-white/40 tracking-widest">
-                          <span className="flex items-center gap-1"><Mail className="w-3 h-3" /> {admin.email}</span>
-                          <span className="flex items-center gap-1 text-orange uppercase font-black"><MapPin className="w-3 h-3" /> {admin.zone || 'Global Sector'}</span>
+                      <div className="min-w-0">
+                        <h4 className="text-xs sm:text-sm font-black text-white uppercase truncate">{admin.name || 'Unnamed Admin'}</h4>
+                        <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 mt-1 text-[8px] sm:text-[9px] font-black uppercase text-white/40 tracking-widest">
+                          <span className="flex items-center gap-1 truncate"><Mail className="w-3 h-3 shrink-0" /> {admin.email}</span>
+                          <span className="flex items-center gap-1 text-orange uppercase font-black shrink-0"><MapPin className="w-3 h-3 shrink-0" /> {admin.zone || 'Global Sector'}</span>
                         </div>
                       </div>
                     </div>
                     
-                    <div className="flex items-center gap-6">
+                    <div className="flex items-center justify-between sm:justify-end gap-4 sm:gap-6 pt-2 sm:pt-0 border-t border-white/5 sm:border-none">
                       <Badge className={cn(
-                        "text-[9px] font-black uppercase px-3 py-1",
+                        "text-[8px] sm:text-[9px] font-black uppercase px-2 sm:px-3 py-1",
                         admin.status === 'Active' ? "bg-active/10 text-active border-active/20" : "bg-emergency/10 text-emergency border-emergency/20"
                       )}>
                         {admin.status || 'Active'}
@@ -166,7 +164,7 @@ export default function AdminManagementPage() {
                         onClick={() => handleStatusToggle(admin.id, admin.status || 'Active')}
                         variant="ghost" 
                         size="sm" 
-                        className="text-[10px] font-black uppercase text-white/40 hover:text-orange"
+                        className="text-[9px] sm:text-[10px] font-black uppercase text-white/40 hover:text-orange px-0 sm:px-3"
                       >
                         {admin.status === 'Active' ? 'Deactivate' : 'Reactivate'}
                       </Button>
@@ -211,7 +209,7 @@ export default function AdminManagementPage() {
       </div>
 
       <Dialog open={isProvisioning} onOpenChange={setIsProvisioning}>
-        <DialogContent className="bg-charcoal border-white/10 text-white">
+        <DialogContent className="bg-charcoal border-white/10 text-white max-w-[90vw] sm:max-w-md rounded-2xl">
           <DialogHeader>
             <DialogTitle className="text-xl font-black uppercase tracking-tighter">Authorize New Admin</DialogTitle>
             <DialogDescription className="text-[10px] uppercase font-bold text-white/40">Initialize administrative credentials for the fleet mesh.</DialogDescription>
@@ -223,7 +221,7 @@ export default function AdminManagementPage() {
                 value={newAdmin.name} 
                 onChange={e => setNewAdmin({...newAdmin, name: e.target.value})}
                 placeholder="Full Name" 
-                className="bg-navy/40 border-white/10 text-white font-bold" 
+                className="bg-navy/40 border-white/10 text-white font-bold h-11" 
               />
             </div>
             <div className="space-y-2">
@@ -232,7 +230,7 @@ export default function AdminManagementPage() {
                 value={newAdmin.email} 
                 onChange={e => setNewAdmin({...newAdmin, email: e.target.value})}
                 placeholder="email@nexus-fleet.com" 
-                className="bg-navy/40 border-white/10 text-white font-mono" 
+                className="bg-navy/40 border-white/10 text-white font-mono h-11" 
               />
             </div>
             <div className="space-y-2">
@@ -241,13 +239,13 @@ export default function AdminManagementPage() {
                 value={newAdmin.zone} 
                 onChange={e => setNewAdmin({...newAdmin, zone: e.target.value})}
                 placeholder="e.g. Sector 4 / Global" 
-                className="bg-navy/40 border-white/10 text-white font-bold" 
+                className="bg-navy/40 border-white/10 text-white font-bold h-11" 
               />
             </div>
           </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setIsProvisioning(false)} className="border-white/10 text-white font-black uppercase text-[10px]">Cancel</Button>
-            <Button onClick={handleProvisionAdmin} disabled={isSubmitting} className="bg-orange text-white font-black uppercase text-[10px] shadow-lg">
+          <DialogFooter className="flex flex-row gap-3">
+            <Button variant="outline" onClick={() => setIsProvisioning(false)} className="flex-1 border-white/10 text-white font-black uppercase text-[10px] h-11">Cancel</Button>
+            <Button onClick={handleProvisionAdmin} disabled={isSubmitting} className="flex-1 bg-orange text-white font-black uppercase text-[10px] h-11 shadow-lg">
               {isSubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : "Confirm Designation"}
             </Button>
           </DialogFooter>
