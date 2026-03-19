@@ -53,8 +53,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
   const { data: profile, isLoading: isProfileLoading } = useDoc(userProfileRef)
 
-  // Real-time Alert Count for the Bell Icon
-  const alertsQuery = useMemoFirebase(() => db ? query(collection(db, "alerts"), where("status", "==", "active")) : null, [db])
+  // Real-time Alert Count for the Bell Icon - Gated by User Auth
+  const alertsQuery = useMemoFirebase(() => (db && user) ? query(collection(db, "alerts"), where("status", "==", "active")) : null, [db, user])
   const { data: activeAlerts } = useCollection(alertsQuery)
   const alertCount = activeAlerts?.length || 0
 

@@ -1,3 +1,4 @@
+
 "use client"
 
 import React from "react"
@@ -16,18 +17,20 @@ import {
 } from "lucide-react"
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { useFirestore, useCollection, useMemoFirebase } from "@/firebase"
+import { useFirestore, useCollection, useMemoFirebase, useUser } from "@/firebase"
 import { collection, query, orderBy, limit } from "firebase/firestore"
 import { cn } from "@/lib/utils"
+import { Badge } from "@/components/ui/badge"
 
 export default function AuditLogsPage() {
   const db = useFirestore()
+  const { user } = useUser()
   
-  const logsQuery = useMemoFirebase(() => query(
+  const logsQuery = useMemoFirebase(() => (db && user) ? query(
     collection(db, "auditLogs"), 
     orderBy("timestamp", "desc"),
     limit(100)
-  ), [db])
+  ) : null, [db, user])
 
   const { data: logs, isLoading } = useCollection(logsQuery)
 
@@ -89,7 +92,7 @@ export default function AuditLogsPage() {
                   ))}
                   {!logs?.length && !isLoading && (
                     <tr>
-                      <td colSpan={4} className="p-20 text-center opacity-40 italic">No system events logged in current reporting phase.</td>
+                      <td colSpan={4} className="p-20 text-center text-muted-foreground italic">No system events logged in current reporting phase.</td>
                     </tr>
                   )}
                 </tbody>

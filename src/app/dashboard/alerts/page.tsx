@@ -8,16 +8,17 @@ import { AlertCircle, ShieldAlert, CheckCircle2, Info, Clock, BellOff } from "lu
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 
-import { useFirestore, useCollection, useMemoFirebase } from "@/firebase"
+import { useFirestore, useCollection, useMemoFirebase, useUser } from "@/firebase"
 import { collection, query, where, orderBy, limit } from "firebase/firestore"
 
 export default function AlertsPage() {
   const db = useFirestore()
+  const { user } = useUser()
 
-  const alertsQuery = useMemoFirebase(() => db ? query(collection(db, "alerts"), where("status", "==", "active"), limit(20)) : null, [db])
+  const alertsQuery = useMemoFirebase(() => (db && user) ? query(collection(db, "alerts"), where("status", "==", "active"), limit(20)) : null, [db, user])
   const { data: activeAlerts, isLoading: isAlertsLoading } = useCollection(alertsQuery)
 
-  const historyQuery = useMemoFirebase(() => db ? query(collection(db, "auditLogs"), orderBy("createdAt", "desc"), limit(10)) : null, [db])
+  const historyQuery = useMemoFirebase(() => (db && user) ? query(collection(db, "auditLogs"), orderBy("createdAt", "desc"), limit(10)) : null, [db, user])
   const { data: historyLogs } = useCollection(historyQuery)
 
   return (

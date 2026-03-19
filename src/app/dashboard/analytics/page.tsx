@@ -13,16 +13,17 @@ import {
   PieChart as RePieChart,
   Pie
 } from "recharts"
-import { useFirestore, useCollection, useMemoFirebase } from "@/firebase"
+import { useFirestore, useCollection, useMemoFirebase, useUser } from "@/firebase"
 import { collection, query, where } from "firebase/firestore"
 
 export default function AnalyticsPage() {
   const db = useFirestore()
+  const { user } = useUser()
   
-  const ridesQuery = useMemoFirebase(() => db ? collection(db, "rides") : null, [db])
+  const ridesQuery = useMemoFirebase(() => (db && user) ? collection(db, "rides") : null, [db, user])
   const { data: rides } = useCollection(ridesQuery)
 
-  const driversQuery = useMemoFirebase(() => db ? query(collection(db, "userProfiles"), where("role", "==", "driver")) : null, [db])
+  const driversQuery = useMemoFirebase(() => (db && user) ? query(collection(db, "userProfiles"), where("role", "==", "driver")) : null, [db, user])
   const { data: drivers } = useCollection(driversQuery)
 
   const stats = useMemo(() => {
