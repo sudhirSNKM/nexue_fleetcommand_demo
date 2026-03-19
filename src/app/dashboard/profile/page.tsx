@@ -178,12 +178,29 @@ export default function UniversalProfilePage() {
     const file = e.target.files?.[0]
     if (!file || !user || !db || !storage) return
 
+    // Protocol Integrity: Ensure update access has been granted by Command
+    if (activeRequest?.status !== 'granted') {
+      toast({
+        variant: "destructive",
+        title: "Protocol Breach",
+        description: "You must have an approved 'Initiate Protocol Update' to modify document archives.",
+      })
+      return
+    }
+
     setIsSubmitting(true)
     try {
       const fileRef = ref(storage, `documents/${user.uid}/${docType}`)
-      await uploadBytes(fileRef, file)
+      
+      // Stage 1: Storage Handshake
+      console.log(`[STORAGE] Initiating upload for: ${docType} (File: ${file.name}, Size: ${file.size}b)`);
+      const snapshot = await uploadBytes(fileRef, file)
+      console.log(`[STORAGE] Bytes uploaded successfully for: ${docType}`);
+      
       const downloadURL = await getDownloadURL(fileRef)
+      console.log(`[STORAGE] Resolved download URL: ${docType}`);
 
+      // Stage 2: Registry Sync
       const docPath = `docs.${docType}`
       await updateDoc(doc(db, "userProfiles", user.uid), {
         [docPath]: {
@@ -193,16 +210,18 @@ export default function UniversalProfilePage() {
           fileName: file.name
         }
       })
+      console.log(`[REGISTRY] Document record updated: ${docType}`);
 
       toast({
-        title: "Document Uploaded",
-        description: `${docType.toUpperCase()} is now pending verification.`,
+        title: "Document Logged",
+        description: `${docType.toUpperCase()} is now pending tactical verification.`,
       })
     } catch (error: any) {
+      console.error(`[STORAGE_FAILURE] Protocol error for ${docType}:`, error);
       toast({
         variant: "destructive",
         title: "Upload Failed",
-        description: error.message,
+        description: error.message || "A storage link error occurred during document logging.",
       })
     } finally {
       setIsSubmitting(false)
@@ -575,7 +594,7 @@ export default function UniversalProfilePage() {
                                        <div className="relative">
                                           <input 
                                             type="file" 
-                                            className="absolute inset-0 opacity-0 cursor-pointer" 
+                                            className={cn('absolute inset-0 opacity-0', activeRequest?.status === 'granted' ? 'cursor-pointer' : 'cursor-not-allowed')} 
                                             onChange={(e) => handleFileUpload(e, docKey)} 
                                           />
                                           <Button size="sm" className="bg-orange text-white font-black uppercase text-[8px]">
@@ -599,11 +618,11 @@ export default function UniversalProfilePage() {
                                <div className="relative">
                                   <input 
                                     type="file" 
-                                    className="absolute inset-0 opacity-0 cursor-pointer" 
+                                    className={cn('absolute inset-0 opacity-0', activeRequest?.status === 'granted' ? 'cursor-pointer' : 'cursor-not-allowed')} 
                                     onChange={(e) => handleFileUpload(e, docKey)} 
                                   />
-                                  <Button className="bg-orange hover:bg-orange/90 text-white font-black uppercase text-[10px] px-8 h-10 shadow-lg shadow-orange/20 border-none">
-                                    Upload Credentials
+                                  <Button className={cn('font-black uppercase text-[10px] px-8 h-10 shadow-lg border-none', activeRequest?.status === 'granted' ? 'bg-orange hover:bg-orange/90 text-white shadow-orange/20' : 'bg-slate-200 text-slate-400 shadow-none cursor-not-allowed')}>
+                                    {activeRequest?.status === 'granted' ? 'Upload Credentials' : 'Access Restricted'}
                                   </Button>
                                </div>
                             </div>
