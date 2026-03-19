@@ -36,7 +36,8 @@ export default function PassengersListPage() {
   const userProfileRef = useMemoFirebase(() => user && db ? doc(db, "userProfiles", user.uid) : null, [user, db])
   const { data: profile, isLoading: isProfileLoading } = useDoc(userProfileRef)
   
-  const role = (profile?.role || "").toLowerCase().replace(/\s+/g, '-')
+  const rawRole = (profile?.role || "").toLowerCase().trim()
+  const role = rawRole.replace(/[\s_-]+/g, '-')
   const isSuperAdmin = role === "super-admin"
   const isUserAdmin = role === "admin" || isSuperAdmin
 
@@ -85,8 +86,8 @@ export default function PassengersListPage() {
     return (
       <div className="h-full flex flex-col items-center justify-center space-y-4 bg-charcoal text-white min-h-[400px]">
         <ShieldCheck className="w-12 h-12 text-emergency mb-2" />
-        <h2 className="text-xl font-black uppercase">Access Restricted</h2>
-        <p className="text-[10px] uppercase font-black tracking-widest text-white/40">Administrative Clearance Level Required</p>
+        <h2 className="text-xl font-black uppercase text-white">Access Restricted</h2>
+        <p className="text-[10px] uppercase font-black tracking-widest text-muted-foreground">Administrative Clearance Level Required</p>
       </div>
     )
   }
@@ -105,7 +106,7 @@ export default function PassengersListPage() {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div>
           <h1 className="text-3xl font-black uppercase tracking-tighter text-white">Passenger Registry</h1>
-          <p className="text-[10px] text-white/40 uppercase font-black tracking-[0.4em] mt-1">
+          <p className="text-[10px] text-muted-foreground uppercase font-black tracking-[0.4em] mt-1">
             {isSuperAdmin ? 'Full Access Infrastructure Audit' : 'Restricted Privacy Monitoring Active'}
           </p>
         </div>
@@ -181,7 +182,7 @@ export default function PassengersListPage() {
                           <span className="text-[8px] text-white/40 font-mono italic">Operator: {lastRide.driverId?.substring(0,8)}...</span>
                         </div>
                       ) : (
-                        <span className="text-white/40 text-[8px] italic">No Recent Activity Detected</span>
+                        <span className="text-muted-foreground text-[8px] italic">No Recent Activity Detected</span>
                       )}
                     </td>
                     <td className="p-4">
@@ -220,7 +221,7 @@ export default function PassengersListPage() {
                 <tr>
                   <td colSpan={5} className="p-20 text-center opacity-40 italic">
                     <Activity className="w-12 h-12 mx-auto mb-4" />
-                    <p className="text-sm font-black uppercase">No passenger units detected in current sector</p>
+                    <p className="text-sm font-black uppercase text-muted-foreground">No passenger units detected in current sector</p>
                   </td>
                 </tr>
               )}
