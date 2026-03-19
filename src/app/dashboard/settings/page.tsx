@@ -29,6 +29,7 @@ import { useUser, useFirestore, useDoc, useMemoFirebase } from "@/firebase"
 import { doc, updateDoc, setDoc, deleteDoc, collection, getDocs, writeBatch } from "firebase/firestore"
 import { useToast } from "@/hooks/use-toast"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Skeleton } from "@/components/ui/skeleton"
 
 export default function SettingsPage() {
   const { user } = useUser()
@@ -126,6 +127,16 @@ export default function SettingsPage() {
   }
 
   const renderTabContent = () => {
+    if (isConfigLoading) {
+      return (
+        <div className="space-y-6">
+          <Skeleton className="h-12 w-full bg-white/5" />
+          <Skeleton className="h-12 w-full bg-white/5" />
+          <Skeleton className="h-32 w-full bg-white/5" />
+        </div>
+      )
+    }
+
     switch (activeTab) {
       case "General Admin":
         return (
@@ -360,7 +371,7 @@ export default function SettingsPage() {
             <CardFooter className="bg-white/5 border-t border-white/5 p-6">
                <Button 
                  onClick={handleCommitChanges}
-                 disabled={isSaving}
+                 disabled={isSaving || isConfigLoading}
                  className="ml-auto bg-orange hover:bg-orange/90 text-white font-black uppercase tracking-widest text-xs h-12 px-8 shadow-[0_5px_15px_rgba(255,128,0,0.2)]"
                >
                  {isSaving ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Save className="w-4 h-4 mr-2" />}

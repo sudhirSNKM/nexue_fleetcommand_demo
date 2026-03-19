@@ -33,8 +33,8 @@ import { usePathname, useRouter } from "next/navigation"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { useUser, useDoc, useMemoFirebase, useAuth, useFirestore } from "@/firebase"
-import { doc } from "firebase/firestore"
+import { useUser, useDoc, useMemoFirebase, useAuth, useFirestore, useCollection } from "@/firebase"
+import { doc, collection, query, where } from "firebase/firestore"
 import { signOut } from "firebase/auth"
 import { Sheet, SheetContent, SheetTrigger, SheetTitle, SheetDescription } from "@/components/ui/sheet"
 import { Card } from "@/components/ui/card"
@@ -52,6 +52,11 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   }, [user, db])
 
   const { data: profile, isLoading: isProfileLoading } = useDoc(userProfileRef)
+
+  // Real-time Alert Count for the Bell Icon
+  const alertsQuery = useMemoFirebase(() => db ? query(collection(db, "alerts"), where("status", "==", "active")) : null, [db])
+  const { data: activeAlerts } = useCollection(alertsQuery)
+  const alertCount = activeAlerts?.length || 0
 
   // Redirect to login if no user
   React.useEffect(() => {
@@ -203,10 +208,17 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           </div>
 
           <div className="flex items-center gap-4 lg:gap-6">
-            <button className={cn("relative transition-all hover:scale-110", isMobilityUser ? "text-slate-400 hover:text-slate-900" : "text-muted-foreground hover:text-white")}>
+            <Link 
+              href="/dashboard/alerts"
+              className={cn("relative transition-all hover:scale-110", isMobilityUser ? "text-slate-400 hover:text-slate-900" : "text-muted-foreground hover:text-white")}
+            >
               <Bell className="w-5 h-5" />
-              <span className="absolute -top-1 -right-1 w-2 h-2 bg-emergency rounded-full shadow-[0_0_5px_#FF0000]" />
-            </button>
+              {alertCount > 0 && (
+                <span className="absolute -top-1 -right-1 flex items-center justify-center min-w-[14px] h-[14px] bg-emergency rounded-full shadow-[0_0_5px_#FF0000] text-[8px] font-black text-white px-1">
+                  {alertCount}
+                </span>
+              )}
+            </Link>
 
             <div className={cn("flex items-center gap-3 border-l pl-4 lg:pl-6", isMobilityUser ? "border-slate-100" : "border-white/5")}>
               <div className="text-right hidden sm:block">
