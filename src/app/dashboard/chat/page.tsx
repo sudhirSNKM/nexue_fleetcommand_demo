@@ -84,15 +84,19 @@ export default function AdministrativeChatPage() {
   return (
     <div className="h-full flex flex-col space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl sm:text-3xl font-black uppercase tracking-tighter text-white flex items-center gap-3">
-            Tactical Comms <span className="hidden sm:inline">Link</span>
-            <MessageSquare className="w-6 h-6 sm:w-8 sm:h-8 text-orange" />
-          </h1>
-          <p className="text-[8px] sm:text-[10px] text-white/40 uppercase font-black tracking-[0.2em] sm:tracking-[0.4em] mt-1">Direct Secure Communication Layer</p>
+        <div className="flex items-start gap-4">
+          <div className="w-12 h-12 rounded-2xl bg-orange/10 flex items-center justify-center border border-orange/20 shrink-0 mt-1">
+            <MessageSquare className="w-6 h-6 text-orange" />
+          </div>
+          <div>
+            <h1 className="text-2xl sm:text-3xl font-black uppercase tracking-tighter text-white leading-tight">
+              Tactical Comms Link
+            </h1>
+            <p className="text-[8px] sm:text-[10px] text-white/40 uppercase font-black tracking-[0.4em] mt-1">Direct Secure Communication Layer</p>
+          </div>
         </div>
-        <div className="flex items-center gap-2 bg-orange/10 border border-orange/20 px-3 py-1.5 sm:px-4 sm:py-2 rounded-full w-fit">
-          <Activity className="w-3 h-3 sm:w-4 sm:h-4 text-orange" />
+        <div className="flex items-center gap-2 bg-orange/10 border border-orange/20 px-3 py-1.5 sm:px-4 sm:py-2 rounded-full w-fit self-start sm:self-center">
+          <Activity className="w-3 h-3 text-orange" />
           <span className="text-[8px] sm:text-[9px] font-black text-orange uppercase tracking-widest text-nowrap">Network Secure (E2EE)</span>
         </div>
       </div>

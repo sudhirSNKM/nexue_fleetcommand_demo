@@ -7,10 +7,28 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Button } from "@/components/ui/button"
 import { Switch } from "@/components/ui/switch"
-import { Settings, Shield, Bell, Database, AlertTriangle, Loader2, Save } from "lucide-react"
+import { 
+  Settings, 
+  Shield, 
+  Bell, 
+  Database, 
+  AlertTriangle, 
+  Loader2, 
+  Save, 
+  Lock, 
+  Globe, 
+  Clock, 
+  ShieldAlert,
+  Zap,
+  Activity,
+  History,
+  FileDown,
+  Trash2
+} from "lucide-react"
 import { useUser, useFirestore, useDoc, useMemoFirebase } from "@/firebase"
 import { doc, updateDoc, setDoc, deleteDoc, collection, getDocs, writeBatch } from "firebase/firestore"
 import { useToast } from "@/hooks/use-toast"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 
 export default function SettingsPage() {
   const { user } = useUser()
@@ -26,7 +44,15 @@ export default function SettingsPage() {
     commandPostName: "Nexus Primary",
     systemId: "NX-COMMAND-01",
     autoRedeploy: true,
-    emergencyOverride: false
+    emergencyOverride: false,
+    enforce2FA: true,
+    sessionExpiry: "12h",
+    regionalLock: false,
+    alertMissions: true,
+    alertPersonnel: false,
+    alertHealth: true,
+    backupCycle: "Daily",
+    retentionDays: 90
   })
 
   const userProfileRef = useMemoFirebase(() => user && db ? doc(db, "userProfiles", user.uid) : null, [user, db])
@@ -38,12 +64,10 @@ export default function SettingsPage() {
 
   useEffect(() => {
     if (remoteConfig) {
-      setConfig({
-        commandPostName: remoteConfig.commandPostName || "Nexus Primary",
-        systemId: remoteConfig.systemId || "NX-COMMAND-01",
-        autoRedeploy: remoteConfig.autoRedeploy ?? true,
-        emergencyOverride: remoteConfig.emergencyOverride ?? false
-      })
+      setConfig(prev => ({
+        ...prev,
+        ...remoteConfig
+      }))
     }
   }, [remoteConfig])
 
@@ -79,15 +103,10 @@ export default function SettingsPage() {
 
     setIsLoading(true)
     try {
-      // Logic for purging data: For now, we'll just toast a mock success or clear a small collection
-      // In a real app, this might clear specific collections like driverShifts or auditLogs
       toast({
         title: "Purge In Progress",
         description: "Wiping mission logs and tactical registry...",
       })
-      
-      // Batch delete example for mission logs or something similar if needed
-      // ...
       
       setTimeout(() => {
         toast({
@@ -103,6 +122,193 @@ export default function SettingsPage() {
         description: error.message
       })
       setIsLoading(false)
+    }
+  }
+
+  const renderTabContent = () => {
+    switch (activeTab) {
+      case "General Admin":
+        return (
+          <div className="space-y-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+              <div className="space-y-3">
+                <Label className="text-[10px] uppercase font-black text-orange/60 tracking-widest ml-1">Command Post Name</Label>
+                <Input 
+                  value={config.commandPostName} 
+                  onChange={(e) => setConfig({...config, commandPostName: e.target.value})}
+                  className="bg-white/5 border-white/10 text-white font-bold h-12 focus:border-orange/50 transition-colors" 
+                />
+              </div>
+              <div className="space-y-3">
+                <Label className="text-[10px] uppercase font-black text-orange/60 tracking-widest ml-1">System ID</Label>
+                <Input 
+                  value={config.systemId} 
+                  onChange={(e) => setConfig({...config, systemId: e.target.value})}
+                  className="bg-white/5 border-white/10 text-white font-mono h-12 focus:border-orange/50 transition-colors" 
+                />
+              </div>
+            </div>
+
+            <div className="space-y-6 pt-6 border-t border-white/5">
+              <div className="flex items-center justify-between p-4 bg-white/5 rounded-xl border border-white/5 hover:border-orange/20 transition-all group">
+                <div>
+                  <p className="text-xs font-black text-white uppercase tracking-widest group-hover:text-orange transition-colors">Auto-Redeploy Assets</p>
+                  <p className="text-[10px] text-white/30 uppercase font-bold tracking-wider">Enable AI-driven fleet redistribution</p>
+                </div>
+                <Switch 
+                  checked={config.autoRedeploy} 
+                  onCheckedChange={(val) => setConfig({...config, autoRedeploy: val})} 
+                  className="data-[state=checked]:bg-orange"
+                />
+              </div>
+              <div className="flex items-center justify-between p-4 bg-white/5 rounded-xl border border-white/5 hover:border-orange/20 transition-all group">
+                <div>
+                  <p className="text-xs font-black text-white uppercase tracking-widest group-hover:text-orange transition-colors">Emergency Override</p>
+                  <p className="text-[10px] text-white/30 uppercase font-bold tracking-wider">Allow remote engine kill in safety breaches</p>
+                </div>
+                <Switch 
+                  checked={config.emergencyOverride} 
+                  onCheckedChange={(val) => setConfig({...config, emergencyOverride: val})} 
+                  className="data-[state=checked]:bg-orange"
+                />
+              </div>
+            </div>
+          </div>
+        )
+      case "Security Protocols":
+        return (
+          <div className="space-y-6">
+            <div className="flex items-center justify-between p-4 bg-white/5 rounded-xl border border-white/5 group">
+              <div className="flex items-center gap-4">
+                <Lock className="w-5 h-5 text-orange" />
+                <div>
+                  <p className="text-xs font-black text-white uppercase tracking-widest">Enforce Multi-Factor Auth</p>
+                  <p className="text-[10px] text-white/30 uppercase font-bold tracking-wider">Mandatory 2FA for all administrative logins</p>
+                </div>
+              </div>
+              <Switch 
+                checked={config.enforce2FA} 
+                onCheckedChange={(val) => setConfig({...config, enforce2FA: val})} 
+                className="data-[state=checked]:bg-orange"
+              />
+            </div>
+
+            <div className="flex items-center justify-between p-4 bg-white/5 rounded-xl border border-white/5">
+              <div className="flex items-center gap-4">
+                <Clock className="w-5 h-5 text-orange" />
+                <div>
+                  <p className="text-xs font-black text-white uppercase tracking-widest">Global Session Expiry</p>
+                  <p className="text-[10px] text-white/30 uppercase font-bold tracking-wider">Automatic terminal lockout duration</p>
+                </div>
+              </div>
+              <Select value={config.sessionExpiry} onValueChange={(val) => setConfig({...config, sessionExpiry: val})}>
+                <SelectTrigger className="w-[120px] bg-navy/40 border-white/10 text-xs font-bold uppercase">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent className="bg-charcoal border-white/10 text-white text-xs uppercase font-bold">
+                  <SelectItem value="2h">2 Hours</SelectItem>
+                  <SelectItem value="12h">12 Hours</SelectItem>
+                  <SelectItem value="24h">24 Hours</SelectItem>
+                  <SelectItem value="Persistent">Persistent</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="flex items-center justify-between p-4 bg-white/5 rounded-xl border border-white/5">
+              <div className="flex items-center gap-4">
+                <Globe className="w-5 h-5 text-orange" />
+                <div>
+                  <p className="text-xs font-black text-white uppercase tracking-widest">Regional IP Lock</p>
+                  <p className="text-[10px] text-white/30 uppercase font-bold tracking-wider">Restrict access to verified sector IP ranges</p>
+                </div>
+              </div>
+              <Switch 
+                checked={config.regionalLock} 
+                onCheckedChange={(val) => setConfig({...config, regionalLock: val})} 
+                className="data-[state=checked]:bg-orange"
+              />
+            </div>
+          </div>
+        )
+      case "Notification Nodes":
+        return (
+          <div className="space-y-6">
+            {[
+              { id: 'alertMissions', label: "High-Priority Mission Alerts", desc: "Real-time broadcast for tactical exceptions", icon: Zap },
+              { id: 'alertPersonnel', label: "Personnel Access Logs", desc: "Notify on administrative login events", icon: Activity },
+              { id: 'alertHealth', label: "Infrastructure Health Heartbeat", desc: "Hourly diagnostic summary of system nodes", icon: ShieldAlert }
+            ].map((node) => (
+              <div key={node.id} className="flex items-center justify-between p-4 bg-white/5 rounded-xl border border-white/5">
+                <div className="flex items-center gap-4">
+                  <node.icon className="w-5 h-5 text-orange" />
+                  <div>
+                    <p className="text-xs font-black text-white uppercase tracking-widest">{node.label}</p>
+                    <p className="text-[10px] text-white/30 uppercase font-bold tracking-wider">{node.desc}</p>
+                  </div>
+                </div>
+                <Switch 
+                  checked={(config as any)[node.id]} 
+                  onCheckedChange={(val) => setConfig({...config, [node.id]: val})} 
+                  className="data-[state=checked]:bg-orange"
+                />
+              </div>
+            ))}
+          </div>
+        )
+      case "Data Management":
+        return (
+          <div className="space-y-6">
+            <div className="flex items-center justify-between p-4 bg-white/5 rounded-xl border border-white/5">
+              <div className="flex items-center gap-4">
+                <History className="w-5 h-5 text-orange" />
+                <div>
+                  <p className="text-xs font-black text-white uppercase tracking-widest">Automated Backup Cycle</p>
+                  <p className="text-[10px] text-white/30 uppercase font-bold tracking-wider">Frequency of encrypted state snapshots</p>
+                </div>
+              </div>
+              <Select value={config.backupCycle} onValueChange={(val) => setConfig({...config, backupCycle: val})}>
+                <SelectTrigger className="w-[120px] bg-navy/40 border-white/10 text-xs font-bold uppercase">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent className="bg-charcoal border-white/10 text-white text-xs uppercase font-bold">
+                  <SelectItem value="Hourly">Hourly</SelectItem>
+                  <SelectItem value="Daily">Daily</SelectItem>
+                  <SelectItem value="Weekly">Weekly</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="flex items-center justify-between p-4 bg-white/5 rounded-xl border border-white/5">
+              <div className="flex items-center gap-4">
+                <Database className="w-5 h-5 text-orange" />
+                <div>
+                  <p className="text-xs font-black text-white uppercase tracking-widest">Mission Log Retention</p>
+                  <p className="text-[10px] text-white/30 uppercase font-bold tracking-wider">Days to keep mission data before archiving</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-3">
+                <Input 
+                  type="number" 
+                  value={config.retentionDays} 
+                  onChange={(e) => setConfig({...config, retentionDays: parseInt(e.target.value)})}
+                  className="w-20 bg-navy/40 border-white/10 text-white font-mono h-9 text-xs text-center" 
+                />
+                <span className="text-[10px] font-black text-white/40 uppercase">Days</span>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <Button variant="outline" className="h-12 border-white/10 bg-white/5 text-[10px] font-black uppercase tracking-widest hover:bg-white/10">
+                <FileDown className="w-4 h-4 mr-2 text-active" /> Export Full Audit JSON
+              </Button>
+              <Button variant="outline" className="h-12 border-white/10 bg-white/5 text-[10px] font-black uppercase tracking-widest hover:bg-emergency/10 hover:text-emergency transition-colors">
+                <Trash2 className="w-4 h-4 mr-2" /> Clear Temporary Cache
+              </Button>
+            </div>
+          </div>
+        )
+      default:
+        return null
     }
   }
 
@@ -143,75 +349,25 @@ export default function SettingsPage() {
         </aside>
 
         <div className="md:col-span-2 space-y-6">
-          {activeTab === "General Admin" ? (
-            <Card className="glass-panel border-none shadow-2xl">
-              <CardHeader className="bg-white/5 border-b border-white/5 p-6">
-                <CardTitle className="text-sm font-black uppercase tracking-widest text-white/80">Fleet Command Parameters</CardTitle>
-                <CardDescription className="text-[10px] uppercase font-bold text-white/40 tracking-wider">Adjust core operational thresholds for the entire fleet.</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-8 p-8">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                  <div className="space-y-3">
-                    <Label className="text-[10px] uppercase font-black text-orange/60 tracking-widest ml-1">Command Post Name</Label>
-                    <Input 
-                      value={config.commandPostName} 
-                      onChange={(e) => setConfig({...config, commandPostName: e.target.value})}
-                      className="bg-white/5 border-white/10 text-white font-bold h-12 focus:border-orange/50 transition-colors" 
-                    />
-                  </div>
-                  <div className="space-y-3">
-                    <Label className="text-[10px] uppercase font-black text-orange/60 tracking-widest ml-1">System ID</Label>
-                    <Input 
-                      value={config.systemId} 
-                      onChange={(e) => setConfig({...config, systemId: e.target.value})}
-                      className="bg-white/5 border-white/10 text-white font-mono h-12 focus:border-orange/50 transition-colors" 
-                    />
-                  </div>
-                </div>
-
-                <div className="space-y-6 pt-6 border-t border-white/5">
-                  <div className="flex items-center justify-between p-4 bg-white/5 rounded-xl border border-white/5 hover:border-orange/20 transition-all group">
-                    <div>
-                      <p className="text-xs font-black text-white uppercase tracking-widest group-hover:text-orange transition-colors">Auto-Redeploy Assets</p>
-                      <p className="text-[10px] text-white/30 uppercase font-bold tracking-wider">Enable AI-driven fleet redistribution</p>
-                    </div>
-                    <Switch 
-                      checked={config.autoRedeploy} 
-                      onCheckedChange={(val) => setConfig({...config, autoRedeploy: val})} 
-                      className="data-[state=checked]:bg-orange"
-                    />
-                  </div>
-                  <div className="flex items-center justify-between p-4 bg-white/5 rounded-xl border border-white/5 hover:border-orange/20 transition-all group">
-                    <div>
-                      <p className="text-xs font-black text-white uppercase tracking-widest group-hover:text-orange transition-colors">Emergency Override</p>
-                      <p className="text-[10px] text-white/30 uppercase font-bold tracking-wider">Allow remote engine kill in safety breaches</p>
-                    </div>
-                    <Switch 
-                      checked={config.emergencyOverride} 
-                      onCheckedChange={(val) => setConfig({...config, emergencyOverride: val})} 
-                      className="data-[state=checked]:bg-orange"
-                    />
-                  </div>
-                </div>
-              </CardContent>
-              <CardFooter className="bg-white/5 border-t border-white/5 p-6">
-                 <Button 
-                   onClick={handleCommitChanges}
-                   disabled={isSaving}
-                   className="ml-auto bg-orange hover:bg-orange/90 text-white font-black uppercase tracking-widest text-xs h-12 px-8 shadow-[0_5px_15px_rgba(255,128,0,0.2)]"
-                 >
-                   {isSaving ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Save className="w-4 h-4 mr-2" />}
-                   Commit Changes
-                 </Button>
-              </CardFooter>
-            </Card>
-          ) : (
-            <Card className="glass-panel border-none p-20 text-center shadow-2xl">
-               <Shield className="w-16 h-16 text-white/10 mx-auto mb-6 animate-pulse" />
-               <h3 className="text-lg font-black uppercase text-white/20 tracking-[0.5em] mb-2">{activeTab} Node</h3>
-               <p className="text-[10px] font-black uppercase text-white/10 tracking-[0.2em]">Access restricted or module offline</p>
-            </Card>
-          )}
+          <Card className="glass-panel border-none shadow-2xl">
+            <CardHeader className="bg-white/5 border-b border-white/5 p-6">
+              <CardTitle className="text-sm font-black uppercase tracking-widest text-white/80">{activeTab} Interface</CardTitle>
+              <CardDescription className="text-[10px] uppercase font-bold text-white/40 tracking-wider">Adjusting operational thresholds for the {activeTab.toLowerCase()} cluster.</CardDescription>
+            </CardHeader>
+            <CardContent className="p-8">
+              {renderTabContent()}
+            </CardContent>
+            <CardFooter className="bg-white/5 border-t border-white/5 p-6">
+               <Button 
+                 onClick={handleCommitChanges}
+                 disabled={isSaving}
+                 className="ml-auto bg-orange hover:bg-orange/90 text-white font-black uppercase tracking-widest text-xs h-12 px-8 shadow-[0_5px_15px_rgba(255,128,0,0.2)]"
+               >
+                 {isSaving ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Save className="w-4 h-4 mr-2" />}
+                 Commit {activeTab} Changes
+               </Button>
+            </CardFooter>
+          </Card>
 
           {isSuperAdmin && activeTab === "General Admin" && (
             <Card className="glass-panel border-emergency/20 border-2 shadow-[0_0_30px_rgba(255,0,0,0.05)]">
