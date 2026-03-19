@@ -247,7 +247,7 @@ export default function UniversalProfilePage() {
       <motion.div 
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
-        className={cn("p-4 rounded-2xl flex items-center gap-4 mb-8 border transition-colors", config.bg, config.border)}
+        className={cn("p-4 rounded-2xl flex items-center gap-4 mb-4 md:mb-8 border transition-colors", config.bg, config.border)}
       >
         <div className={cn("p-2 rounded-xl", config.bg)}>
           <Icon className={cn("w-5 h-5", config.text, activeRequest.status === 'pending' && "animate-pulse")} />
@@ -261,21 +261,21 @@ export default function UniversalProfilePage() {
   }
 
   return (
-    <div className={cn("max-w-4xl mx-auto space-y-8 pb-20", isMobilityUser ? "text-slate-900" : "text-white")}>
-      <header className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+    <div className={cn("max-w-4xl mx-auto space-y-4 md:space-y-8 pb-20", isMobilityUser ? "text-slate-900" : "text-white")}>
+      <header className="flex flex-col md:flex-row md:items-center justify-between gap-4 md:gap-6">
         <div>
-          <h1 className="text-3xl font-black uppercase tracking-tighter flex items-center gap-3">
-             <User className="w-8 h-8 text-orange" />
+          <h1 className="text-2xl md:text-3xl font-black uppercase tracking-tighter flex items-center gap-3">
+             <User className="w-6 h-6 md:w-8 md:h-8 text-orange" />
              Identity Management
           </h1>
-          <p className={cn("text-[10px] uppercase font-black tracking-[0.4em] mt-2", isMobilityUser ? "text-slate-400" : "text-white/40")}>
+          <p className={cn("text-[10px] uppercase font-black tracking-[0.4em] mt-1 md:mt-2", isMobilityUser ? "text-slate-400" : "text-white/40")}>
             Certified Member of Nexus Command
           </p>
         </div>
         
         <div className="flex gap-4">
            {isMobilityUser ? (
-             <Card className="px-6 py-2 border-l-4 border-orange bg-white shadow-sm flex flex-col justify-center">
+             <Card className="px-4 py-2 md:px-6 md:py-2 border-l-4 border-orange bg-white shadow-sm flex flex-col justify-center">
                <p className="text-[10px] font-black text-slate-400 uppercase mb-0.5">Global Rating</p>
                <p className="text-xl font-black text-slate-900">{profile?.rating ? profile.rating.toFixed(1) : '5.0'}</p>
              </Card>
@@ -290,12 +290,12 @@ export default function UniversalProfilePage() {
 
       {renderStatusBanner()}
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-        <aside className="space-y-6">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-8">
+        <aside className="space-y-4 md:space-y-6">
            <Card className={cn("border-none overflow-hidden", isMobilityUser ? "bg-white shadow-xl" : "glass-panel")}>
-              <div className={cn("h-24", isMobilityUser ? "bg-slate-100" : "bg-gradient-to-r from-orange/20 to-navy")} />
-              <CardContent className="p-6 pt-0 -mt-12 text-center">
-                <div className="w-24 h-24 rounded-2xl ring-4 ring-white overflow-hidden shadow-2xl mx-auto mb-4 relative group">
+              <div className={cn("h-16 md:h-24", isMobilityUser ? "bg-slate-100" : "bg-gradient-to-r from-orange/20 to-navy")} />
+              <CardContent className="p-6 pt-0 -mt-10 md:-mt-12 text-center">
+                <div className="w-20 h-20 md:w-24 md:h-24 rounded-2xl ring-4 ring-white overflow-hidden shadow-2xl mx-auto mb-4 relative group">
                   <img src={`https://picsum.photos/seed/${user?.uid}/200/200`} alt="Avatar" className="w-full h-full object-cover" />
                   {isEditing && (
                     <div className="absolute inset-0 bg-black/50 flex items-center justify-center cursor-pointer">
@@ -303,7 +303,7 @@ export default function UniversalProfilePage() {
                     </div>
                   )}
                 </div>
-                <h3 className="text-lg font-black uppercase">{profile?.name || "Member UN-01"}</h3>
+                <h3 className={cn("text-lg font-black uppercase", isMobilityUser ? "text-slate-900" : "text-white")}>{profile?.name || "Member UN-01"}</h3>
                 <Badge variant="outline" className={cn("mt-2 border-orange/40 text-orange uppercase font-black text-[10px] tracking-widest px-4", !isMobilityUser && "bg-orange/5")}>
                   {profile?.role}
                 </Badge>
@@ -326,19 +326,19 @@ export default function UniversalProfilePage() {
            <Button 
             onClick={handleLogout}
             variant="ghost"
-            className={cn("w-full h-12 font-black uppercase text-[10px] tracking-widest", isMobilityUser ? "text-slate-400 hover:text-red-600 hover:bg-red-50" : "text-muted-foreground hover:text-emergency hover:bg-emergency/10")}
+            className={cn("w-full h-12 font-black uppercase text-[10px] tracking-widest", isMobilityUser ? "text-slate-500 hover:text-red-600 hover:bg-red-50" : "text-muted-foreground hover:text-emergency hover:bg-emergency/10")}
           >
             <LogOut className="w-4 h-4 mr-3" /> Abort Session
           </Button>
         </aside>
 
-        <div className="md:col-span-2 space-y-8">
+        <div className="md:col-span-2 space-y-4 md:space-y-8">
           <Tabs defaultValue="details" className="w-full">
-            <TabsList className={cn("inline-flex h-12 items-center justify-start rounded-xl p-1 mb-6", isMobilityUser ? "bg-slate-200/50" : "bg-navy/40")}>
+            <TabsList className={cn("inline-flex h-12 items-center justify-start rounded-xl p-1 mb-4 md:mb-6", isMobilityUser ? "bg-slate-200/50" : "bg-navy/40")}>
               <TabsTrigger 
                 value="details" 
                 className={cn(
-                  "rounded-lg px-6 py-2 text-[10px] font-black uppercase tracking-widest data-[state=active]:bg-orange data-[state=active]:text-white transition-all",
+                  "rounded-lg px-4 md:px-6 py-2 text-[10px] font-black uppercase tracking-widest data-[state=active]:bg-orange data-[state=active]:text-white transition-all",
                   isMobilityUser ? "text-slate-600" : "text-white/60"
                 )}
               >
@@ -348,7 +348,7 @@ export default function UniversalProfilePage() {
                 <TabsTrigger 
                   value="documents" 
                   className={cn(
-                    "rounded-lg px-6 py-2 text-[10px] font-black uppercase tracking-widest data-[state=active]:bg-orange data-[state=active]:text-white transition-all",
+                    "rounded-lg px-4 md:px-6 py-2 text-[10px] font-black uppercase tracking-widest data-[state=active]:bg-orange data-[state=active]:text-white transition-all",
                     isMobilityUser ? "text-slate-600" : "text-white/60"
                   )}
                 >
@@ -358,7 +358,7 @@ export default function UniversalProfilePage() {
               <TabsTrigger 
                 value="audit" 
                 className={cn(
-                  "rounded-lg px-6 py-2 text-[10px] font-black uppercase tracking-widest data-[state=active]:bg-orange data-[state=active]:text-white transition-all",
+                  "rounded-lg px-4 md:px-6 py-2 text-[10px] font-black uppercase tracking-widest data-[state=active]:bg-orange data-[state=active]:text-white transition-all",
                   isMobilityUser ? "text-slate-600" : "text-white/60"
                 )}
               >
@@ -366,16 +366,16 @@ export default function UniversalProfilePage() {
               </TabsTrigger>
             </TabsList>
 
-            <TabsContent value="details" className="space-y-8">
+            <TabsContent value="details" className="space-y-4 md:space-y-8">
                <Card className={cn("border-none shadow-2xl", isMobilityUser ? "bg-white" : "glass-panel")}>
-                  <CardHeader className={cn("p-6 border-b", isMobilityUser ? "bg-slate-50 border-slate-100" : "bg-navy/10 border-white/5")}>
+                  <CardHeader className={cn("p-4 md:p-6 border-b", isMobilityUser ? "bg-slate-50 border-slate-100" : "bg-navy/10 border-white/5")}>
                     <CardTitle className="text-xs font-black uppercase flex items-center gap-3">
                        <ShieldAlert className="w-5 h-5 text-orange" />
                        Core Protocol Parameters
                     </CardTitle>
                   </CardHeader>
-                  <CardContent className="p-8 space-y-6">
-                     <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                  <CardContent className="p-4 md:p-8 space-y-6">
+                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
                         <div className="space-y-2">
                            <Label className={cn("text-[10px] font-black uppercase tracking-widest", isMobilityUser ? "text-slate-500" : "text-white/50")}>Full Legal Identity</Label>
                            <Input 
