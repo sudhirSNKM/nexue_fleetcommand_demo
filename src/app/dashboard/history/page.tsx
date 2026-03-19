@@ -1,4 +1,3 @@
-
 "use client"
 
 import React, { useState } from "react"
@@ -184,7 +183,7 @@ export default function RideHistoryPage() {
           ) : (
             <Card className={cn("p-12 sm:p-20 text-center border-2 border-dashed rounded-3xl", isMobilityUser ? "bg-white border-slate-200" : "glass-panel border-white/10")}>
               <div className="w-16 h-16 sm:w-20 sm:h-20 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-6">
-                <HistoryIcon className={cn("w-8 h-8 sm:w-10 sm:h-10", isMobilityUser ? "text-slate-300" : "text-white/10")} />
+                <HistoryIcon className={cn("w-8 h-8 sm:w-10 sm:h-10", isMobilityUser ? "text-slate-300" : "text-white/40")} />
               </div>
               <h2 className={cn("text-lg sm:text-xl font-black uppercase mb-2", isMobilityUser ? "text-slate-900" : "text-white")}>Archive Empty</h2>
               <p className={cn("text-[10px] sm:text-xs font-bold uppercase tracking-widest", isMobilityUser ? "text-slate-400" : "text-white/40")}>No historical missions detected in current sector.</p>

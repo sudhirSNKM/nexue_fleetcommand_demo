@@ -1,4 +1,3 @@
-
 "use client"
 
 import React, { useState } from "react"
@@ -136,7 +135,7 @@ export default function AdminManagementPage() {
             <CardContent className="p-0">
               <div className="divide-y divide-white/5">
                 {isLoading ? (
-                  <div className="p-10 text-center text-white/20 animate-pulse font-black uppercase text-xs">Accessing Personnel Files...</div>
+                  <div className="p-10 text-center text-white/40 animate-pulse font-black uppercase text-xs">Accessing Personnel Files...</div>
                 ) : admins?.map((admin) => (
                   <div key={admin.id} className="p-4 sm:p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:bg-white/5 transition-all group">
                     <div className="flex items-center gap-4 min-w-0">
@@ -172,7 +171,7 @@ export default function AdminManagementPage() {
                   </div>
                 ))}
                 {!admins?.length && !isLoading && (
-                  <div className="p-20 text-center opacity-20">
+                  <div className="p-20 text-center opacity-40">
                     <Lock className="w-12 h-12 mx-auto mb-4" />
                     <p className="text-sm font-black uppercase">No regional administrators provisioned</p>
                   </div>

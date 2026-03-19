@@ -1,4 +1,3 @@
-
 "use client"
 
 import React, { useMemo } from "react"
@@ -182,7 +181,7 @@ export default function PassengersListPage() {
                           <span className="text-[8px] text-white/40 font-mono italic">Operator: {lastRide.driverId?.substring(0,8)}...</span>
                         </div>
                       ) : (
-                        <span className="text-white/20 text-[8px] italic">No Recent Activity Detected</span>
+                        <span className="text-white/40 text-[8px] italic">No Recent Activity Detected</span>
                       )}
                     </td>
                     <td className="p-4">
@@ -219,7 +218,7 @@ export default function PassengersListPage() {
               })}
               {!passengers?.length && !isPassengersLoading && (
                 <tr>
-                  <td colSpan={5} className="p-20 text-center opacity-20 italic">
+                  <td colSpan={5} className="p-20 text-center opacity-40 italic">
                     <Activity className="w-12 h-12 mx-auto mb-4" />
                     <p className="text-sm font-black uppercase">No passenger units detected in current sector</p>
                   </td>

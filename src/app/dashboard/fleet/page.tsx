@@ -105,7 +105,7 @@ export default function FleetPage() {
                 </tr>
               )) : (
                 <tr>
-                   <td colSpan={6} className="p-10 text-center text-[10px] font-black uppercase text-white/20 tracking-widest">
+                   <td colSpan={6} className="p-10 text-center text-[10px] font-black uppercase text-white/40 tracking-widest">
                       {isLoading ? "Synchronizing Asset Data..." : "Fleet Registry Empty"}
                    </td>
                 </tr>

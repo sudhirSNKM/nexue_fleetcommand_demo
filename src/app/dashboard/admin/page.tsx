@@ -1,4 +1,3 @@
-
 "use client"
 
 import React, { useEffect, useState, useMemo } from "react"
@@ -176,7 +175,7 @@ export default function AdminOperationsCenter() {
             </CardHeader>
             <CardContent className="p-4 space-y-3">
               {pendingRequests?.length === 0 ? (
-                <p className="text-[10px] text-white/20 uppercase font-black text-center py-4">No Pending Actions</p>
+                <p className="text-[10px] text-white/40 uppercase font-black text-center py-4">No Pending Actions</p>
               ) : (
                 pendingRequests?.map(req => (
                   <div key={req.id} className="p-3 bg-white/5 rounded border border-white/5 flex items-center justify-between">

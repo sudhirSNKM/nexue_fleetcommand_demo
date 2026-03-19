@@ -1,4 +1,3 @@
-
 "use client"
 
 import React from "react"
@@ -81,7 +80,7 @@ export default function DriversPage() {
               {isDriversLoading ? (
                 <div className="p-20 text-center flex flex-col items-center gap-4">
                   <Loader2 className="w-8 h-8 text-orange animate-spin" />
-                  <p className="text-[10px] font-black uppercase text-white/20">Accessing Registry...</p>
+                  <p className="text-[10px] font-black uppercase text-white/40">Accessing Registry...</p>
                 </div>
               ) : (
                 <div className="divide-y divide-white/5">
@@ -134,7 +133,7 @@ export default function DriversPage() {
                     </div>
                   ))}
                   {!drivers?.length && (
-                    <div className="p-20 text-center opacity-20">
+                    <div className="p-20 text-center opacity-40">
                       <Users className="w-12 h-12 mx-auto mb-4" />
                       <p className="text-sm font-black uppercase">No operators detected in registry</p>
                     </div>
@@ -157,7 +156,7 @@ export default function DriversPage() {
               <div className="divide-y divide-white/5 max-h-[500px] overflow-y-auto scrollbar-hide">
                 {isShiftsLoading ? (
                   <div className="p-10 text-center animate-pulse">
-                    <p className="text-[10px] font-black uppercase text-white/20">Scanning Feed...</p>
+                    <p className="text-[10px] font-black uppercase text-white/40">Scanning Feed...</p>
                   </div>
                 ) : (
                   <>
@@ -182,7 +181,7 @@ export default function DriversPage() {
                     {!shifts?.length && (
                       <div className="p-8 text-center">
                         <Clock className="w-8 h-8 mx-auto mb-2 text-white/10" />
-                        <p className="text-[9px] uppercase font-black text-white/20">No active shifts detected</p>
+                        <p className="text-[9px] uppercase font-black text-white/40">No active shifts detected</p>
                       </div>
                     )}
                   </>

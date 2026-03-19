@@ -80,8 +80,8 @@ export default function AlertsPage() {
           ))}
           {(!activeAlerts || activeAlerts.length === 0) && !isAlertsLoading && (
             <div className="p-10 text-center border border-dashed border-white/5 rounded-2xl">
-               <CheckCircle2 className="w-10 h-10 text-active opacity-20 mx-auto mb-4" />
-               <p className="text-[10px] font-black uppercase text-white/20 tracking-widest">No Active Incidents Detected</p>
+               <CheckCircle2 className="w-10 h-10 text-active opacity-40 mx-auto mb-4" />
+               <p className="text-[10px] font-black uppercase text-white/40 tracking-widest">No Active Incidents Detected</p>
             </div>
           )}
         </div>
@@ -106,7 +106,7 @@ export default function AlertsPage() {
                   </div>
                 ))}
                 {(!historyLogs || historyLogs.length === 0) && (
-                  <div className="p-8 text-center text-[9px] font-black uppercase text-white/10">No Logs Archived</div>
+                  <div className="p-8 text-center text-[9px] font-black uppercase text-white/40">No Logs Archived</div>
                 )}
               </div>
             </CardContent>

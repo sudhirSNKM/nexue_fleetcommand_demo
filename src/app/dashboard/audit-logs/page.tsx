@@ -1,4 +1,3 @@
-
 "use client"
 
 import React from "react"
@@ -54,7 +53,7 @@ export default function AuditLogsPage() {
                 <Activity className="w-4 h-4 text-orange" /> Governance Matrix
               </CardTitle>
               <div className="relative group">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40" />
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40 group-focus-within:text-orange transition-colors" />
                 <input 
                   placeholder="Filter by Action/User..." 
                   className="bg-navy/40 border border-white/10 rounded-xl pl-10 pr-4 py-2 text-[10px] text-white focus:outline-none focus:ring-1 focus:ring-orange/50 transition-all w-64"
@@ -90,7 +89,7 @@ export default function AuditLogsPage() {
                   ))}
                   {!logs?.length && !isLoading && (
                     <tr>
-                      <td colSpan={4} className="p-20 text-center opacity-20 italic">No system events logged in current reporting phase.</td>
+                      <td colSpan={4} className="p-20 text-center opacity-40 italic">No system events logged in current reporting phase.</td>
                     </tr>
                   )}
                 </tbody>
