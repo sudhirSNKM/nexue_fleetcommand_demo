@@ -59,7 +59,7 @@ export default function LiveMap({ locations = [], activeRides = [] }: LiveMapPro
   const safeActiveRides = activeRides || []
 
   return (
-    <Card className="glass-panel border-none shadow-none h-full min-h-[400px] flex flex-col bg-transparent">
+    <Card className="glass-panel border-none shadow-none h-full min-h-[250px] lg:min-h-[400px] flex flex-col bg-transparent">
       <CardContent className="flex-1 p-0 relative h-full">
         {L && (
           <MapContainer center={[12.9716, 77.5946]} zoom={12} className="h-full w-full" zoomControl={false}>

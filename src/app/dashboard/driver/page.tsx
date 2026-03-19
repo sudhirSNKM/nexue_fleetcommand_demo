@@ -1,3 +1,4 @@
+
 "use client"
 
 import React, { useState } from "react"
@@ -102,7 +103,7 @@ export default function DriverApp() {
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 h-full text-slate-900">
-      <div className="lg:col-span-3 relative h-[400px] lg:h-full rounded-2xl overflow-hidden border border-slate-200 bg-white">
+      <div className="lg:col-span-3 relative h-[250px] lg:h-full rounded-2xl overflow-hidden border border-slate-200 bg-white">
         <TacticalMap markers={activeRide ? [
           { id: 'p', lat: activeRide.pickup.lat, lng: activeRide.pickup.lng, label: 'Pickup', type: 'pickup' },
           { id: 'd', lat: activeRide.dropoff.lat, lng: activeRide.dropoff.lng, label: 'Dropoff', type: 'dropoff' }

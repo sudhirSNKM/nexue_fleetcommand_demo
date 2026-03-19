@@ -107,7 +107,7 @@ export default function SuperAdminDashboard() {
 
       <div className="grid grid-cols-1 xl:grid-cols-4 gap-8">
         {/* TACTICAL MAP CONTAINER */}
-        <div className="xl:col-span-3 min-h-[600px] border border-white/5 rounded-2xl overflow-hidden shadow-2xl relative bg-card/20 group">
+        <div className="xl:col-span-3 h-[300px] lg:min-h-[600px] border border-white/5 rounded-2xl overflow-hidden shadow-2xl relative bg-card/20 group">
           <LiveMap 
             locations={liveLocations} 
             activeRides={activeMissions} 

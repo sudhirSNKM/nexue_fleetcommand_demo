@@ -1,3 +1,4 @@
+
 "use client"
 
 import React, { useState, useMemo, useEffect } from "react"
@@ -237,7 +238,7 @@ export default function PassengerApp() {
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-full text-slate-900">
-      <div className="lg:col-span-2 relative h-[400px] lg:h-full rounded-2xl overflow-hidden border border-slate-200 shadow-sm bg-white">
+      <div className="lg:col-span-2 relative h-[250px] lg:h-full rounded-2xl overflow-hidden border border-slate-200 shadow-sm bg-white">
         <TacticalMap 
           markers={currentRide || hasLocations ? [
             { id: 'p', lat: 12.9716, lng: 77.5946, label: 'Origin', type: 'pickup' },

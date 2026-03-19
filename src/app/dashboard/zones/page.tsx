@@ -35,7 +35,7 @@ export default function ZonesManagementPage() {
       </div>
 
       <div className="grid grid-cols-1 xl:grid-cols-4 gap-8 flex-1">
-        <div className="xl:col-span-3 min-h-[600px] border border-white/5 rounded-2xl overflow-hidden relative shadow-2xl bg-navy/20">
+        <div className="xl:col-span-3 min-h-[300px] lg:min-h-[600px] border border-white/5 rounded-2xl overflow-hidden relative shadow-2xl bg-navy/20">
           <LiveMap />
           <div className="absolute top-4 left-4 z-[1000]">
             <Badge className="bg-charcoal/90 backdrop-blur-md border-active/50 text-active flex items-center gap-2 px-3 py-1.5 font-black uppercase text-[10px]">

@@ -128,7 +128,7 @@ export default function AdminOperationsCenter() {
       </div>
 
       <div className="grid grid-cols-1 xl:grid-cols-4 gap-6">
-        <div className="xl:col-span-3 h-[450px] border border-white/5 rounded-2xl overflow-hidden shadow-2xl relative bg-card/20">
+        <div className="xl:col-span-3 h-[300px] lg:h-[450px] border border-white/5 rounded-2xl overflow-hidden shadow-2xl relative bg-card/20">
           <LiveMap locations={liveLocations} activeRides={activeMissions} />
           <div className="absolute top-4 left-4 z-[1000]">
             <button className="px-3 py-1.5 text-[9px] font-black uppercase rounded-lg border bg-orange border-orange text-white backdrop-blur-md">

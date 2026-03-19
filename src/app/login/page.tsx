@@ -28,23 +28,20 @@ export default function LoginPage() {
     setIsLoading(true)
     
     try {
-      let emailToUse = identifier.toLowerCase()
+      const isEmail = /^\S+@\S+\.\S+$/.test(identifier.trim())
+      let emailToUse = identifier.toLowerCase().trim()
 
-      // Unified Auth Strategy: Check if identifier is email or phone
-      const isEmail = /^\S+@\S+\.\S+$/.test(identifier)
-      
       if (!isEmail) {
-        // Resolve Identity via Phone Registry
+        // Phone number entered: query Firestore to resolve the email
         const q = query(collection(db, "userProfiles"), where("phone", "==", identifier.trim()), limit(1))
-        const querySnapshot = await getDocs(q)
-        
-        if (querySnapshot.empty) {
-          throw new Error("Comms link not found in personnel registry.")
+        const snap = await getDocs(q)
+        if (snap.empty) {
+          throw new Error("No personnel record found for this phone number.")
         }
-        
-        emailToUse = querySnapshot.docs[0].data().email
+        emailToUse = snap.docs[0].data().email
       }
 
+<<<<<<< HEAD
       await signInWithEmailAndPassword(auth, emailToUse, password)
       const user = auth.currentUser!;
       
@@ -53,20 +50,41 @@ export default function LoginPage() {
       
       if (userSnap.exists() && userSnap.data().currentSessionId) {
         // Log trace of override but proceed with new session
-      }
+=======
+      // Direct Firebase Auth handshake — no pre-auth Firestore lookup needed for email
+      const userCredential = await signInWithEmailAndPassword(auth, emailToUse, password)
+      const user = userCredential.user
 
       // Session Security Protocol: Generate and synchronize unique session identifier
-      const newSessionId = Math.random().toString(36).substring(2) + Date.now().toString(36);
-      localStorage.setItem("nexus_terminal_session", newSessionId);
-      
-      await updateDoc(userDocRef, { currentSessionId: newSessionId });
+      const { updateDoc, getDoc } = await import("firebase/firestore")
+      const userDocRef = doc(db, "userProfiles", user.uid)
+      const userSnap = await getDoc(userDocRef)
+
+      if (userSnap.exists() && userSnap.data().currentSessionId) {
+        toast({
+          title: "Session Override detected",
+          description: "An active link was detected elsewhere. Overriding for new tactical session.",
+        })
+>>>>>>> 0c7c111fd6dd7bdffda3ed2ac380e9980d318cef
+      }
+
+      const newSessionId = Math.random().toString(36).substring(2) + Date.now().toString(36)
+      localStorage.setItem("nexus_terminal_session", newSessionId)
+      await updateDoc(userDocRef, { currentSessionId: newSessionId })
 
       router.push("/dashboard")
     } catch (error: any) {
+      // Map Firebase Auth errors to user-friendly messages
+      let message = error.message || "Invalid credentials provided."
+      if (error.code === "auth/invalid-credential" || error.code === "auth/user-not-found" || error.code === "auth/wrong-password") {
+        message = "Invalid email or password. Please verify your credentials."
+      } else if (error.code === "auth/too-many-requests") {
+        message = "Too many failed attempts. Please wait and try again."
+      }
       toast({
         variant: "destructive",
         title: "Access Denied",
-        description: error.message || "Invalid credentials provided.",
+        description: message,
       })
     } finally {
       setIsLoading(false)

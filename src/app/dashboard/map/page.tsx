@@ -30,7 +30,7 @@ export default function MapPage() {
       </div>
 
       <div className="grid grid-cols-1 xl:grid-cols-4 gap-6 flex-1">
-        <div className="xl:col-span-3 min-h-[600px]">
+        <div className="xl:col-span-3 min-h-[300px] lg:min-h-[600px]">
           <LiveMap />
         </div>
         

@@ -13,15 +13,11 @@ export default function Home() {
 
   useEffect(() => {
     if (isUserLoading) return;
-    
-    const timer = setTimeout(() => {
-      if (user) {
-        router.push("/dashboard")
-      } else {
-        router.push("/login")
-      }
-    }, 2500)
-    return () => clearTimeout(timer)
+    if (user) {
+      router.replace("/dashboard")
+    } else {
+      router.replace("/login")
+    }
   }, [user, isUserLoading, router])
 
   return (

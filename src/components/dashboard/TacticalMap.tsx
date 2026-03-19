@@ -47,7 +47,7 @@ export default function TacticalMap({ markers = [], route = [], center = [12.971
   const safeRoute = route || []
 
   return (
-    <Card className="glass-panel overflow-hidden h-full min-h-[400px]">
+    <Card className="glass-panel overflow-hidden h-full min-h-[250px] lg:min-h-[400px]">
       <CardContent className="p-0 h-full relative">
         {L && (
           <MapContainer center={center} zoom={zoom} className="h-full w-full" zoomControl={false}>
